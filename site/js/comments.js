@@ -230,7 +230,7 @@
         busy(f, false);
         if (s.error) return say(msg, frError(s.error), "error");
         f.reset();
-        say(msg, "Presque fini ! Ouvre l'e-mail de confirmation qu'on vient de t'envoyer et clique sur le lien pour activer ton compte.", "ok");
+        say(msg, "Presque fini ! Ouvre l'e-mail de confirmation qu'on vient de t'envoyer et clique sur le lien pour activer ton compte. Pas reçu d'ici quelques minutes ? Regarde dans tes spams.", "ok");
       });
     });
   });
@@ -242,7 +242,7 @@
     sb.auth.resetPasswordForEmail(f.email.value.trim(), { redirectTo: here + "#avis" }).then(function (r) {
       busy(f, false);
       if (r.error) return say(msg, frError(r.error), "error");
-      say(msg, "Si un compte existe avec cette adresse, tu vas recevoir un lien pour choisir un nouveau mot de passe.", "ok");
+      say(msg, "Si un compte existe avec cette adresse, tu vas recevoir un lien pour choisir un nouveau mot de passe. Pense à regarder dans tes spams.", "ok");
     });
   });
 
