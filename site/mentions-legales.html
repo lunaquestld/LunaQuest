@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mentions légales · LunaQuest</title>
+<meta name="description" content="Mentions légales, crédits, licences et politique de confidentialité de LunaQuest.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@400;500;600;700&family=Permanent+Marker&family=Space+Mono:wght@400;700&display=swap">
+<style>
+  :root {
+    color-scheme: dark;
+    --night: #04061a;
+    --panel: rgba(12, 18, 54, 0.66);
+    --line: rgba(130, 160, 255, 0.18);
+    --red: #ff1f2e;
+    --red-soft: #ff7b86;
+    --blue: #2d5bff;
+    --blue-soft: #8fb2ff;
+    --paper: #f4f3ff;
+    --muted: #a8b4dc;
+    --faint: #6e7aa6;
+    --font-display: "Anton", "Impact", "Arial Narrow", sans-serif;
+    --font-body: "Manrope", "Segoe UI", system-ui, sans-serif;
+    --font-mono: "Space Mono", Consolas, monospace;
+    --font-tag: "Permanent Marker", "Segoe Print", cursive;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--paper); font: 16px/1.7 var(--font-body);
+    background: radial-gradient(1200px 600px at 80% -10%, rgba(45,91,255,.22), transparent 60%),
+                radial-gradient(900px 500px at -10% 20%, rgba(255,31,46,.14), transparent 60%), var(--night); min-height: 100vh; }
+  a { color: var(--blue-soft); }
+  a:hover { color: var(--paper); }
+  :focus-visible { outline: 2px solid var(--red-soft); outline-offset: 3px; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 16px; }
+  header { padding: 28px 0 8px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .brand { font: 400 28px/1 var(--font-display); text-transform: uppercase; color: var(--paper); text-decoration: none; letter-spacing: .02em; }
+  .brand span { color: var(--red); }
+  .back { font: 700 12px/1 var(--font-mono); letter-spacing: .2em; text-transform: uppercase; text-decoration: none; padding: 12px 16px; background: rgba(45,91,255,.22); box-shadow: inset 0 0 0 1px rgba(143,178,255,.4); color: var(--paper); }
+  .back:hover { background: var(--blue); }
+  h1 { font: 400 clamp(44px, 8vw, 76px)/.95 var(--font-display); text-transform: uppercase; margin: 36px 0 10px; }
+  .updated { font: 700 12px/1.4 var(--font-mono); letter-spacing: .2em; text-transform: uppercase; color: var(--red-soft); margin: 0 0 30px; }
+  nav.toc { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 34px; }
+  nav.toc a { font: 700 12px/1 var(--font-mono); letter-spacing: .08em; text-decoration: none; padding: 9px 12px; border: 1px solid var(--line); color: var(--muted); }
+  nav.toc a:hover { color: var(--paper); border-color: var(--red-soft); }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 26px 28px; margin-bottom: 18px; }
+  h2 { font: 400 28px/1.1 var(--font-display); text-transform: uppercase; margin: 0 0 14px; }
+  h2 small { display: block; font: 700 11px/1.4 var(--font-mono); letter-spacing: .3em; color: var(--red-soft); margin-bottom: 6px; }
+  h3 { font-size: 17px; margin: 20px 0 6px; }
+  p, li { color: var(--muted); }
+  p { margin: 0 0 12px; }
+  ul { margin: 0 0 12px; padding-left: 20px; }
+  li { margin-bottom: 6px; }
+  b, strong { color: var(--paper); }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; margin: 0 0 12px; }
+  dt { font: 700 12px/1.7 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
+  dd { margin: 0; color: var(--muted); }
+  .note { border-left: 3px solid var(--red); padding: 4px 0 4px 14px; }
+  footer { padding: 30px 0 50px; color: var(--faint); font-size: 14px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  footer .sig { font: 400 24px/1 var(--font-tag); color: var(--paper); }
+  @media (max-width: 560px) {
+    section { padding: 20px 18px; }
+    dl { grid-template-columns: 1fr; gap: 0; }
+    dd { margin-bottom: 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="brand" href="index.html">Luna<span>Quest</span></a>
+    <a class="back" href="index.html">← Retour au site</a>
+  </header>
+
+  <main>
+    <h1>Mentions légales</h1>
+    <p class="updated">Dernière mise à jour : 23 octobre 2026</p>
+
+    <nav class="toc" aria-label="Sommaire">
+      <a href="#editeur">Éditeur</a>
+      <a href="#hebergeur">Hébergeur</a>
+      <a href="#credits">Création et IA</a>
+      <a href="#licences">Licences</a>
+      <a href="#marques">Marques</a>
+      <a href="#responsabilite">Responsabilité</a>
+      <a href="#propriete">Propriété du site</a>
+      <a href="#confidentialite">Confidentialité</a>
+      <a href="#droit">Droit applicable</a>
+    </nav>
+
+    <section id="editeur">
+      <h2><small>01</small>Éditeur du site</h2>
+      <p>Ce site et le logiciel LunaQuest sont un projet <b>personnel et non commercial</b>, édité par <b>LD</b> (pseudonyme).</p>
+      <p>Conformément à l'article 6, III, 2° de la loi n° 2004-575 du 21 juin 2004 pour la confiance dans l'économie numérique (LCEN), l'éditeur, qui agit à titre non professionnel, a choisi de rester anonyme. Ses coordonnées personnelles ont été communiquées à l'hébergeur ci-dessous, qui peut être contacté pour toute demande légale.</p>
+      <p>LunaQuest est gratuit. Rien n'est vendu sur ce site. Son code source est publié sous licence MIT sur <a href="https://github.com/lunaquestld/LunaQuest" rel="noopener">GitHub</a>.</p>
+    </section>
+
+    <section id="hebergeur">
+      <h2><small>02</small>Hébergeur</h2>
+      <dl>
+        <dt>Société</dt><dd>Netlify, Inc.</dd>
+        <dt>Adresse</dt><dd>101 2nd Street, San Francisco, CA 94105, États-Unis</dd>
+        <dt>Site</dt><dd><a href="https://www.netlify.com" rel="noopener">www.netlify.com</a></dd>
+      </dl>
+    </section>
+
+    <section id="credits">
+      <h2><small>03</small>Création et intelligence artificielle</h2>
+      <ul>
+        <li><b>Idée, conception et direction :</b> LunaQuest a été imaginé par LD, qui en a défini les fonctions, l'apparence et les choix, et qui l'a testé.</li>
+        <li><b>Réalisation :</b> le code de LunaQuest, l'installateur, l'appli du casque, ce site et ses textes ont été réalisés avec l'aide de <b>Claude</b>, une intelligence artificielle développée par Anthropic, sous la direction de LD.</li>
+        <li>Anthropic n'est ni l'éditeur ni le distributeur de LunaQuest, n'a pas vérifié ce logiciel et n'en est pas responsable.</li>
+      </ul>
+      <p class="note">Comme tout logiciel, et en particulier un logiciel écrit avec l'aide d'une IA, LunaQuest peut contenir des erreurs. Signale-les pour qu'elles soient corrigées.</p>
+    </section>
+
+    <section id="licences">
+      <h2><small>04</small>Logiciels utilisés et licences</h2>
+      <h3>ALVR</h3>
+      <p>LunaQuest s'appuie sur <a href="https://github.com/alvr-org/ALVR" rel="noopener">ALVR</a> (Air Light VR), un logiciel libre de streaming PC VR. L'appli du casque fournie avec LunaQuest (« LunaQuest Client ») est une <b>version modifiée du client ALVR v20.14.1</b> : nom, icône, décor et panneau d'accueil personnalisés, espace couleur natif du casque.</p>
+      <p>ALVR est distribué sous licence MIT : Copyright (c) 2018-2019 polygraphene, Copyright (c) 2020-2024 alvr-org. Le texte complet de la licence est fourni avec LunaQuest, dans le fichier <code>THIRD-PARTY-NOTICES.txt</code>.</p>
+      <h3>OpenVR</h3>
+      <p>L'affichage de l'écran du PC dans le casque utilise la liaison C# d'OpenVR, Copyright (c) 2015 Valve Corporation, sous licence BSD 3-Clause (texte complet dans <code>THIRD-PARTY-NOTICES.txt</code>).</p>
+      <h3>Logiciels à installer à part</h3>
+      <p>LunaQuest ne contient pas et ne redistribue pas ALVR Streamer, SteamVR, Steam ni VB-CABLE. Les outils Android Platform Tools (ADB) sont téléchargés directement depuis les serveurs de Google, sous les conditions de Google. Chacun de ces logiciels reste soumis à sa propre licence.</p>
+    </section>
+
+    <section id="marques">
+      <h2><small>05</small>Marques et absence d'affiliation</h2>
+      <p>LunaQuest est un projet indépendant. Il n'est <b>ni affilié, ni soutenu, ni approuvé</b> par Meta, Valve, le projet ALVR, Anthropic ou Microsoft.</p>
+      <ul>
+        <li>Meta, Meta Quest, Quest et Meta Horizon sont des marques de Meta Platforms, Inc.</li>
+        <li>Steam et SteamVR sont des marques de Valve Corporation.</li>
+        <li>Claude est une marque d'Anthropic, PBC.</li>
+        <li>Windows est une marque de Microsoft Corporation.</li>
+        <li>ALVR est le nom du projet open source du même nom.</li>
+      </ul>
+      <p>Ces noms ne sont cités que pour indiquer avec quels produits LunaQuest fonctionne. Le mot « Quest » dans « LunaQuest » sert uniquement à indiquer la compatibilité avec les casques Meta Quest.</p>
+    </section>
+
+    <section id="responsabilite">
+      <h2><small>06</small>Utilisation et responsabilité</h2>
+      <ul>
+        <li>LunaQuest est fourni <b>« tel quel »</b>, gratuitement et sans garantie d'aucune sorte, notamment de fonctionnement, de compatibilité ou d'absence d'erreurs.</li>
+        <li>LunaQuest nécessite d'activer le <b>mode développeur</b> du casque et d'installer une appli hors du store Meta. Tu le fais par ton propre choix et sous ta responsabilité.</li>
+        <li>Respecte les consignes de santé et de sécurité de ton casque : joue dans un espace dégagé et fais des pauses régulières.</li>
+        <li>Dans les limites autorisées par la loi, l'éditeur ne pourra être tenu responsable des dommages directs ou indirects liés à l'utilisation de LunaQuest ou de ce site (perte de données, panne, problème matériel, etc.).</li>
+        <li>Les liens vers d'autres sites sont donnés pour information. L'éditeur n'est pas responsable de leur contenu.</li>
+      </ul>
+    </section>
+
+    <section id="propriete">
+      <h2><small>07</small>Propriété du site</h2>
+      <p>Le nom et le logo LunaQuest, les textes, les visuels, les captures d'écran et les photos du créateur présents sur ce site appartiennent à LD. Ils ne peuvent pas être réutilisés sans son accord, sauf pour parler de LunaQuest en citant la source. Les parties issues de logiciels libres restent soumises à leurs licences (voir la rubrique « Licences »).</p>
+    </section>
+
+    <section id="confidentialite">
+      <h2><small>08</small>Confidentialité et données personnelles</h2>
+      <h3>Sur ce site</h3>
+      <ul>
+        <li>Ce site ne te demande <b>aucune information</b>, ne crée <b>aucun compte</b> et n'utilise <b>ni cookie, ni outil de statistiques, ni publicité</b>.</li>
+        <li>Le téléchargement de LunaQuest ne demande ni compte ni adresse e-mail.</li>
+        <li>Comme tout hébergeur, <b>Netlify</b> enregistre des données techniques de connexion (dont l'adresse IP) pour faire fonctionner le site et le protéger. Voir la <a href="https://www.netlify.com/privacy/" rel="noopener">politique de confidentialité de Netlify</a>.</li>
+        <li>Les polices d'écriture du site sont chargées depuis <b>Google Fonts</b> : ton navigateur contacte donc les serveurs de Google, qui reçoivent ton adresse IP. Voir la <a href="https://policies.google.com/privacy" rel="noopener">politique de confidentialité de Google</a>.</li>
+      </ul>
+      <h3>Dans l'appli LunaQuest</h3>
+      <ul>
+        <li>LunaQuest <b>n'envoie aucune donnée</b> à l'éditeur ni à qui que ce soit. Il ne contient aucun outil de suivi.</li>
+        <li>Il communique uniquement avec ton casque par le câble USB, et avec ALVR et SteamVR sur ton PC.</li>
+        <li>Seule connexion à internet : le téléchargement d'ADB depuis les serveurs de Google, si tu le demandes.</li>
+        <li>Tes réglages restent sur ton PC, dans le dossier d'installation de LunaQuest.</li>
+      </ul>
+      <h3>Tes droits</h3>
+      <p>Conformément au RGPD et à la loi Informatique et Libertés, tu disposes d'un droit d'accès, de rectification, d'effacement et d'opposition sur les données qui te concernent. Pour les données techniques enregistrées par Netlify ou Google, adresse-toi à eux directement. Tu peux aussi déposer une réclamation auprès de la <a href="https://www.cnil.fr" rel="noopener">CNIL</a>.</p>
+      <p class="note">Si un espace commentaires ou des comptes sont ajoutés au site, cette page sera mise à jour avant leur ouverture pour expliquer quelles données sont collectées et pourquoi.</p>
+    </section>
+
+    <section id="droit">
+      <h2><small>09</small>Droit applicable</h2>
+      <p>Les présentes mentions sont soumises au droit français. En cas de litige, une solution amiable sera recherchée en priorité.</p>
+    </section>
+  </main>
+
+  <footer>
+    <span class="sig">Imaginé par LD</span>
+    <span>Réalisé avec l'IA Claude · Basé sur ALVR · Non affilié à Meta ni à Valve</span>
+  </footer>
+</div>
+</body>
+</html>

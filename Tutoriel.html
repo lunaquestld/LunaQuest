@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LunaQuest · Tutoriel</title>
+<style>
+  :root {
+    --night: #080d24; --night2: #18285e; --card: rgba(13, 22, 58, .62); --border: rgba(150, 182, 255, .24);
+    --text: #f2f5ff; --soft: #a2b8ec; --dim: #7084bc; --accent: #4c8dff; --accent2: #84baff; --warn: #ffc46c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: var(--text); font: 16px/1.6 "Segoe UI", system-ui, sans-serif;
+    background: radial-gradient(1200px 700px at 85% -10%, rgba(120,150,255,.22), transparent 60%),
+                radial-gradient(900px 600px at -10% 110%, rgba(70,110,230,.25), transparent 60%),
+                linear-gradient(160deg, var(--night), var(--night2));
+    background-attachment: fixed; min-height: 100vh;
+  }
+  .stars { position: fixed; inset: 0; pointer-events: none; background-image:
+    radial-gradient(1.5px 1.5px at 12% 18%, #fff, transparent), radial-gradient(1px 1px at 28% 72%, #cfe0ff, transparent),
+    radial-gradient(1.2px 1.2px at 46% 34%, #fff, transparent), radial-gradient(1px 1px at 63% 82%, #fff, transparent),
+    radial-gradient(1.6px 1.6px at 78% 46%, #dce8ff, transparent), radial-gradient(1px 1px at 91% 12%, #fff, transparent),
+    radial-gradient(1px 1px at 8% 88%, #fff, transparent), radial-gradient(1.3px 1.3px at 55% 8%, #fff, transparent),
+    radial-gradient(1px 1px at 36% 52%, #cfe0ff, transparent), radial-gradient(1.4px 1.4px at 84% 92%, #fff, transparent);
+    opacity: .8; }
+  main { position: relative; max-width: 860px; margin: 0 auto; padding: 48px 16px 64px; }
+  header { display: flex; align-items: center; gap: 24px; margin-bottom: 32px; }
+  .moon { flex: none; width: 96px; height: 96px; border-radius: 50%; position: relative;
+    background: radial-gradient(circle at 32% 30%, #fcfdff, #b0c2e8 70%);
+    box-shadow: 0 0 60px rgba(150,186,255,.45), inset -22px -10px 30px rgba(10,18,52,.55); }
+  .moon::before, .moon::after { content: ""; position: absolute; border-radius: 50%; background: rgba(78,98,150,.18); }
+  .moon::before { width: 26px; height: 26px; left: 18px; top: 46px; }
+  .moon::after { width: 16px; height: 16px; left: 56px; top: 20px; }
+  h1 { margin: 0; font-size: 44px; font-weight: 600; letter-spacing: .5px; }
+  .sub { margin: 4px 0 0; color: var(--soft); }
+  h2 { margin: 40px 0 16px; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; color: var(--dim); font-weight: 600; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 20px 24px; backdrop-filter: blur(4px); }
+  .card + .card { margin-top: 14px; }
+  .step { display: grid; grid-template-columns: 44px 1fr; gap: 16px; align-items: start; }
+  .num { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-weight: 600;
+    background: linear-gradient(180deg, var(--accent2), #2c5cd4); box-shadow: 0 0 22px rgba(110,160,255,.45); }
+  .step h3 { margin: 6px 0 6px; font-size: 18px; font-weight: 600; }
+  .step p, .step ul { margin: 0 0 8px; color: var(--soft); }
+  .step ul { padding-left: 20px; }
+  b, strong { color: var(--text); font-weight: 600; }
+  code { font-family: Consolas, monospace; font-size: 14px; background: rgba(120,165,255,.14); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1px 6px; color: var(--text); }
+  a { color: var(--accent2); }
+  .note { border-left: 3px solid var(--warn); padding: 10px 14px; margin-top: 10px; background: rgba(255,196,108,.08); border-radius: 0 10px 10px 0; color: var(--soft); }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 10px 8px; border-top: 1px solid var(--border); vertical-align: top; color: var(--soft); }
+  td:first-child { color: var(--text); font-weight: 600; width: 36%; }
+  tr:first-child td { border-top: 0; }
+  footer { margin-top: 40px; color: var(--dim); font-size: 14px; text-align: center; }
+  @media (max-width: 560px) { h1 { font-size: 34px; } .moon { width: 70px; height: 70px; } td:first-child { width: auto; } }
+</style>
+</head>
+<body>
+<div class="stars"></div>
+<main>
+  <header>
+    <div class="moon" aria-hidden="true"></div>
+    <div>
+      <h1>LunaQuest</h1>
+      <p class="sub">Jouer en PC VR avec ton Meta Quest par câble USB, sans l'appli Meta. Propulsé par ALVR.</p>
+    </div>
+  </header>
+
+  <h2>Ce qu'il te faut</h2>
+  <div class="card">
+    <ul style="margin:0;padding-left:20px;color:var(--soft)">
+      <li>Un PC Windows 10 ou 11 avec <b>Steam</b> et <b>SteamVR</b> installés.</li>
+      <li>Un casque <b>Meta Quest 2, 3, 3S ou Pro</b>.</li>
+      <li>Un <b>câble USB-C</b> (USB 3 conseillé) entre le PC et le casque.</li>
+    </ul>
+  </div>
+
+  <h2>Installation (une seule fois)</h2>
+
+  <div class="card step"><div class="num">1</div><div>
+    <h3>Active le mode développeur du casque</h3>
+    <p>Sur ton téléphone, ouvre l'appli <b>Meta Horizon</b> › <b>Appareils</b> › ton casque › <b>Paramètres du casque</b> › <b>Mode développeur</b>, et active-le. Si on te demande de créer une « organisation de développeur », c'est gratuit : mets n'importe quel nom. Redémarre ensuite le casque.</p>
+  </div></div>
+
+  <div class="card step"><div class="num">2</div><div>
+    <h3>Télécharge ALVR</h3>
+    <p>Va sur <a href="https://github.com/alvr-org/ALVR/releases">github.com/alvr-org/ALVR/releases</a> et prends, dans la <b>même version</b> :</p>
+    <ul>
+      <li><code>alvr_streamer_windows.zip</code> : la partie PC ;</li>
+      <li><code>alvr_client_android.apk</code> : l'appli pour le casque.</li>
+    </ul>
+    <p>Extrais le zip dans <b>Documents</b> (par exemple <code>Documents\alvr_streamer_windows</code>), puis lance <b>ALVR Dashboard.exe</b> une fois. Suis l'assistant, puis ferme ALVR. Tu n'auras plus besoin de l'ouvrir.</p>
+  </div></div>
+
+  <div class="card step"><div class="num">3</div><div>
+    <h3>Lance LunaQuest</h3>
+    <p>Extrais <code>LunaQuest.zip</code> dans un dossier à toi (par exemple <code>Documents\LunaQuest</code>, pas dans <i>Program Files</i>) et lance <b>LunaQuest.exe</b>.</p>
+    <div class="note">Windows peut afficher « Windows a protégé votre ordinateur », car l'appli n'est pas signée. Clique sur <b>Informations complémentaires</b> › <b>Exécuter quand même</b>.</div>
+  </div></div>
+
+  <div class="card step"><div class="num">4</div><div>
+    <h3>Prépare le casque</h3>
+    <ul>
+      <li>Onglet <b>Connexion</b> : clique sur <b>Installer ADB</b>, l'outil officiel de Google pour parler au casque.</li>
+      <li>Branche le casque et <b>mets-le sur ta tête</b> : accepte « Autoriser le débogage USB » en cochant <b>Toujours autoriser</b>.</li>
+      <li>Clique sur <b>Installer l'APK ALVR</b> et choisis <code>alvr_client_android.apk</code>.</li>
+    </ul>
+  </div></div>
+
+  <div class="card step"><div class="num">5</div><div>
+    <h3>Enregistre ton casque pour le câble</h3>
+    <p>Dans le casque, ouvre <b>Bibliothèque</b> › filtre <b>Sources inconnues</b> › <b>ALVR</b>. Sur le panneau d'attente, repère la ligne <b>hostname</b> (du type <code>1234.client.alvr</code>).</p>
+    <p>Dans LunaQuest, onglet <b>Réglages ALVR</b> › <b>Casque filaire</b> : recopie ce nom exactement, puis clique sur <b>Enregistrer</b>.</p>
+  </div></div>
+
+  <h2>À chaque session</h2>
+  <div class="card step"><div class="num">6</div><div>
+    <h3>Branche et joue</h3>
+    <p>Lance LunaQuest, branche le casque et clique sur <b>Connecter</b> (ou laisse la connexion automatique s'en charger). LunaQuest ouvre le tunnel USB, garde le casque éveillé, lance SteamVR et l'appli ALVR dans le casque. Quand tu vois SteamVR dans le casque, lance ton jeu.</p>
+  </div></div>
+
+  <h2>Réglages conseillés</h2>
+  <div class="card">
+    <table>
+      <tr><td>Images par seconde</td><td><b>90 Hz</b> pour commencer. 72 Hz si ton PC peine, 120 Hz si ton PC est très puissant.</td></tr>
+      <tr><td>Débit vidéo</td><td><b>60 à 100 Mbit/s</b> en USB. Plus haut, l'image peut saccader.</td></tr>
+      <tr><td>Codec</td><td><b>HEVC</b> pour la plupart des cartes. AV1 seulement sur RTX 40, RX 7000 ou plus récent.</td></tr>
+      <tr><td>Micro</td><td>Nécessite <a href="https://vb-audio.com/Cable/">VB-CABLE</a> (gratuit). Sans lui, laisse le micro coupé, sinon ALVR refuse de se connecter.</td></tr>
+    </table>
+    <p style="color:var(--dim);margin:12px 0 0">Les réglages s'appliquent au prochain lancement de SteamVR. Si SteamVR tourne déjà, LunaQuest propose de le redémarrer.</p>
+  </div>
+
+  <h2>Dépannage</h2>
+  <div class="card">
+    <table>
+      <tr><td>Le jeu se fige au lancement</td><td>Le casque s'est mis en veille : laisse <b>Garder le casque éveillé</b> activé. Avec Beat Saber moddé, le mod <b>BeatLeader</b> peut aussi figer le jeu sous SteamVR.</td></tr>
+      <tr><td>L'image saccade dans le casque</td><td>Baisse le <b>débit vidéo</b> (par exemple 60 Mbit/s) et utilise un câble USB 3.</td></tr>
+      <tr><td>Pas de son</td><td>Active <b>Son du jeu dans le casque</b> dans Réglages ALVR.</td></tr>
+      <tr><td>Une manette n'est pas détectée</td><td>Active <b>Mains squelettiques</b> dans Réglages ALVR (sans lui, la manette gauche peut ne jamais apparaître dans SteamVR), puis vérifie les piles.</td></tr>
+      <tr><td>« Casque : autorise le débogage USB »</td><td>Mets le casque et accepte la fenêtre de débogage USB.</td></tr>
+      <tr><td>« ALVR (PC) : introuvable »</td><td>Clique sur <b>Dossier ALVR…</b> et choisis <code>ALVR Dashboard.exe</code>.</td></tr>
+    </table>
+  </div>
+
+  <footer>LunaQuest est un lanceur pour <a href="https://github.com/alvr-org/ALVR">ALVR</a>, un logiciel libre. Il n'est affilié ni à Meta ni à Valve.</footer>
+</main>
+</body>
+</html>

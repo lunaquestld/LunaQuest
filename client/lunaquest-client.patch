@@ -1,0 +1,747 @@
+diff --git a/Cargo.toml b/Cargo.toml
+index d471a4a..52c1d4d 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -26,8 +26,9 @@ alvr_sockets = { path = "alvr/sockets" }
+ alvr_system_info = { path = "alvr/system_info" }
+ 
+ [profile.release]
+-debug = "limited"
+-strip = false
++# LunaQuest : version publique sans infos de débogage (elles contiennent les chemins du PC qui compile)
++debug = false
++strip = true
+ 
+ [profile.distribution]
+ inherits = "release"
+diff --git a/alvr/client_core/src/storage.rs b/alvr/client_core/src/storage.rs
+index 65455b3..def4d47 100644
+--- a/alvr/client_core/src/storage.rs
++++ b/alvr/client_core/src/storage.rs
+@@ -1,6 +1,5 @@
+ use alvr_common::{error, info};
+ use app_dirs2::{AppDataType, AppInfo};
+-use rand::Rng;
+ use serde::{Deserialize, Serialize};
+ use std::{fs, path::PathBuf};
+ 
+@@ -24,16 +23,9 @@ pub struct Config {
+ 
+ impl Default for Config {
+     fn default() -> Self {
+-        let mut rng = rand::rng();
+-
+         Self {
+-            hostname: format!(
+-                "{}{}{}{}.client",
+-                rng.random_range(0..10),
+-                rng.random_range(0..10),
+-                rng.random_range(0..10),
+-                rng.random_range(0..10),
+-            ),
++            // LunaQuest : nom fixe, pour que LunaQuest enregistre le casque tout seul (connexion par câble)
++            hostname: "lunaquest.client".to_owned(),
+             protocol_id: alvr_common::protocol_id(),
+         }
+     }
+diff --git a/alvr/client_openxr/Cargo.toml b/alvr/client_openxr/Cargo.toml
+index 152e38d..12ac018 100644
+--- a/alvr/client_openxr/Cargo.toml
++++ b/alvr/client_openxr/Cargo.toml
+@@ -26,7 +26,7 @@ libc = "0.2"
+ ndk-context = "0.1"
+ 
+ [package.metadata.android]
+-package = "alvr.client.stable"             # Changed for Meta Store
++package = "alvr.client.lunaquest"          # LunaQuest : s'installe à côté de l'ALVR officiel
+ install_location = "auto"
+ build_targets = ["aarch64-linux-android"]
+ runtime_libs = "../../deps/android_openxr"
+@@ -82,7 +82,7 @@ authorities = "org.khronos.openxr.runtime_broker;org.khronos.openxr.system_runti
+ debuggable = false
+ theme = "@android:style/Theme.Black.NoTitleBar.Fullscreen"
+ icon = "@mipmap/ic_launcher"
+-label = "ALVR"
++label = "LunaQuest"
+ 
+ [package.metadata.android.application.activity]
+ config_changes = "density|keyboard|keyboardHidden|navigation|orientation|screenLayout|screenSize|uiMode"
+diff --git a/alvr/client_openxr/resources/drawable/ic_launcher_foreground.xml b/alvr/client_openxr/resources/drawable/ic_launcher_foreground.xml
+index 1af9baa..3260bbe 100644
+--- a/alvr/client_openxr/resources/drawable/ic_launcher_foreground.xml
++++ b/alvr/client_openxr/resources/drawable/ic_launcher_foreground.xml
+@@ -2,63 +2,24 @@
+     xmlns:aapt="http://schemas.android.com/aapt"
+     android:width="108dp"
+     android:height="108dp"
+-    android:viewportWidth="247.19"
+-    android:viewportHeight="247.2">
+-  <group android:scaleX="0.48997378"
+-      android:scaleY="0.49"
+-      android:translateX="63.03669"
+-      android:translateY="63.036">
+-    <group>
+-      <clip-path
+-          android:pathData="m19.24,27.3 l48.9,43.32 -19.6,44.33 18.17,46.96 -45.21,41.35 2.17,43.95 223.52,-0.01 0.01,-247.19 -215.11,0.14z"/>
+-      <path
+-          android:pathData="M123.59,123.6m-115.38,0a115.38,115.38 0,1 1,230.77 0a115.38,115.38 0,1 1,-230.77 0"
+-          android:strokeWidth="16.4055"
+-          android:fillColor="#00000000">
+-        <aapt:attr name="android:strokeColor">
+-          <gradient 
+-              android:startX="-0"
+-              android:startY="123.6"
+-              android:endX="247.17"
+-              android:endY="123.6"
+-              android:type="linear">
+-            <item android:offset="0" android:color="#FF3ED2E3"/>
+-            <item android:offset="1" android:color="#FF1D89CF"/>
+-          </gradient>
+-        </aapt:attr>
+-      </path>
+-      <path
+-          android:pathData="M123.59,123.6m-85.3,0a85.3,85.3 0,1 1,170.6 0a85.3,85.3 0,1 1,-170.6 0"
+-          android:strokeWidth="15.875"
+-          android:fillColor="#00000000">
+-        <aapt:attr name="android:strokeColor">
+-          <gradient 
+-              android:startX="32.22"
+-              android:startY="123.6"
+-              android:endX="214.95"
+-              android:endY="123.6"
+-              android:type="linear">
+-            <item android:offset="0" android:color="#FF3ED2E3"/>
+-            <item android:offset="1" android:color="#FF2192D1"/>
+-          </gradient>
+-        </aapt:attr>
+-      </path>
+-      <path
+-          android:pathData="M123.59,123.6m-56.33,0a56.33,56.33 0,1 1,112.67 0a56.33,56.33 0,1 1,-112.67 0"
+-          android:strokeWidth="15.5123"
+-          android:fillColor="#00000000">
+-        <aapt:attr name="android:strokeColor">
+-          <gradient 
+-              android:startX="63.25"
+-              android:startY="123.6"
+-              android:endX="183.92"
+-              android:endY="123.6"
+-              android:type="linear">
+-            <item android:offset="0" android:color="#FF3ED2E3"/>
+-            <item android:offset="1" android:color="#FF279ED4"/>
+-          </gradient>
+-        </aapt:attr>
+-      </path>
+-    </group>
+-  </group>
++    android:viewportWidth="108"
++    android:viewportHeight="108">
++  <!-- LunaQuest : une lune claire sur fond nuit, avec un croissant d'ombre -->
++  <path
++      android:pathData="M54,54m-25,0a25,25 0,1 1,50 0a25,25 0,1 1,-50 0">
++    <aapt:attr name="android:fillColor">
++      <gradient
++          android:centerX="46"
++          android:centerY="46"
++          android:gradientRadius="34"
++          android:type="radial">
++        <item android:offset="0" android:color="#FFFCFDFF"/>
++        <item android:offset="1" android:color="#FF9FB3E0"/>
++      </gradient>
++    </aapt:attr>
++  </path>
++  <path android:fillColor="#2E4E62A0" android:pathData="M45,57m-6,0a6,6 0,1 1,12 0a6,6 0,1 1,-12 0"/>
++  <path android:fillColor="#2E4E62A0" android:pathData="M61,44m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0"/>
++  <path android:fillColor="#2E4E62A0" android:pathData="M57,66m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0"/>
++  <path android:fillColor="#99080D24" android:pathData="M79,54A25,25 0,0 1,54 79A27,27 0,0 0,66 54A27,27 0,0 0,54 29A25,25 0,0 1,79 54Z"/>
+ </vector>
+diff --git a/alvr/client_openxr/resources/values/ic_launcher_background.xml b/alvr/client_openxr/resources/values/ic_launcher_background.xml
+index c5d5899..d6e3ec7 100644
+--- a/alvr/client_openxr/resources/values/ic_launcher_background.xml
++++ b/alvr/client_openxr/resources/values/ic_launcher_background.xml
+@@ -1,4 +1,4 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <resources>
+-    <color name="ic_launcher_background">#FFFFFF</color>
++    <color name="ic_launcher_background">#080D24</color>
+ </resources>
+\ No newline at end of file
+diff --git a/alvr/client_openxr/src/lib.rs b/alvr/client_openxr/src/lib.rs
+index 3e35add..ab1fc92 100644
+--- a/alvr/client_openxr/src/lib.rs
++++ b/alvr/client_openxr/src/lib.rs
+@@ -255,9 +255,10 @@ pub fn entry_point() {
+             vec![90.0]
+         };
+ 
++        // LunaQuest : espace couleur natif des casques Meta (celui des jeux Quest), plus vif que Rec.709
+         if exts.fb_color_space {
+             xr_session
+-                .set_color_space(xr::ColorSpaceFB::REC709)
++                .set_color_space(xr::ColorSpaceFB::RIFT_CV1)
+                 .unwrap();
+         }
+ 
+diff --git a/alvr/client_openxr/src/lobby.rs b/alvr/client_openxr/src/lobby.rs
+index a20149e..4446b01 100644
+--- a/alvr/client_openxr/src/lobby.rs
++++ b/alvr/client_openxr/src/lobby.rs
+@@ -206,7 +206,7 @@ impl Lobby {
+             additional_motions,
+             body_skeleton,
+             body_tracking_type,
+-            false,
++            true, // LunaQuest : toujours dessiner le ciel étoilé et le sol lunaire
+             cfg!(debug_assertions),
+         );
+ 
+diff --git a/alvr/graphics/resources/lobby_quad.wgsl b/alvr/graphics/resources/lobby_quad.wgsl
+index 2cb8623..7374195 100644
+--- a/alvr/graphics/resources/lobby_quad.wgsl
++++ b/alvr/graphics/resources/lobby_quad.wgsl
+@@ -13,64 +13,132 @@ struct VertexOutput {
+     @location(0) uv: vec2f,
+ }
+ 
++// LunaQuest : couleurs de la nuit lunaire
++const SKY_HORIZON = vec3f(0.050, 0.085, 0.210);
++const SKY_ZENITH = vec3f(0.008, 0.012, 0.040);
++const MOON_GLOW = vec3f(0.350, 0.500, 1.000);
++
+ @vertex
+ fn vertex_main(@builtin(vertex_index) vertex_index: u32) -> VertexOutput {
+     var result: VertexOutput;
+ 
+     result.uv = vec2f(f32(vertex_index & 1), f32(vertex_index >> 1));
+-    result.position = pc.transform * vec4f(result.uv.x - 0.5, 0.5 - result.uv.y, 0.0, 1.0);
++    if pc.object_type == 2 {
++        // Ciel : un quad plein écran, la direction de vue est reconstruite dans le fragment shader
++        result.position = vec4f(result.uv.x * 2.0 - 1.0, 1.0 - result.uv.y * 2.0, 0.5, 1.0);
++    } else {
++        result.position = pc.transform * vec4f(result.uv.x - 0.5, 0.5 - result.uv.y, 0.0, 1.0);
++    }
+ 
+     return result;
+ }
+ 
++fn hash3(p: vec3f) -> f32 {
++    return fract(sin(dot(p, vec3f(127.1, 311.7, 74.7))) * 43758.5453);
++}
++
++fn hash2(p: vec2f) -> f32 {
++    return fract(sin(dot(p, vec2f(127.1, 311.7))) * 43758.5453);
++}
++
++// Étoiles fixes dans le ciel : une étoile dans une petite partie des cellules d'une grille 3D
++fn stars(dir: vec3f) -> vec3f {
++    let p = dir * 140.0;
++    let cell = floor(p);
++    if hash3(cell) < 0.982 {
++        return vec3f(0.0);
++    }
++    let star_pos = cell + vec3f(hash3(cell + 1.3), hash3(cell + 2.7), hash3(cell + 4.1));
++    let size = 0.12 + 0.22 * hash3(cell + 7.7);
++    let intensity = smoothstep(size, 0.0, length(p - star_pos)) * (0.45 + 0.55 * hash3(cell + 9.1));
++    let tint = mix(vec3f(1.0, 1.0, 1.0), vec3f(0.62, 0.75, 1.0), hash3(cell + 5.5));
++    return tint * intensity;
++}
++
++fn sky(dir: vec3f) -> vec3f {
++    let height = clamp(dir.y, 0.0, 1.0);
++    var color = mix(SKY_HORIZON, SKY_ZENITH, sqrt(height));
++    color += stars(dir) * smoothstep(-0.02, 0.10, dir.y);
++
++    // Lune, éclairée par la gauche, avec quelques cratères
++    let moon_dir = normalize(vec3f(-0.50, 0.45, -0.75));
++    let moon_radius = 0.06;
++    let angle = acos(clamp(dot(dir, moon_dir), -1.0, 1.0));
++    color += MOON_GLOW * 0.22 * exp(-angle * 11.0);
++    if angle < moon_radius * 1.05 {
++        let right = normalize(cross(moon_dir, vec3f(0.0, 1.0, 0.0)));
++        let up = cross(right, moon_dir);
++        let local = vec2f(dot(dir - moon_dir, right), dot(dir - moon_dir, up)) / moon_radius;
++        let z = sqrt(max(0.0, 1.0 - dot(local, local)));
++        let light = normalize(vec3f(-0.65, 0.35, 0.68));
++        let diffuse = clamp(dot(vec3f(local, z), light), 0.0, 1.0);
++        var moon = mix(vec3f(0.70, 0.76, 0.88), vec3f(1.0, 1.0, 1.0), z) * (0.18 + 0.90 * diffuse);
++        var craters = array<vec3f, 5>(
++            vec3f(-0.35, 0.10, 0.26),
++            vec3f(0.28, 0.40, 0.17),
++            vec3f(0.10, -0.45, 0.14),
++            vec3f(-0.05, -0.12, 0.09),
++            vec3f(0.48, -0.05, 0.11),
++        );
++        for (var i = 0; i < 5; i++) {
++            if distance(local, craters[i].xy) < craters[i].z {
++                moon *= 0.84;
++            }
++        }
++        color = mix(color, moon, smoothstep(1.0, 0.95, length(local)));
++    }
++    return color;
++}
++
+ @fragment
+ fn fragment_main(@location(0) uv: vec2f) -> @location(0) vec4f {
+-    if pc.object_type == 0 { // Ground
++    if pc.object_type == 0 { // Sol lunaire
+         let world_xz = (uv - 0.5) * pc.floor_side;
+ 
+-        let ground_center = vec3f(0.0, 0.0, 0.0);
+-        let ground_horizon = vec3f(0.0, 0.0, 0.015);
++        // Poussière lunaire : légères variations de teinte sur le sol bleu nuit
++        let dust = hash2(floor(world_xz * 1.5));
++        let ground_center = vec3f(0.018, 0.028, 0.072) * (0.85 + 0.30 * dust);
+ 
+-        let grid_close = vec3f(0.114, 0.545, 0.804);
+-        let grid_far = vec3f(0.259, 0.863, 0.886);
++        let grid_close = vec3f(0.30, 0.48, 0.95);
++        let grid_far = vec3f(0.55, 0.70, 1.00);
+ 
+-        let line_fade_start = 10.0;
+-        let line_fade_end = 50.0;
++        let line_fade_start = 8.0;
++        let line_fade_end = 30.0;
+         let line_fade_dist = line_fade_end - line_fade_start;
+ 
+-        let line_bloom = 10.0;
++        let line_bloom = 4.0;
+ 
+         let distance = length(world_xz);
+ 
+-        // Pick a coordinate to visualize in a grid
++        // Grille discrète pour garder un repère au sol
+         let cell_size = 2.0;
+         let coord = world_xz / cell_size;
+ 
+-        // Compute anti-aliased world-space grid lines
+-        let screen_space_line_width = 1.0 * fwidth(coord); // todo: make resolution agnostic?
++        let screen_space_line_width = 1.0 * fwidth(coord);
+         let grid = abs(fract(coord - 0.5) - 0.5) / screen_space_line_width;
+ 
+-        // Create mask for grid lines and fade over distance
+         var line = clamp(1.0 - min(grid.x, grid.y), 0.0, 1.0);
+-        line *= clamp((line_fade_start - distance) / line_fade_dist, 0.0, 1.0);
+-    
+-        // Fill in normal ground colour
++        line *= clamp((line_fade_start - distance) / line_fade_dist + 1.0, 0.0, 1.0) * 0.6;
++
+         var out_color = ground_center * (1.0 - line);
+ 
+-        // Add cheap and simple "bloom" to the grid lines
+         line *= 1.0 + line_bloom;
+ 
+-        // Fill in grid line colour
+-        out_color += line * mix(grid_far, grid_close, clamp((line_fade_end - distance) / line_fade_end, 0.0, 1.0));
++        out_color += line * mix(grid_far, grid_close, clamp((line_fade_end - distance) / line_fade_end, 0.0, 1.0)) * 0.35;
+ 
+-        // Fade to the horizon colour over distance
++        // Fondu vers l'horizon, de la même couleur que le bas du ciel
+         if distance > 10.0 {
+             let coef = 1.0 - 10.0 / distance;
+-            out_color = (1.0 - coef) * out_color + coef * ground_horizon;
++            out_color = (1.0 - coef) * out_color + coef * SKY_HORIZON;
+         }
+ 
+         return vec4f(out_color, 1.0);
+-    } else { // HUD
++    } else if pc.object_type == 2 { // Ciel étoilé
++        let ndc = vec2f(uv.x * 2.0 - 1.0, 1.0 - uv.y * 2.0);
++        let p = pc.transform * vec4f(ndc, 0.5, 1.0);
++        let dir = normalize(p.xyz / p.w);
++        return vec4f(sky(dir), 1.0);
++    } else { // Panneau d'informations
+         return textureSample(hud_texture, hud_sampler, uv);
+     }
+ }
+diff --git a/alvr/graphics/src/lobby.rs b/alvr/graphics/src/lobby.rs
+index e311d00..66d594c 100644
+--- a/alvr/graphics/src/lobby.rs
++++ b/alvr/graphics/src/lobby.rs
+@@ -1,11 +1,12 @@
+ use super::{GraphicsContext, MAX_PUSH_CONSTANTS_SIZE, SDR_FORMAT};
+ use alvr_common::{
+-    glam::{IVec2, Mat4, Quat, UVec2, Vec3},
++    glam::{Mat4, Quat, UVec2, Vec3},
+     DeviceMotion, Fov, Pose,
+ };
+ use glyph_brush_layout::{
+     ab_glyph::{Font, FontRef, ScaleFont},
+-    FontId, GlyphPositioner, HorizontalAlign, Layout, SectionGeometry, SectionText, VerticalAlign,
++    FontId, GlyphPositioner, HorizontalAlign, Layout, SectionGeometry, SectionGlyph, SectionText,
++    VerticalAlign,
+ };
+ use std::{f32::consts::FRAC_PI_2, mem, rc::Rc};
+ use wgpu::{
+@@ -45,17 +46,23 @@ const HUD_SIDE: f32 = 3.5;
+ const HUD_TEXTURE_SIDE: usize = 1024;
+ const FONT_SIZE: f32 = 50.0;
+ 
+-const FAST_BORDER_OFFSETS: [IVec2; 8] = [
+-    IVec2::new(0, -3),
+-    IVec2::new(2, -2),
+-    IVec2::new(3, 0),
+-    IVec2::new(2, 2),
+-    IVec2::new(0, 3),
+-    IVec2::new(-2, 2),
+-    IVec2::new(-3, 0),
+-    IVec2::new(-2, -2),
+-];
+-const MAX_BORDER_OFFSET: i32 = 3;
++// LunaQuest : panneau bleu nuit arrondi, titre et petite lune
++const PANEL_FILL: [f32; 4] = [13.0, 22.0, 58.0, 225.0];
++const PANEL_BORDER: [f32; 4] = [132.0, 186.0, 255.0, 240.0];
++const PANEL_BORDER_WIDTH: f32 = 4.0;
++const PANEL_PADDING: f32 = 48.0;
++const PANEL_RADIUS: f32 = 40.0;
++const TEXT_COLOR: [f32; 3] = [242.0, 245.0, 255.0];
++const TITLE_COLOR: [f32; 3] = [132.0, 186.0, 255.0];
++const TITLE_TEXT: &str = "LunaQuest";
++const TITLE_SIZE: f32 = 72.0;
++const TITLE_GAP: f32 = 34.0;
++const FOOTER_TEXT: &str = "Pour te déconnecter, quitte l'appli LunaQuest";
++const FOOTER_SIZE: f32 = 34.0;
++const FOOTER_GAP: f32 = 30.0;
++const FOOTER_COLOR: [f32; 3] = [140.0, 165.0, 220.0];
++const MOON_ICON_RADIUS: f32 = 26.0;
++const ACCENT_LINE_COLOR: [u8; 4] = [132, 186, 255, 255];
+ 
+ const HAND_SKELETON_BONES: [(usize, usize); 19] = [
+     // Thumb
+@@ -216,6 +223,159 @@ fn create_pipeline(
+     })
+ }
+ 
++// ---- LunaQuest : dessin du panneau d'informations (texture RGBA non prémultipliée) ----
++
++fn lerp(a: f32, b: f32, t: f32) -> f32 {
++    a + (b - a) * t
++}
++
++fn layout_text(
++    font: &FontRef<'_>,
++    text: &str,
++    scale: f32,
++    center: (f32, f32),
++) -> Vec<SectionGlyph> {
++    Layout::default()
++        .h_align(HorizontalAlign::Center)
++        .v_align(VerticalAlign::Center)
++        .calculate_glyphs(
++            &[font],
++            &SectionGeometry {
++                screen_position: center,
++                ..Default::default()
++            },
++            &[SectionText {
++                text,
++                scale: scale.into(),
++                font_id: FontId(0),
++            }],
++        )
++}
++
++fn glyph_bounds(
++    font: &FontRef<'_>,
++    scale: f32,
++    glyphs: &[SectionGlyph],
++) -> Option<((f32, f32), (f32, f32))> {
++    let scaled_font = font.as_scaled(scale);
++    let mut result: Option<((f32, f32), (f32, f32))> = None;
++    for section_glyph in glyphs {
++        if let Some(outlined) = scaled_font.outline_glyph(section_glyph.glyph.clone()) {
++            let b = outlined.px_bounds();
++            result = Some(match result {
++                None => ((b.min.x, b.min.y), (b.max.x, b.max.y)),
++                Some((min, max)) => (
++                    (min.0.min(b.min.x), min.1.min(b.min.y)),
++                    (max.0.max(b.max.x), max.1.max(b.max.y)),
++                ),
++            });
++        }
++    }
++    result
++}
++
++// Compose une couleur par-dessus le pixel existant (opérateur « over »)
++fn blend_pixel(buffer: &mut [u8], x: i32, y: i32, rgb: [f32; 3], alpha: f32) {
++    let side = HUD_TEXTURE_SIDE as i32;
++    if alpha <= 0.0 || x < 0 || y < 0 || x >= side || y >= side {
++        return;
++    }
++    let i = (y as usize * HUD_TEXTURE_SIDE + x as usize) * 4;
++    let a = alpha.min(1.0);
++    let dst_a = buffer[i + 3] as f32 / 255.0;
++    let out_a = a + dst_a * (1.0 - a);
++    if out_a <= 0.0 {
++        return;
++    }
++    for c in 0..3 {
++        let dst = buffer[i + c] as f32;
++        buffer[i + c] = ((rgb[c] * a + dst * dst_a * (1.0 - a)) / out_a)
++            .round()
++            .clamp(0.0, 255.0) as u8;
++    }
++    buffer[i + 3] = (out_a * 255.0).round() as u8;
++}
++
++// Rectangle arrondi bleu nuit avec une bordure bleu clair, bords anticrénelés
++fn draw_panel(buffer: &mut [u8], (left, top, right, bottom): (f32, f32, f32, f32)) {
++    let (cx, cy) = ((left + right) / 2.0, (top + bottom) / 2.0);
++    let (hw, hh) = ((right - left) / 2.0, (bottom - top) / 2.0);
++    let radius = PANEL_RADIUS.min(hw).min(hh);
++    for y in top.floor() as i32..=bottom.ceil() as i32 {
++        for x in left.floor() as i32..=right.ceil() as i32 {
++            let qx = (x as f32 + 0.5 - cx).abs() - (hw - radius);
++            let qy = (y as f32 + 0.5 - cy).abs() - (hh - radius);
++            let outside = (qx.max(0.0).powi(2) + qy.max(0.0).powi(2)).sqrt();
++            let dist = outside + qx.max(qy).min(0.0) - radius;
++            let coverage = (0.5 - dist).clamp(0.0, 1.0);
++            if coverage <= 0.0 {
++                continue;
++            }
++            let border = (dist + PANEL_BORDER_WIDTH + 0.5).clamp(0.0, 1.0);
++            let rgb = [
++                lerp(PANEL_FILL[0], PANEL_BORDER[0], border),
++                lerp(PANEL_FILL[1], PANEL_BORDER[1], border),
++                lerp(PANEL_FILL[2], PANEL_BORDER[2], border),
++            ];
++            let alpha = lerp(PANEL_FILL[3], PANEL_BORDER[3], border) / 255.0 * coverage;
++            blend_pixel(buffer, x, y, rgb, alpha);
++        }
++    }
++}
++
++// Petite lune éclairée par la gauche, avec trois cratères
++fn draw_moon_icon(buffer: &mut [u8], (cx, cy): (f32, f32), radius: f32) {
++    let craters = [(-0.35, 0.15, 0.27), (0.28, -0.38, 0.17), (0.08, 0.45, 0.14)];
++    for y in (cy - radius - 2.0) as i32..=(cy + radius + 2.0) as i32 {
++        for x in (cx - radius - 2.0) as i32..=(cx + radius + 2.0) as i32 {
++            let (dx, dy) = (x as f32 + 0.5 - cx, y as f32 + 0.5 - cy);
++            let coverage = (radius + 0.5 - (dx * dx + dy * dy).sqrt()).clamp(0.0, 1.0);
++            if coverage <= 0.0 {
++                continue;
++            }
++            let (lx, ly) = (dx / radius, dy / radius);
++            let z = (1.0 - (lx * lx + ly * ly)).max(0.0).sqrt();
++            let light = (-0.65 * lx - 0.35 * ly + 0.68 * z).clamp(0.0, 1.0);
++            let shade = 0.25 + 0.85 * light;
++            let mut rgb = [
++                lerp(176.0, 252.0, z) * shade,
++                lerp(194.0, 253.0, z) * shade,
++                lerp(232.0, 255.0, z) * shade,
++            ];
++            for (ox, oy, cr) in craters {
++                if ((lx - ox) * (lx - ox) + (ly - oy) * (ly - oy)).sqrt() < cr {
++                    rgb = rgb.map(|c| c * 0.82);
++                }
++            }
++            blend_pixel(buffer, x, y, rgb.map(|c| c.min(255.0)), coverage);
++        }
++    }
++}
++
++fn draw_glyphs(
++    buffer: &mut [u8],
++    font: &FontRef<'_>,
++    scale: f32,
++    glyphs: Vec<SectionGlyph>,
++    rgb: [f32; 3],
++) {
++    let scaled_font = font.as_scaled(scale);
++    for section_glyph in glyphs {
++        if let Some(outlined) = scaled_font.outline_glyph(section_glyph.glyph) {
++            let b = outlined.px_bounds();
++            outlined.draw(|x, y, coverage| {
++                blend_pixel(
++                    buffer,
++                    x as i32 + b.min.x as i32,
++                    y as i32 + b.min.y as i32,
++                    rgb,
++                    coverage,
++                );
++            });
++        }
++    }
++}
++
+ pub struct LobbyViewParams {
+     pub swapchain_index: u32,
+     pub pose: Pose,
+@@ -329,59 +489,54 @@ impl LobbyRenderer {
+         let ubuntu_font =
+             FontRef::try_from_slice(include_bytes!("../resources/Ubuntu-Medium.ttf")).unwrap();
+ 
+-        let section_glyphs = Layout::default()
+-            .h_align(HorizontalAlign::Center)
+-            .v_align(VerticalAlign::Center)
+-            .calculate_glyphs(
+-                &[&ubuntu_font],
+-                &SectionGeometry {
+-                    screen_position: (
+-                        HUD_TEXTURE_SIDE as f32 / 2_f32,
+-                        HUD_TEXTURE_SIDE as f32 / 2_f32,
+-                    ),
+-                    ..Default::default()
+-                },
+-                &[SectionText {
+-                    text: message,
+-                    scale: FONT_SIZE.into(),
+-                    font_id: FontId(0),
+-                }],
++        let side = HUD_TEXTURE_SIDE as f32;
++        let mut buffer = vec![0_u8; HUD_TEXTURE_SIDE * HUD_TEXTURE_SIDE * 4];
++
++        if !message.trim().is_empty() {
++            // Mesure du texte pour dimensionner le panneau : titre au-dessus, message en dessous
++            let measure = layout_text(&ubuntu_font, message, FONT_SIZE, (side / 2.0, side / 2.0));
++            let (msg_min, msg_max) = glyph_bounds(&ubuntu_font, FONT_SIZE, &measure)
++                .unwrap_or(((side / 2.0, side / 2.0), (side / 2.0, side / 2.0)));
++            let msg_h = msg_max.1 - msg_min.1;
++            let block_h = TITLE_SIZE + TITLE_GAP + msg_h + FOOTER_GAP + FOOTER_SIZE;
++            let block_top = (side - block_h) / 2.0;
++
++            let title_center = (side / 2.0 + MOON_ICON_RADIUS, block_top + TITLE_SIZE / 2.0);
++            let title = layout_text(&ubuntu_font, TITLE_TEXT, TITLE_SIZE, title_center);
++            let message_glyphs = layout_text(
++                &ubuntu_font,
++                message,
++                FONT_SIZE,
++                (side / 2.0, block_top + TITLE_SIZE + TITLE_GAP + msg_h / 2.0),
++            );
++            let title_bounds = glyph_bounds(&ubuntu_font, TITLE_SIZE, &title)
++                .unwrap_or((title_center, title_center));
++            let moon_center = (title_bounds.0 .0 - MOON_ICON_RADIUS - 18.0, title_center.1);
++
++            // Aide en bas du panneau : quitter l'appli déclenche la déconnexion complète côté PC (LunaQuest)
++            let footer_center = (side / 2.0, block_top + block_h - FOOTER_SIZE / 2.0);
++            let footer = layout_text(&ubuntu_font, FOOTER_TEXT, FOOTER_SIZE, footer_center);
++            let footer_bounds = glyph_bounds(&ubuntu_font, FOOTER_SIZE, &footer)
++                .unwrap_or((footer_center, footer_center));
++
++            let left = f32::min(
++                f32::min(msg_min.0, moon_center.0 - MOON_ICON_RADIUS),
++                footer_bounds.0 .0,
++            ) - PANEL_PADDING;
++            let right = f32::max(f32::max(msg_max.0, title_bounds.1 .0), footer_bounds.1 .0)
++                + PANEL_PADDING;
++            let panel = (
++                f32::max(left, 2.0),
++                f32::max(block_top - PANEL_PADDING, 2.0),
++                f32::min(right, side - 2.0),
++                f32::min(block_top + block_h + PANEL_PADDING, side - 2.0),
+             );
+ 
+-        let scaled_font = ubuntu_font.as_scaled(FONT_SIZE);
+-
+-        let mut buffer = vec![0; HUD_TEXTURE_SIDE * HUD_TEXTURE_SIDE * 4];
+-
+-        for section_glyph in section_glyphs {
+-            if let Some(outlined) = scaled_font.outline_glyph(section_glyph.glyph) {
+-                let bounds = outlined.px_bounds();
+-
+-                outlined.draw(|x, y, alpha| {
+-                    let x = x as i32 + bounds.min.x as i32;
+-                    let y = y as i32 + bounds.min.y as i32;
+-
+-                    if x >= MAX_BORDER_OFFSET
+-                        && y >= MAX_BORDER_OFFSET
+-                        && x < HUD_TEXTURE_SIDE as i32 - MAX_BORDER_OFFSET
+-                        && y < HUD_TEXTURE_SIDE as i32 - MAX_BORDER_OFFSET
+-                    {
+-                        let coord = (y as usize * HUD_TEXTURE_SIDE + x as usize) * 4;
+-                        let value = (alpha * 255.0) as u8;
+-
+-                        buffer[coord] = value;
+-                        buffer[coord + 1] = value;
+-                        buffer[coord + 2] = value;
+-
+-                        // Render opacity with border
+-                        for offset in &FAST_BORDER_OFFSETS {
+-                            let coord = ((y + offset.y) as usize * HUD_TEXTURE_SIDE
+-                                + (x + offset.x) as usize)
+-                                * 4;
+-                            buffer[coord + 3] = u8::max(buffer[coord + 3], value);
+-                        }
+-                    }
+-                });
+-            }
++            draw_panel(&mut buffer, panel);
++            draw_moon_icon(&mut buffer, moon_center, MOON_ICON_RADIUS);
++            draw_glyphs(&mut buffer, &ubuntu_font, TITLE_SIZE, title, TITLE_COLOR);
++            draw_glyphs(&mut buffer, &ubuntu_font, FONT_SIZE, message_glyphs, TEXT_COLOR);
++            draw_glyphs(&mut buffer, &ubuntu_font, FOOTER_SIZE, footer, FOOTER_COLOR);
+         }
+ 
+         self.context.queue.write_texture(
+@@ -432,10 +587,11 @@ impl LobbyRenderer {
+             let view_proj = super::projection_from_fov(view_input.fov) * view;
+ 
+             let clear_color = if render_background {
++                // LunaQuest : bleu nuit (le ciel étoilé est dessiné par-dessus)
+                 Color {
+-                    r: 0.0,
+-                    g: 0.0,
+-                    b: 0.02,
++                    r: 0.008,
++                    g: 0.012,
++                    b: 0.04,
+                     a: 1.0,
+                 }
+             } else {
+@@ -476,6 +632,17 @@ impl LobbyRenderer {
+             pass.set_bind_group(0, &self.bind_group, &[]);
+ 
+             if render_background {
++                // LunaQuest : ciel étoilé avec la lune, dessiné en plein écran à partir de la direction de vue
++                pass.set_push_constants(
++                    ShaderStages::VERTEX_FRAGMENT,
++                    OBJECT_TYPE_CONST_OFFSET,
++                    &2_u32.to_le_bytes(),
++                );
++                let sky_transform = (super::projection_from_fov(view_input.fov)
++                    * Mat4::from_quat(view_input.pose.orientation.inverse()))
++                .inverse();
++                transform_draw(&mut pass, sky_transform, 4);
++
+                 // Render ground
+                 pass.set_push_constants(
+                     ShaderStages::VERTEX_FRAGMENT,
+@@ -527,7 +694,7 @@ impl LobbyRenderer {
+                 pass.set_push_constants(
+                     ShaderStages::VERTEX_FRAGMENT,
+                     COLOR_CONST_OFFSET,
+-                    &[255, 255, 255, 255],
++                    &ACCENT_LINE_COLOR,
+                 );
+                 for rot in &segment_rotations {
+                     let transform = hand_transform
+@@ -573,7 +740,7 @@ impl LobbyRenderer {
+                     pass.set_push_constants(
+                         ShaderStages::VERTEX_FRAGMENT,
+                         COLOR_CONST_OFFSET,
+-                        &[255, 255, 255, 255],
++                        &ACCENT_LINE_COLOR,
+                     );
+ 
+                     for (joint1_idx, joint2_idx) in HAND_SKELETON_BONES {
+diff --git a/alvr/xtask/src/dependencies.rs b/alvr/xtask/src/dependencies.rs
+index e8dd840..5a20b70 100644
+--- a/alvr/xtask/src/dependencies.rs
++++ b/alvr/xtask/src/dependencies.rs
+@@ -385,10 +385,14 @@ pub fn build_android_deps(
+             .run()
+             .unwrap();
+     }
+-    cmd!(sh, "cargo install cargo-ndk cbindgen").run().unwrap();
++    // LunaQuest : versions 2024 verrouillées. Les plus récentes exigent un dlltool complet,
++    // absent de la chaîne Rust « GNU » minimale utilisée sous Windows.
++    cmd!(sh, "cargo install --locked cargo-ndk@3.5.4").run().unwrap();
++    cmd!(sh, "cargo install --locked cbindgen@0.27.0").run().unwrap();
++    // Copie locale de github.com/zarik5/cargo-apk avec un Cargo.lock aux dépendances compatibles.
+     cmd!(
+         sh,
+-        "cargo install --git https://github.com/zarik5/cargo-apk cargo-apk"
++        "cargo install --locked --path ../tools/cargo-apk/cargo-apk"
+     )
+     .run()
+     .unwrap();
