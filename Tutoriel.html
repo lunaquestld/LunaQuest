@@ -84,19 +84,15 @@
   </div></div>
 
   <div class="card step"><div class="num">2</div><div>
-    <h3>Télécharge ALVR</h3>
-    <p>Va sur <a href="https://github.com/alvr-org/ALVR/releases">github.com/alvr-org/ALVR/releases</a> et prends, dans la <b>même version</b> :</p>
-    <ul>
-      <li><code>alvr_streamer_windows.zip</code> : la partie PC ;</li>
-      <li><code>alvr_client_android.apk</code> : l'appli pour le casque.</li>
-    </ul>
+    <h3>Installe ALVR sur le PC</h3>
+    <p>Va sur <a href="https://github.com/alvr-org/ALVR/releases/tag/v20.14.1">github.com/alvr-org/ALVR, version 20.14.1</a> et prends seulement <code>alvr_streamer_windows.zip</code> : la partie PC. L'appli du casque est fournie avec LunaQuest.</p>
     <p>Extrais le zip dans <b>Documents</b> (par exemple <code>Documents\alvr_streamer_windows</code>), puis lance <b>ALVR Dashboard.exe</b> une fois. Suis l'assistant, puis ferme ALVR. Tu n'auras plus besoin de l'ouvrir.</p>
   </div></div>
 
   <div class="card step"><div class="num">3</div><div>
-    <h3>Lance LunaQuest</h3>
-    <p>Extrais <code>LunaQuest.zip</code> dans un dossier à toi (par exemple <code>Documents\LunaQuest</code>, pas dans <i>Program Files</i>) et lance <b>LunaQuest.exe</b>.</p>
-    <div class="note">Windows peut afficher « Windows a protégé votre ordinateur », car l'appli n'est pas signée. Clique sur <b>Informations complémentaires</b> › <b>Exécuter quand même</b>.</div>
+    <h3>Installe LunaQuest</h3>
+    <p>Décompresse <code>LunaQuest-Setup.zip</code> et lance <b>LunaQuest-Setup.exe</b>. LunaQuest s'installe pour toi seul, sans droits administrateur, et apparaît dans le menu Démarrer.</p>
+    <div class="note">Windows peut afficher « Windows a protégé votre ordinateur », car l'installateur n'est pas signé. Clique sur <b>Informations complémentaires</b> › <b>Exécuter quand même</b>.</div>
   </div></div>
 
   <div class="card step"><div class="num">4</div><div>
@@ -104,20 +100,16 @@
     <ul>
       <li>Onglet <b>Connexion</b> : clique sur <b>Installer ADB</b>, l'outil officiel de Google pour parler au casque.</li>
       <li>Branche le casque et <b>mets-le sur ta tête</b> : accepte « Autoriser le débogage USB » en cochant <b>Toujours autoriser</b>.</li>
-      <li>Clique sur <b>Installer l'APK ALVR</b> et choisis <code>alvr_client_android.apk</code>.</li>
+      <li>Clique sur <b>Installer l'appli casque</b> : <b>LunaQuest Client</b> s'installe dans le casque. Il est rangé dans <b>Bibliothèque</b> › <b>Sources inconnues</b>.</li>
     </ul>
-  </div></div>
-
-  <div class="card step"><div class="num">5</div><div>
-    <h3>Enregistre ton casque pour le câble</h3>
-    <p>Dans le casque, ouvre <b>Bibliothèque</b> › filtre <b>Sources inconnues</b> › <b>ALVR</b>. Sur le panneau d'attente, repère la ligne <b>hostname</b> (du type <code>1234.client.alvr</code>).</p>
-    <p>Dans LunaQuest, onglet <b>Réglages ALVR</b> › <b>Casque filaire</b> : recopie ce nom exactement, puis clique sur <b>Enregistrer</b>.</p>
+    <p>Rien à recopier : LunaQuest enregistre tout seul le casque pour le câble à la première connexion.</p>
   </div></div>
 
   <h2>À chaque session</h2>
-  <div class="card step"><div class="num">6</div><div>
+  <div class="card step"><div class="num">5</div><div>
     <h3>Branche et joue</h3>
-    <p>Lance LunaQuest, branche le casque et clique sur <b>Connecter</b> (ou laisse la connexion automatique s'en charger). LunaQuest ouvre le tunnel USB, garde le casque éveillé, lance SteamVR et l'appli ALVR dans le casque. Quand tu vois SteamVR dans le casque, lance ton jeu.</p>
+    <p>Lance LunaQuest, branche le casque et clique sur <b>Connecter</b> (ou laisse la connexion automatique s'en charger). LunaQuest ouvre le tunnel USB, garde le casque éveillé, lance SteamVR et LunaQuest Client dans le casque. Quand tu vois SteamVR dans le casque, lance ton jeu.</p>
+    <p>Pour arrêter, quitte simplement LunaQuest Client dans le casque : LunaQuest déconnecte tout proprement.</p>
   </div></div>
 
   <h2>Réglages conseillés</h2>

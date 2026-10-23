@@ -72,7 +72,7 @@ foreach ($p in $pngs) { $w.Write($p) }
 $w.Close()
 
 # ---- Version publique (affichée dans l'installateur et dans « Applications installées »).
-$version = "0.2.0"
+$version = "0.2.1"
 $versionCs = "$bin\Version.cs"
 Set-Content -Encoding utf8 $versionCs "[assembly: System.Reflection.AssemblyVersion(""$version.0"")]`r`n[assembly: System.Reflection.AssemblyFileVersion(""$version.0"")]"
 

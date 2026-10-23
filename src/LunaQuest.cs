@@ -1263,7 +1263,7 @@ namespace LunaQuest
 
             btnAdb = AddButton(0, "Installer ADB", false, 512, 286, 192, 42);
             btnAdb.Click += delegate { RunBusy(InstallAdb); };
-            btnApk = AddButton(0, "Installer l'APK ALVR", false, 716, 286, 192, 42);
+            btnApk = AddButton(0, "Installer l'appli casque", false, 716, 286, 192, 42);
             btnApk.Click += delegate { InstallApk(); };
             btnFolder = AddButton(0, "Dossier ALVR…", false, 512, 338, 192, 42);
             btnFolder.Click += delegate { PickAlvrFolder(); };
@@ -1388,10 +1388,10 @@ namespace LunaQuest
         static readonly string[,] GuideSteps =
         {
             { "Active le mode développeur", "Appli Meta Horizon sur ton téléphone › Appareils › ton casque › Mode développeur." },
-            { "Installe ALVR sur le PC", "Sur github.com/alvr-org/ALVR, prends alvr_streamer_windows.zip et alvr_client_android.apk (même version). Extrais le zip et lance ALVR Dashboard une seule fois." },
-            { "Prépare le casque", "Onglet Connexion : Installer ADB, branche le casque, accepte le débogage USB dans le casque, puis Installer l'APK ALVR." },
-            { "Enregistre ton casque", "Lance ALVR dans le casque (Bibliothèque › Sources inconnues), recopie son nom dans Réglages ALVR › Casque filaire, puis Enregistrer." },
-            { "Joue !", "Clique sur Connecter : LunaQuest ouvre le tunnel USB, SteamVR et ALVR. Ensuite, il suffit de brancher le casque." },
+            { "Installe ALVR sur le PC", "Sur github.com/alvr-org/ALVR, version 20.14.1, prends alvr_streamer_windows.zip. Extrais-le, par exemple dans Documents, et lance ALVR Dashboard une seule fois." },
+            { "Prépare le casque", "Onglet Connexion : Installer ADB, branche le casque avec le câble USB, puis accepte le débogage USB qui s'affiche dans le casque." },
+            { "Installe l'appli du casque", "Clique sur Installer l'appli casque : LunaQuest Client, fourni avec LunaQuest, s'installe et s'enregistre tout seul. Rien à recopier." },
+            { "Joue !", "Clique sur Connecter : LunaQuest ouvre le tunnel USB, SteamVR et l'appli du casque. Ensuite, il suffit de brancher le casque." },
             { "En cas de souci", "Jeu figé : garde le casque éveillé. Saccades : baisse le débit. Pas de son : active Son du jeu. Une manette absente : active les mains squelettiques." }
         };
 
@@ -1616,7 +1616,7 @@ namespace LunaQuest
             else SetRow(1, Theme.Green, string.IsNullOrEmpty(s.Model) ? s.Serial : s.Model);
 
             if (!s.Ready) SetRow(2, Theme.Dim, "—");
-            else if (s.AlvrPackage == null) SetRow(2, Theme.Red, "Non installé (Installer l'APK)");
+            else if (s.AlvrPackage == null) SetRow(2, Theme.Red, "Non installé (Installer l'appli casque)");
             else SetRow(2, Theme.Green, "Installé");
 
             if (!s.Ready) { SetRow(3, Theme.Dim, "—"); usbMBps = 0; }
@@ -1716,7 +1716,7 @@ namespace LunaQuest
                 }
                 catch (Exception e) { Log("Config ALVR illisible : " + e.Message); }
             }
-            if (!s.HasWiredClient) Log("Attention : aucun casque enregistré pour le câble. Va dans Réglages ALVR › Casque filaire.");
+            if (!s.HasWiredClient && s.AlvrPackage != LunaClientPackage) Log("Attention : aucun casque enregistré pour le câble. Va dans Réglages ALVR › Casque filaire.");
 
             // Le serveur ALVR tourne dans SteamVR : pas besoin d'ouvrir ALVR Dashboard.
             if (!s.SteamVrRunning)
@@ -1725,7 +1725,7 @@ namespace LunaQuest
                 catch (Exception e) { Log("Impossible de lancer SteamVR : " + e.Message); }
             }
 
-            if (s.AlvrPackage == null) { Log("ALVR n'est pas installé sur le casque (Installer l'APK ALVR)."); return; }
+            if (s.AlvrPackage == null) { Log("L'appli du casque n'est pas installée : clique sur « Installer l'appli casque »."); return; }
             var launch = Adb.Run(ser + "shell monkey -p " + s.AlvrPackage + " -c android.intent.category.LAUNCHER 1");
             if (!launch.Ok || launch.All.Contains("No activities found") || launch.All.Contains("aborted"))
                 launch = Adb.Run(ser + "shell am start -n " + s.AlvrPackage + "/android.app.NativeActivity");
@@ -1862,19 +1862,23 @@ namespace LunaQuest
 
         void InstallApk()
         {
-            if (!last.Ready) { Log("Branche et autorise le casque avant d'installer l'APK."); return; }
-            string apk;
-            using (var dlg = new OpenFileDialog { Title = "Choisis l'APK : LunaQuest-Client.apk (fourni) ou alvr_client_android.apk", Filter = "APK Android (*.apk)|*.apk", InitialDirectory = appDir })
+            if (!last.Ready) { Log("Branche et autorise le casque avant d'installer l'appli du casque."); return; }
+            // L'installateur fournit LunaQuest Client à côté de l'exe ; sinon on demande l'APK à installer.
+            string apk = Path.Combine(appDir, "LunaQuest-Client.apk");
+            if (!File.Exists(apk))
             {
-                if (dlg.ShowDialog(this) != DialogResult.OK) return;
-                apk = dlg.FileName;
+                using (var dlg = new OpenFileDialog { Title = "Choisis l'APK : LunaQuest-Client.apk ou alvr_client_android.apk", Filter = "APK Android (*.apk)|*.apk", InitialDirectory = appDir })
+                {
+                    if (dlg.ShowDialog(this) != DialogResult.OK) return;
+                    apk = dlg.FileName;
+                }
             }
             string serial = last.Serial;
             RunBusy(() =>
             {
                 Log("Installation de " + Path.GetFileName(apk) + " sur le casque…");
                 var r = Adb.Run("-s " + serial + " install -r \"" + apk + "\"", 180000);
-                Log(r.Ok && r.All.Contains("Success") ? "ALVR installé sur le casque." : "Échec de l'installation : " + r.All);
+                Log(r.Ok && r.All.Contains("Success") ? "Appli du casque installée : elle est dans Bibliothèque › Sources inconnues." : "Échec de l'installation : " + r.All);
                 lock (cacheLock) packageCache.Remove(serial);
             });
         }
