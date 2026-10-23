@@ -1084,8 +1084,9 @@ namespace LunaQuest
         static readonly string[] SteamVrProcesses = { "vrserver", "vrmonitor", "vrcompositor", "vrdashboard", "vrwebhelper", "vrstartup", "ALVR Dashboard" };
         static readonly int[] FpsChoices = { 72, 80, 90, 120 };
         static readonly string[] CodecValues = { "H264", "Hevc", "AV1" };
-        // Largeur par œil : recommandé Meta, écran du Quest 3, puis suréchantillonnage.
-        static readonly int[] EyeWidths = { 1680, 2064, 2448, 2880 };
+        // Largeur par œil : recommandé Meta, écran du Quest 3 (2064), puis suréchantillonnage. 3840 est le maximum :
+        // deux yeux côte à côte font 7680 px de large, la plus grande vidéo (8K) que le décodeur du casque accepte.
+        static readonly int[] EyeWidths = { 1680, 2064, 2448, 2880, 3264, 3840 };
 
         readonly string appDir = AppDomain.CurrentDomain.BaseDirectory;
         readonly Config config;
@@ -1316,7 +1317,7 @@ namespace LunaQuest
             segCodec = AddTo(1, new Segmented("H.264", "HEVC", "AV1") { Location = new Point(52, 374), Size = new Size(400, 38) });
 
             AddLabel(1, "Résolution par œil (largeur en pixels)", Theme.Body, Theme.Soft, 52, 422);
-            segRes = AddTo(1, new Segmented("1680", "2064", "2448", "2880") { Location = new Point(52, 446), Size = new Size(400, 38) });
+            segRes = AddTo(1, new Segmented("1680", "2064", "2448", "2880", "3264", "3840") { Location = new Point(52, 446), Size = new Size(400, 38) });
 
             tglGameAudio = AddTo(1, new ToggleSwitch("Son du jeu dans le casque") { Location = new Point(512, 210), Size = new Size(396, 28) });
             tglMic = AddTo(1, new ToggleSwitch("Micro du casque") { Location = new Point(512, 254), Size = new Size(396, 28) });
