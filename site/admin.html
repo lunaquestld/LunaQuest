@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Modération · LunaQuest</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --night: #04061a; --panel: rgba(12, 18, 54, 0.8); --line: rgba(130, 160, 255, 0.2);
+    --red: #ff1f2e; --red-soft: #ff7b86; --blue: #2d5bff; --blue-soft: #8fb2ff;
+    --paper: #f4f3ff; --muted: #a8b4dc; --faint: #6e7aa6; --green: #7ee0b8;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--night); color: var(--paper); font: 15px/1.6 "Segoe UI", system-ui, sans-serif; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 24px 16px 60px; }
+  header { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+  h1 { font-size: 26px; margin: 0; }
+  h1 span { color: var(--red); }
+  a { color: var(--blue-soft); }
+  button { font: 600 13px/1 "Segoe UI", system-ui, sans-serif; color: var(--paper); background: rgba(45,91,255,.25); border: 1px solid rgba(143,178,255,.4); border-radius: 8px; padding: 9px 12px; cursor: pointer; }
+  button:hover { background: var(--blue); }
+  button.danger { background: rgba(255,31,46,.2); border-color: rgba(255,123,134,.5); }
+  button.danger:hover { background: var(--red); }
+  button.ok { background: rgba(126,224,184,.15); border-color: rgba(126,224,184,.5); }
+  button:disabled { opacity: .5; cursor: default; }
+  input { font: 15px/1.4 "Segoe UI", system-ui, sans-serif; color: var(--paper); background: rgba(4,6,26,.7); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
+  .login { max-width: 380px; display: grid; gap: 10px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .tabs button[aria-selected="true"] { background: var(--paper); color: var(--night); }
+  .item { display: grid; gap: 8px; margin-bottom: 10px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 13px; color: var(--faint); }
+  .meta b { color: var(--paper); }
+  .tag { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; padding: 3px 7px; border-radius: 5px; background: rgba(255,123,134,.18); color: var(--red-soft); }
+  .tag.public { background: rgba(126,224,184,.15); color: var(--green); }
+  .body { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--muted); }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .msg { color: var(--muted); min-height: 1.2em; }
+  .msg.error { color: var(--red-soft); }
+  .words { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .words span { display: inline-flex; align-items: center; gap: 6px; padding: 5px 6px 5px 10px; border: 1px solid var(--line); border-radius: 999px; font-size: 13px; }
+  .words button { padding: 2px 7px; border-radius: 999px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Luna<span>Quest</span> · Modération</h1>
+    <div class="row"><a href="index.html#avis">← Retour au site</a> <button type="button" id="logout" hidden>Se déconnecter</button></div>
+  </header>
+
+  <form class="card login" id="login" hidden>
+    <b>Connexion administrateur</b>
+    <input type="email" name="email" placeholder="E-mail" autocomplete="email" required>
+    <input type="password" name="password" placeholder="Mot de passe" autocomplete="current-password" required>
+    <button type="submit">Se connecter</button>
+  </form>
+
+  <main id="panel" hidden>
+    <div class="tabs" role="tablist">
+      <button type="button" data-tab="hidden" aria-selected="true">À vérifier</button>
+      <button type="button" data-tab="public">Publics</button>
+      <button type="button" data-tab="deleted">Supprimés</button>
+      <button type="button" data-tab="all">Tous</button>
+      <button type="button" data-tab="banned">Comptes bloqués</button>
+      <button type="button" data-tab="words">Mots filtrés</button>
+    </div>
+    <div id="content"></div>
+    <button type="button" id="more" hidden>Voir plus</button>
+  </main>
+
+  <p class="msg" id="msg" role="status"></p>
+</div>
+
+<script src="vendor/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/admin.js" defer></script>
+</body>
+</html>

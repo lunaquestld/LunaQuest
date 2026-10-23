@@ -255,6 +255,65 @@
   .contact p { color: var(--muted); margin: 0 0 18px; }
   .soon-tag { display: inline-block; font: 700 11px/1 var(--font-mono); letter-spacing: .2em; text-transform: uppercase; padding: 10px 14px 10px 16px; color: var(--night); background: var(--red-soft); clip-path: var(--cut); animation: pulse 1.6s steps(2) infinite; }
 
+  /* ---------- Espace commentaires ---------- */
+  [hidden] { display: none !important; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .avis { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 18px; align-items: start; }
+  .avis-side { display: grid; gap: 14px; position: sticky; top: 100px; }
+  .avis-box { padding: 26px; }
+  .avis-box h3 { font: 400 30px/1 var(--font-display); text-transform: uppercase; margin-bottom: 10px; }
+  .avis-box p { color: var(--muted); margin: 0 0 16px; }
+  .avis-btns { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .avis-btns.small { margin-top: 14px; gap: 18px; }
+  .avis-who { font-size: 14px; }
+  .avis-who b { color: var(--paper); }
+  .avis textarea, .auth input[type=email], .auth input[type=password], .auth input[type=text] {
+    width: 100%; font: 15px/1.5 var(--font-body); color: var(--paper); background: rgba(4,6,26,.6); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .avis textarea { resize: vertical; min-height: 120px; }
+  .avis textarea:focus, .auth input:focus { outline: 2px solid var(--red-soft); outline-offset: 1px; border-color: transparent; }
+  .avis-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 10px 0 4px; flex-wrap: wrap; }
+  .check { display: inline-flex; gap: 8px; align-items: center; font-size: 14px; color: var(--paper); cursor: pointer; }
+  .check input { accent-color: var(--red); width: 16px; height: 16px; }
+  .avis-count { font: 700 11px/1 var(--font-mono); color: var(--faint); }
+  .avis-hint { font-size: 12.5px; color: var(--faint) !important; margin: 0 0 14px !important; }
+  .avis-rules { padding: 0 22px; }
+  .avis-rules summary { cursor: pointer; padding: 16px 0; font-weight: 700; font-size: 14px; }
+  .avis-rules ul { margin: 0 0 16px; padding-left: 18px; color: var(--muted); font-size: 14px; }
+  .avis-offline { color: var(--muted); padding: 22px 26px; border: 1px dashed var(--line); border-radius: var(--radius); }
+  .comments { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 10px; }
+  .comment { padding: 18px 22px; }
+  .comment-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .comment-author { color: var(--paper); }
+  .comment-author.anon { color: var(--muted); font-style: italic; }
+  .badge { font: 700 10px/1 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; padding: 5px 8px; color: var(--night); background: var(--red-soft); clip-path: var(--cut); }
+  .comment-date { font: 700 11px/1 var(--font-mono); color: var(--faint); margin-left: auto; }
+  .comment-body { margin: 0; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .comment-actions { margin-top: 8px; display: flex; gap: 16px; }
+  .link-btn { font: 700 11px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--blue-soft); background: none; border: 0; padding: 4px 0; cursor: pointer; text-decoration: none; }
+  .link-btn:hover { color: var(--paper); }
+  .link-btn:disabled { color: var(--faint); cursor: default; }
+  .avis-empty { color: var(--muted); }
+  .form-msg { font-size: 14px; margin: 10px 0 0; min-height: 1em; color: var(--muted); }
+  .form-msg:empty { display: none; }
+  .form-msg.error { color: var(--red-soft); }
+  .form-msg.ok { color: #7ee0b8; }
+
+  /* Fenêtre compte */
+  .auth { width: min(440px, calc(100vw - 32px)); padding: 0; border: 1px solid rgba(255,123,134,.35); border-radius: 20px; color: var(--paper);
+    background: rgba(7, 10, 34, .98); box-shadow: 0 30px 80px rgba(0,0,0,.7), -14px 0 50px rgba(255,31,46,.2), 14px 0 50px rgba(45,91,255,.2); }
+  .auth::backdrop { background: rgba(2, 3, 14, .72); backdrop-filter: blur(4px); }
+  .auth form, .auth .panel-body { padding: 28px; display: grid; gap: 12px; }
+  .auth h3 { font: 400 32px/1 var(--font-display); text-transform: uppercase; margin: 0 0 4px; }
+  .auth label { font: 700 11px/1.4 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--faint); display: grid; gap: 6px; }
+  .auth .check { font: 14px/1.4 var(--font-body); letter-spacing: 0; text-transform: none; color: var(--muted); display: flex; align-items: flex-start; }
+  .auth .btn { justify-content: center; }
+  .auth .alt { font-size: 14px; color: var(--muted); margin: 0; }
+  .auth .x { position: absolute; right: 14px; top: 12px; background: none; border: 0; color: var(--muted); font-size: 26px; cursor: pointer; line-height: 1; }
+  .auth .x:hover { color: var(--paper); }
+  .auth .danger { color: var(--red-soft); }
+
+  @media (max-width: 920px) { .avis { grid-template-columns: 1fr; } .avis-side { position: static; } }
+
   footer { position: relative; z-index: 2; padding-block: 40px 56px; border-top: 1px solid var(--line); color: var(--faint); font-size: 14px; }
   footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 14px; align-items: center; }
   footer b { color: var(--muted); }
@@ -319,6 +378,7 @@
       <a href="#fonctionnalites">Fonctions</a>
       <a href="#apercu">Aperçu</a>
       <a href="#performances">Perfs</a>
+      <a href="#avis">Avis</a>
       <a href="#support">Support</a>
     </nav>
     <span class="pill">Early Access 0.2.0</span>
@@ -472,6 +532,67 @@
       </div>
     </section>
 
+    <section id="avis" aria-labelledby="avis-titre">
+      <div class="head reveal">
+        <p class="eyebrow">Avis</p>
+        <h2 id="avis-titre">Ton avis <span class="r">compte.</span></h2>
+        <p>Un bug, une idée, un retour sur tes jeux ? Laisse un commentaire. Le téléchargement reste libre : le compte sert seulement à commenter.</p>
+      </div>
+
+      <p class="avis-offline" id="avis-offline" hidden>L'espace commentaires arrive très bientôt.</p>
+
+      <div class="avis" id="avis-main">
+        <div class="avis-side">
+          <div class="tilt avis-box" id="avis-guest">
+            <h3>Rejoins la discussion</h3>
+            <p>Crée un compte gratuit pour commenter, avec ton pseudo ou en anonyme.</p>
+            <div class="avis-btns">
+              <button class="btn btn-dl" type="button" data-open="signup">Créer un compte</button>
+              <button class="btn btn-ghost" type="button" data-open="login">Se connecter</button>
+            </div>
+          </div>
+
+          <div class="tilt avis-box" id="avis-member" hidden>
+            <p class="avis-who">Connecté : <b id="avis-me"></b></p>
+            <form id="avis-form" novalidate>
+              <label class="sr-only" for="avis-text">Ton commentaire</label>
+              <textarea id="avis-text" maxlength="1000" rows="5" placeholder="Ton commentaire…" required></textarea>
+              <div class="avis-row">
+                <label class="check"><input type="checkbox" id="avis-anon"> Publier en anonyme</label>
+                <span class="avis-count" id="avis-count">0 / 1000</span>
+              </div>
+              <p class="avis-hint">En anonyme, ton pseudo n'est pas affiché. Le créateur peut le voir, pour la modération.</p>
+              <button class="btn btn-dl" type="submit" id="avis-send">Publier</button>
+              <p class="form-msg" id="avis-status" role="status"></p>
+            </form>
+            <p class="form-msg error" id="avis-banned" hidden>Ton compte ne peut plus publier de commentaires.</p>
+            <div class="avis-btns small">
+              <button class="link-btn" type="button" data-open="account">Mon compte</button>
+              <a class="link-btn" id="avis-admin-link" href="admin.html" hidden>Modération</a>
+              <button class="link-btn" type="button" id="avis-logout">Se déconnecter</button>
+            </div>
+          </div>
+
+          <details class="tilt avis-rules">
+            <summary>Règles de l'espace commentaires</summary>
+            <ul>
+              <li>Reste respectueux : pas d'insultes, de propos haineux ou de harcèlement.</li>
+              <li>Pas de pub ni de spam. Les liens et les mots filtrés passent par une vérification avant publication.</li>
+              <li>Un commentaire signalé par plusieurs membres est masqué en attendant la vérification.</li>
+              <li>Les comptes qui ne respectent pas ces règles peuvent être bloqués.</li>
+            </ul>
+          </details>
+        </div>
+
+        <div class="avis-feed">
+          <ul class="comments" id="avis-list" aria-live="polite"></ul>
+          <p class="avis-empty" id="avis-empty" hidden>Aucun commentaire pour l'instant. Sois le premier !</p>
+          <p class="form-msg" id="avis-list-msg" role="status"></p>
+          <button class="btn btn-ghost" type="button" id="avis-more" hidden>Voir plus</button>
+        </div>
+      </div>
+    </section>
+
     <section id="support" aria-labelledby="support-titre">
       <div class="head reveal">
         <p class="eyebrow">Support</p>
@@ -506,8 +627,8 @@
         </div>
         <aside class="contact tilt" aria-labelledby="contact-titre">
           <h3 id="contact-titre">Contacter le support</h3>
-          <p>Tu ne trouves pas ta réponse ? Un moyen de contact direct sera ajouté ici avec la sortie de l'appli.</p>
-          <span class="soon-tag">Arrive prochainement</span>
+          <p>Tu ne trouves pas ta réponse ? Pose ta question dans l'espace commentaires, le créateur y répond.</p>
+          <a class="btn btn-ghost" href="#avis">Poser ma question</a>
         </aside>
       </div>
     </section>
@@ -520,6 +641,67 @@
     <span>Réalisé avec l'IA <b>Claude</b> · LunaQuest Early Access 0.2.0 · Basé sur <a href="https://github.com/alvr-org/ALVR">ALVR</a> (open source) · Non affilié à Meta ni à Valve · <a href="https://github.com/lunaquestld/LunaQuest" rel="noopener">Code source sur GitHub</a> · <a href="mentions-legales.html">Mentions légales et confidentialité</a></span>
   </div>
 </footer>
+
+<dialog class="auth" id="auth-dialog" aria-label="Compte">
+  <button class="x" type="button" data-close aria-label="Fermer">×</button>
+
+  <form id="form-login" data-panel="login" novalidate>
+    <h3>Connexion</h3>
+    <label>E-mail <input type="email" name="email" autocomplete="email" required></label>
+    <label>Mot de passe <input type="password" name="password" autocomplete="current-password" required></label>
+    <button class="btn btn-dl" type="submit">Se connecter</button>
+    <p class="form-msg" role="status"></p>
+    <p class="alt"><button class="link-btn" type="button" data-open="forgot">Mot de passe oublié ?</button></p>
+    <p class="alt">Pas encore de compte ? <button class="link-btn" type="button" data-open="signup">Créer un compte</button></p>
+  </form>
+
+  <form id="form-signup" data-panel="signup" novalidate hidden>
+    <h3>Créer un compte</h3>
+    <label>Pseudo <input type="text" name="pseudo" minlength="2" maxlength="20" pattern="[A-Za-z0-9_.\-]{2,20}" autocomplete="nickname" required></label>
+    <label>E-mail <input type="email" name="email" autocomplete="email" required></label>
+    <label>Mot de passe (8 caractères minimum) <input type="password" name="password" minlength="8" autocomplete="new-password" required></label>
+    <label>Confirme le mot de passe <input type="password" name="password2" minlength="8" autocomplete="new-password" required></label>
+    <label class="check"><input type="checkbox" name="terms" required> <span>J'accepte les règles de l'espace commentaires et la <a href="mentions-legales.html#confidentialite" target="_blank" rel="noopener">politique de confidentialité</a>.</span></label>
+    <button class="btn btn-dl" type="submit">Créer mon compte</button>
+    <p class="form-msg" role="status"></p>
+    <p class="alt">Déjà un compte ? <button class="link-btn" type="button" data-open="login">Se connecter</button></p>
+  </form>
+
+  <form id="form-forgot" data-panel="forgot" novalidate hidden>
+    <h3>Mot de passe oublié</h3>
+    <label>E-mail du compte <input type="email" name="email" autocomplete="email" required></label>
+    <button class="btn btn-dl" type="submit">Recevoir un lien</button>
+    <p class="form-msg" role="status"></p>
+    <p class="alt"><button class="link-btn" type="button" data-open="login">Retour à la connexion</button></p>
+  </form>
+
+  <form id="form-recovery" data-panel="recovery" novalidate hidden>
+    <h3>Nouveau mot de passe</h3>
+    <label>Nouveau mot de passe <input type="password" name="password" minlength="8" autocomplete="new-password" required></label>
+    <label>Confirme-le <input type="password" name="password2" minlength="8" autocomplete="new-password" required></label>
+    <button class="btn btn-dl" type="submit">Enregistrer</button>
+    <p class="form-msg" role="status"></p>
+  </form>
+
+  <div data-panel="account" hidden>
+    <form id="form-pseudo" novalidate>
+      <h3>Mon compte</h3>
+      <p class="alt">Pseudo actuel : <b id="acc-pseudo-now"></b></p>
+      <label>Nouveau pseudo <input type="text" name="pseudo" minlength="2" maxlength="20" pattern="[A-Za-z0-9_.\-]{2,20}" required></label>
+      <button class="btn btn-ghost" type="submit">Changer de pseudo</button>
+      <p class="form-msg" role="status"></p>
+    </form>
+    <div class="panel-body">
+      <p class="alt">Supprimer ton compte efface aussi tous tes commentaires.</p>
+      <button class="link-btn danger" type="button" id="acc-delete">Supprimer mon compte</button>
+      <p class="form-msg" id="acc-delete-msg" role="status"></p>
+    </div>
+  </div>
+</dialog>
+
+<script src="vendor/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/comments.js" defer></script>
 
 <script>
   (function () {
