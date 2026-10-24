@@ -2323,96 +2323,66 @@ namespace LunaQuest
                 if (glitchTicks == 0) nextGlitch = 70 + fx.Next(110);
             }
             else if (--nextGlitch <= 0) glitchTicks = 6;
-            AnimateEye();
+            AnimateScope();
         }
 
-        // ---------------------------------------------------------------- Œil-lune de la barre de gauche
+        // ---------------------------------------------------------------- Télescope de la barre de gauche
 
-        static readonly PointF EyeCenter = new PointF(40, 42);
-        const float EyeRadius = 15;
-        static readonly RectangleF EyeArea = new RectangleF(40 - 18, 42 - 18, 36, 36);
-        PointF eyeLook, eyeShown;
-        int blinkTicks, nextBlink = 120;
+        static readonly PointF ScopePivot = new PointF(40, 44);
+        static readonly RectangleF ScopeArea = new RectangleF(4, 6, 72, 74);
+        float scopeAngle = -35f, scopeShown = -35f;
 
-        // L'œil regarde la souris tant qu'elle est dans la fenêtre, sinon droit devant ; il cligne de temps en temps.
-        void AnimateEye()
+        // Le télescope vise la souris tant qu'elle est dans la fenêtre, sinon la grande lune en haut à droite.
+        void AnimateScope()
         {
             var mouse = PointToClient(Cursor.Position);
-            if (ClientRectangle.Contains(mouse))
+            PointF target = ClientRectangle.Contains(mouse) ? (PointF)mouse : new PointF(ClientSize.Width - 104, 74);
+            float dx = target.X - ScopePivot.X, dy = target.Y - ScopePivot.Y;
+            if (dx * dx + dy * dy > 16)
             {
-                float dx = mouse.X - EyeCenter.X, dy = mouse.Y - EyeCenter.Y;
-                float dist = (float)Math.Sqrt(dx * dx + dy * dy);
-                float reach = EyeRadius * 0.42f * Math.Min(1f, dist / 90f);
-                eyeLook = dist > 0.5f ? new PointF(dx / dist * reach, dy / dist * reach) : PointF.Empty;
+                // Entre « en haut à gauche » et « un peu vers le bas à droite » : il ne vise jamais le sol.
+                float angle = (float)(Math.Atan2(dy, dx) * 180 / Math.PI);
+                if (angle > 90) angle -= 360;
+                scopeAngle = Math.Max(-165f, Math.Min(35f, angle));
             }
-            else eyeLook = PointF.Empty;
-
-            var before = eyeShown;
-            eyeShown = new PointF(eyeShown.X + (eyeLook.X - eyeShown.X) * 0.3f, eyeShown.Y + (eyeLook.Y - eyeShown.Y) * 0.3f);
-            bool moved = Math.Abs(eyeShown.X - before.X) > 0.02f || Math.Abs(eyeShown.Y - before.Y) > 0.02f;
-
-            if (blinkTicks > 0) blinkTicks--;
-            else if (--nextBlink <= 0) { blinkTicks = 6; nextBlink = 100 + fx.Next(120); }
-            if (moved || blinkTicks > 0) Invalidate(Rectangle.Ceiling(EyeArea));
+            scopeShown += (scopeAngle - scopeShown) * 0.25f;
+            Invalidate(Rectangle.Ceiling(ScopeArea)); // petite zone : redessinée à chaque image pour l'étoile qui scintille
         }
 
-        void PaintEye(Graphics g)
+        void PaintScope(Graphics g)
         {
-            float r = EyeRadius, cx = EyeCenter.X, cy = EyeCenter.Y;
-            var ball = new RectangleF(cx - r, cy - r, 2 * r, 2 * r);
-            using (var path = new GraphicsPath())
+            float px = ScopePivot.X, py = ScopePivot.Y;
+            // Trépied.
+            using (var pen = new Pen(Color.FromArgb(200, Theme.Soft), 2f) { StartCap = LineCap.Round, EndCap = LineCap.Round })
             {
-                path.AddEllipse(ball);
-                // Globe : la petite lune d'avant, éclairée en haut à gauche.
-                using (var b = new PathGradientBrush(path))
-                {
-                    b.CenterPoint = new PointF(cx - r * 0.35f, cy - r * 0.35f);
-                    b.CenterColor = Color.White;
-                    b.SurroundColors = new[] { Color.FromArgb(150, 168, 214) };
-                    g.FillPath(b, path);
-                }
-                var state = g.Save();
-                g.SetClip(path, CombineMode.Intersect);
-                // Cratères discrets, pour garder l'allure de lune.
-                using (var b = new SolidBrush(Color.FromArgb(45, 70, 90, 150)))
-                {
-                    g.FillEllipse(b, cx + r * 0.35f, cy - r * 0.75f, r * 0.35f, r * 0.35f);
-                    g.FillEllipse(b, cx - r * 0.85f, cy + r * 0.3f, r * 0.3f, r * 0.3f);
-                }
-                // Iris bleu électrique cerclé de rouge, pupille nuit, reflet.
-                float ix = cx + eyeShown.X, iy = cy + eyeShown.Y, ir = r * 0.52f;
-                using (var iris = new GraphicsPath())
-                {
-                    iris.AddEllipse(ix - ir, iy - ir, 2 * ir, 2 * ir);
-                    using (var b = new PathGradientBrush(iris))
-                    {
-                        b.CenterColor = Color.FromArgb(143, 178, 255);
-                        b.SurroundColors = new[] { Theme.Electric };
-                        g.FillPath(b, iris);
-                    }
-                }
-                using (var pen = new Pen(Theme.Maple, 1.6f)) g.DrawEllipse(pen, ix - ir, iy - ir, 2 * ir, 2 * ir);
-                using (var b = new SolidBrush(Theme.NightTop)) g.FillEllipse(b, ix - ir * 0.45f, iy - ir * 0.45f, ir * 0.9f, ir * 0.9f);
-                using (var b = new SolidBrush(Color.FromArgb(230, 255, 255, 255))) g.FillEllipse(b, ix - ir * 0.55f, iy - ir * 0.6f, ir * 0.38f, ir * 0.38f);
-                // Clignement : les paupières (couleur de la barre) se ferment puis se rouvrent.
-                if (blinkTicks > 0)
-                {
-                    float closed = 1f - Math.Abs(blinkTicks - 3) / 3f; // 0 → 1 → 0
-                    float lid = r * closed;
-                    using (var b = new SolidBrush(Theme.Sidebar))
-                    {
-                        g.FillRectangle(b, cx - r, cy - r, 2 * r, lid);
-                        g.FillRectangle(b, cx - r, cy + r - lid, 2 * r, lid);
-                    }
-                    using (var pen = new Pen(Theme.MapleSoft, 1.2f))
-                    {
-                        g.DrawLine(pen, cx - r, cy - r + lid, cx + r, cy - r + lid);
-                        g.DrawLine(pen, cx - r, cy + r - lid, cx + r, cy + r - lid);
-                    }
-                }
-                g.Restore(state);
+                g.DrawLine(pen, px, py + 2, px - 15, py + 30);
+                g.DrawLine(pen, px, py + 2, px + 15, py + 30);
             }
-            using (var pen = new Pen(Color.FromArgb(90, 255, 255, 255), 1f)) g.DrawEllipse(pen, ball);
+            using (var pen = new Pen(Color.FromArgb(150, Theme.Dim), 2f) { StartCap = LineCap.Round, EndCap = LineCap.Round })
+                g.DrawLine(pen, px, py + 2, px + 2, py + 32);
+
+            // Tube, tourné vers la cible : oculaire à l'arrière, lentille cerclée de rouge à l'avant.
+            var state = g.Save();
+            g.TranslateTransform(px, py);
+            g.RotateTransform(scopeShown);
+            var tube = new RectangleF(-12, -5, 30, 10);
+            using (var b = new LinearGradientBrush(tube, Color.FromArgb(90, 130, 255), Color.FromArgb(20, 40, 140), 90f)) g.FillRectangle(b, tube);
+            using (var pen = new Pen(Color.FromArgb(140, Theme.ElectricSoft), 1f)) g.DrawRectangle(pen, tube.X, tube.Y, tube.Width, tube.Height);
+            using (var b = new SolidBrush(Theme.Maple)) g.FillRectangle(b, 16, -6.5f, 5, 13);           // pare-soleil
+            using (var b = new SolidBrush(Theme.MoonLight)) g.FillRectangle(b, 21, -5, 1.5f, 10);      // lentille
+            using (var b = new SolidBrush(Theme.Soft)) g.FillRectangle(b, -18, -2.5f, 6, 5);           // oculaire
+            using (var b = new SolidBrush(Color.FromArgb(120, 255, 255, 255))) g.FillRectangle(b, -10, -4, 24, 2); // reflet
+            g.Restore(state);
+
+            // Rotule.
+            using (var b = new SolidBrush(Theme.Maple)) g.FillEllipse(b, px - 3.5f, py - 3.5f, 7, 7);
+            using (var b = new SolidBrush(Theme.NightTop)) g.FillEllipse(b, px - 1.5f, py - 1.5f, 3, 3);
+
+            // Petite étoile qui scintille au bout de la visée.
+            double a = scopeShown * Math.PI / 180;
+            float sx = px + (float)Math.Cos(a) * 30, sy = py + (float)Math.Sin(a) * 30;
+            int twinkle = 120 + (int)(100 * Math.Abs(Math.Sin(Environment.TickCount / 300.0)));
+            Theme.Glow(g, new RectangleF(sx - 5, sy - 5, 10, 10), Color.FromArgb(twinkle, 207, 224, 255));
         }
 
         void PaintTitle(Graphics g)
@@ -2451,7 +2421,7 @@ namespace LunaQuest
             var clip = e.ClipRectangle;
             g.DrawImage(space, clip, clip, GraphicsUnit.Pixel);
             Theme.Smooth(g);
-            if (clip.IntersectsWith(Rectangle.Ceiling(EyeArea))) PaintEye(g);
+            if (clip.IntersectsWith(Rectangle.Ceiling(ScopeArea))) PaintScope(g);
             if (clip.IntersectsWith(TitleArea)) PaintTitle(g);
             foreach (var l in leaves)
                 if (l.Drawn && clip.IntersectsWith(l.Last)) Theme.DrawLeaf(g, l.X, l.Y, l.Size, l.Angle, l.Color);
