@@ -30,34 +30,52 @@ namespace LunaQuest
         }
     }
 
-    // ================================================================ Thème
+    // ================================================================ Thème (mêmes couleurs que le site : nuit, rouge érable, bleu électrique)
 
     static class Theme
     {
-        public static readonly Color NightTop = Color.FromArgb(8, 13, 36);
-        public static readonly Color NightBottom = Color.FromArgb(24, 40, 94);
-        public static readonly Color Field = Color.FromArgb(11, 19, 50);
-        public static readonly Color CardFill = Color.FromArgb(125, 13, 22, 58);
-        public static readonly Color CardBorder = Color.FromArgb(60, 150, 182, 255);
-        public static readonly Color Text = Color.FromArgb(242, 245, 255);
-        public static readonly Color Soft = Color.FromArgb(162, 184, 236);
-        public static readonly Color Dim = Color.FromArgb(112, 132, 188);
-        public static readonly Color Accent = Color.FromArgb(76, 141, 255);
-        public static readonly Color AccentLight = Color.FromArgb(132, 186, 255);
-        public static readonly Color AccentDark = Color.FromArgb(44, 92, 212);
+        public static readonly Color NightTop = Color.FromArgb(2, 3, 9);
+        public static readonly Color NightBottom = Color.FromArgb(7, 9, 26);
+        public static readonly Color Sidebar = Color.FromArgb(4, 5, 14);
+        public static readonly Color Field = Color.FromArgb(5, 7, 20);
+        public static readonly Color CardFill = Color.FromArgb(190, 9, 12, 32);
+        public static readonly Color CardBorder = Color.FromArgb(46, 130, 160, 255);
+        public static readonly Color Text = Color.FromArgb(244, 243, 255);
+        public static readonly Color Soft = Color.FromArgb(168, 180, 220);
+        public static readonly Color Dim = Color.FromArgb(110, 122, 166);
+        public static readonly Color Maple = Color.FromArgb(255, 31, 46);
+        public static readonly Color MapleSoft = Color.FromArgb(255, 123, 134);
+        public static readonly Color Electric = Color.FromArgb(45, 91, 255);
+        public static readonly Color ElectricSoft = Color.FromArgb(143, 178, 255);
+        public static readonly Color MoonLight = Color.FromArgb(207, 224, 255);
+        public static readonly Color Accent = Electric;
+        public static readonly Color AccentLight = ElectricSoft;
+        public static readonly Color AccentDark = Color.FromArgb(30, 62, 190);
         public static readonly Color Green = Color.FromArgb(94, 227, 176);
         public static readonly Color Orange = Color.FromArgb(255, 196, 108);
-        public static readonly Color Red = Color.FromArgb(255, 122, 133);
+        public static readonly Color Red = MapleSoft;
 
-        public static readonly Font Title = new Font("Segoe UI Semibold", 26f);
+        public static readonly Font Display = new Font("Impact", 34f);
+        public static readonly Font Tag = new Font("Segoe Print", 13f, FontStyle.Bold);
+        public static readonly Font Eyebrow = new Font("Consolas", 8.5f, FontStyle.Bold);
         public static readonly Font Body = new Font("Segoe UI", 10f);
         public static readonly Font BodyBold = new Font("Segoe UI Semibold", 10.5f);
         public static readonly Font Small = new Font("Segoe UI", 9f);
-        public static readonly Font CardTitle = new Font("Segoe UI Semibold", 9f);
-        public static readonly Font Button = new Font("Segoe UI Semibold", 10f);
-        public static readonly Font ButtonBig = new Font("Segoe UI Semibold", 14f);
+        public static readonly Font CardTitle = new Font("Consolas", 8.5f, FontStyle.Bold);
+        public static readonly Font Button = new Font("Consolas", 9f, FontStyle.Bold);
+        public static readonly Font ButtonBig = new Font("Consolas", 13f, FontStyle.Bold);
         public static readonly Font StepTitle = new Font("Segoe UI Semibold", 11.5f);
         public static readonly Font Mono = new Font("Consolas", 9f);
+
+        // Feuille d'érable du site (repère -1..1, pointe vers le haut).
+        public static readonly PointF[] Leaf =
+        {
+            new PointF(0, -1), new PointF(.12f, -.62f), new PointF(.38f, -.78f), new PointF(.3f, -.38f), new PointF(.72f, -.5f),
+            new PointF(.6f, -.22f), new PointF(.95f, -.1f), new PointF(.55f, .12f), new PointF(.62f, .36f), new PointF(.2f, .25f),
+            new PointF(.08f, .62f), new PointF(0, .42f), new PointF(-.08f, .62f), new PointF(-.2f, .25f), new PointF(-.62f, .36f),
+            new PointF(-.55f, .12f), new PointF(-.95f, -.1f), new PointF(-.6f, -.22f), new PointF(-.72f, -.5f), new PointF(-.3f, -.38f),
+            new PointF(-.38f, -.78f), new PointF(-.12f, -.62f)
+        };
 
         public static GraphicsPath Round(RectangleF r, float radius)
         {
@@ -94,64 +112,80 @@ namespace LunaQuest
                 }
             }
         }
+
+        // Texte espacé façon « eyebrow » du site (GDI+ ne sait pas espacer les lettres tout seul).
+        public static float DrawSpaced(Graphics g, string text, Font font, Color color, float x, float y, float spacing)
+        {
+            using (var b = new SolidBrush(color))
+            using (var sf = StringFormat.GenericTypographic)
+            {
+                foreach (char ch in text)
+                {
+                    string s = ch.ToString();
+                    g.DrawString(s, font, b, x, y, sf);
+                    x += (ch == ' ' ? font.Size * 0.6f : g.MeasureString(s, font, PointF.Empty, sf).Width) + spacing;
+                }
+            }
+            return x;
+        }
+
+        public static void DrawLeaf(Graphics g, float x, float y, float size, float angle, Color c)
+        {
+            var state = g.Save();
+            g.TranslateTransform(x, y);
+            g.RotateTransform(angle);
+            g.ScaleTransform(size, size);
+            using (var b = new SolidBrush(c)) g.FillPolygon(b, Leaf);
+            using (var pen = new Pen(c, 0.08f)) g.DrawLine(pen, 0, .42f, 0, 1.05f);
+            g.Restore(state);
+        }
     }
 
-    // ================================================================ Décor : ciel étoilé et lune
+    // ================================================================ Décor : nuit étoilée, lueurs rouge et bleue, lune
 
     static class SpaceArt
     {
-        public static Bitmap Render(Size size)
+        public static Bitmap Render(Size size, int sidebarWidth)
         {
             var bmp = new Bitmap(size.Width, size.Height);
             using (var g = Graphics.FromImage(bmp))
             {
                 Theme.Smooth(g);
                 var full = new Rectangle(Point.Empty, size);
-                using (var b = new LinearGradientBrush(full, Theme.NightTop, Theme.NightBottom, 75f)) g.FillRectangle(b, full);
+                using (var b = new LinearGradientBrush(full, Theme.NightTop, Theme.NightBottom, 80f)) g.FillRectangle(b, full);
 
-                // Nébuleuses très douces.
-                Theme.Glow(g, new RectangleF(-220, size.Height - 330, 720, 520), Color.FromArgb(55, 70, 110, 230));
-                Theme.Glow(g, new RectangleF(size.Width - 600, -200, 680, 480), Color.FromArgb(40, 120, 150, 255));
-                Theme.Glow(g, new RectangleF(size.Width * 0.38f, size.Height * 0.42f, 540, 400), Color.FromArgb(22, 150, 120, 255));
+                // Lueurs de gyrophare très douces, comme sur le site.
+                Theme.Glow(g, new RectangleF(-260, size.Height - 360, 760, 560), Color.FromArgb(34, 255, 31, 46));
+                Theme.Glow(g, new RectangleF(size.Width - 620, -240, 760, 520), Color.FromArgb(38, 45, 91, 255));
 
                 // Étoiles (graine fixe : le ciel est toujours le même).
                 var rnd = new Random(7);
-                for (int i = 0; i < 280; i++)
+                for (int i = 0; i < 300; i++)
                 {
                     float x = (float)rnd.NextDouble() * size.Width;
                     float y = (float)rnd.NextDouble() * size.Height;
-                    float s = (float)(0.6 + Math.Pow(rnd.NextDouble(), 3) * 2.3);
-                    int a = 80 + rnd.Next(175);
-                    Color c = rnd.Next(4) == 0 ? Color.FromArgb(a, 176, 204, 255) : Color.FromArgb(a, 255, 255, 255);
+                    float s = (float)(0.5 + Math.Pow(rnd.NextDouble(), 3) * 2.0);
+                    int a = 60 + rnd.Next(170);
+                    double k = rnd.NextDouble();
+                    Color c = k < .1 ? Color.FromArgb(a, 255, 123, 134) : k < .35 ? Color.FromArgb(a, 143, 178, 255) : Color.FromArgb(a, 244, 243, 255);
                     using (var br = new SolidBrush(c)) g.FillEllipse(br, x - s / 2, y - s / 2, s, s);
-                    if (s > 2.3f)
-                    {
-                        Theme.Glow(g, new RectangleF(x - s * 3, y - s * 3, s * 6, s * 6), Color.FromArgb(a / 3, 190, 215, 255));
-                        using (var pen = new Pen(Color.FromArgb(a / 3, 210, 225, 255), 1f))
-                        {
-                            g.DrawLine(pen, x - s * 3, y, x + s * 3, y);
-                            g.DrawLine(pen, x, y - s * 3, x, y + s * 3);
-                        }
-                    }
                 }
 
-                Moon(g, new PointF(size.Width - 128, 92), 52);
+                Moon(g, new PointF(size.Width - 104, 74), 40);
+
+                // Barre latérale : plus sombre, avec un filet rouge vers bleu sur le bord droit.
+                var side = new Rectangle(0, 0, sidebarWidth, size.Height);
+                using (var b = new SolidBrush(Color.FromArgb(235, Theme.Sidebar))) g.FillRectangle(b, side);
+                using (var b = new LinearGradientBrush(new Rectangle(sidebarWidth - 1, 0, 2, size.Height), Theme.Maple, Theme.Electric, 90f))
+                    g.FillRectangle(b, sidebarWidth - 1, 0, 1, size.Height);
+                Theme.Glow(g, new RectangleF(sidebarWidth / 2f - 34, 8, 68, 68), Color.FromArgb(70, 255, 31, 46));
+                SmallMoon(g, new PointF(sidebarWidth / 2f, 42), 14);
             }
             return bmp;
         }
 
-        public static void Moon(Graphics g, PointF c, float r)
+        static void SmallMoon(Graphics g, PointF c, float r)
         {
-            Theme.Glow(g, new RectangleF(c.X - r * 2.5f, c.Y - r * 2.5f, r * 5f, r * 5f), Color.FromArgb(75, 150, 186, 255));
-
-            // Orbite inclinée, dessinée avant la lune pour passer derrière.
-            var state = g.Save();
-            g.TranslateTransform(c.X, c.Y);
-            g.RotateTransform(-16);
-            using (var pen = new Pen(Color.FromArgb(55, 170, 200, 255), 1.2f))
-                g.DrawEllipse(pen, -r * 2.15f, -r * 0.5f, r * 4.3f, r * 1.0f);
-            g.Restore(state);
-
             var body = new RectangleF(c.X - r, c.Y - r, 2 * r, 2 * r);
             using (var p = new GraphicsPath())
             {
@@ -159,52 +193,57 @@ namespace LunaQuest
                 using (var b = new PathGradientBrush(p))
                 {
                     b.CenterPoint = new PointF(c.X - r * 0.35f, c.Y - r * 0.35f);
-                    b.CenterColor = Color.FromArgb(252, 253, 255);
-                    b.SurroundColors = new[] { Color.FromArgb(176, 194, 232) };
+                    b.CenterColor = Color.White;
+                    b.SurroundColors = new[] { Color.FromArgb(142, 162, 212) };
                     g.FillPath(b, p);
                 }
+            }
+            using (var b = new SolidBrush(Color.FromArgb(70, 70, 90, 150))) g.FillEllipse(b, c.X - r * 0.45f, c.Y + r * 0.05f, r * 0.5f, r * 0.5f);
+        }
 
+        public static void Moon(Graphics g, PointF c, float r)
+        {
+            Theme.Glow(g, new RectangleF(c.X - r * 2.6f, c.Y - r * 2.6f, r * 5.2f, r * 5.2f), Color.FromArgb(70, 207, 224, 255));
+            var body = new RectangleF(c.X - r, c.Y - r, 2 * r, 2 * r);
+            using (var p = new GraphicsPath())
+            {
+                p.AddEllipse(body);
+                using (var b = new PathGradientBrush(p))
+                {
+                    b.CenterPoint = new PointF(c.X - r * 0.32f, c.Y - r * 0.4f);
+                    b.CenterColor = Color.White;
+                    b.SurroundColors = new[] { Color.FromArgb(142, 162, 212) };
+                    g.FillPath(b, p);
+                }
                 var clip = g.Clip;
                 g.SetClip(p, CombineMode.Intersect);
                 Crater(g, c.X - r * 0.36f, c.Y + r * 0.12f, r * 0.27f);
                 Crater(g, c.X + r * 0.26f, c.Y - r * 0.40f, r * 0.17f);
                 Crater(g, c.X + r * 0.08f, c.Y + r * 0.46f, r * 0.14f);
-                Crater(g, c.X - r * 0.06f, c.Y - r * 0.16f, r * 0.09f);
                 Crater(g, c.X + r * 0.52f, c.Y + r * 0.10f, r * 0.11f);
-                Crater(g, c.X - r * 0.55f, c.Y - r * 0.38f, r * 0.08f);
-                // Ombre côté droit : effet de croissant.
+                // Ombre côté droit, comme la lune du site.
                 using (var sp = new GraphicsPath())
                 {
-                    sp.AddEllipse(c.X - r * 0.35f, c.Y - r * 1.3f, r * 2.6f, r * 2.6f);
+                    sp.AddEllipse(c.X - r * 0.1f, c.Y - r * 1.2f, r * 2.4f, r * 2.4f);
                     using (var sb = new PathGradientBrush(sp))
                     {
-                        sb.CenterColor = Color.FromArgb(165, 10, 18, 52);
-                        sb.SurroundColors = new[] { Color.FromArgb(0, 10, 18, 52) };
-                        sb.FocusScales = new PointF(0.55f, 0.55f);
+                        sb.CenterColor = Color.FromArgb(150, 8, 14, 46);
+                        sb.SurroundColors = new[] { Color.FromArgb(0, 8, 14, 46) };
+                        sb.FocusScales = new PointF(0.5f, 0.5f);
                         g.FillPath(sb, sp);
                     }
                 }
                 g.Clip = clip;
             }
-            using (var pen = new Pen(Color.FromArgb(70, 225, 235, 255), 1.2f)) g.DrawEllipse(pen, body);
-
-            // Petit satellite sur l'avant de l'orbite.
-            double ang = 200 * Math.PI / 180, tilt = -16 * Math.PI / 180;
-            float ox = (float)(Math.Cos(ang) * r * 2.15), oy = (float)(Math.Sin(ang) * -r * 0.5) + r * 0.02f;
-            float sx = c.X + (float)(ox * Math.Cos(tilt) - oy * Math.Sin(tilt));
-            float sy = c.Y + (float)(ox * Math.Sin(tilt) + oy * Math.Cos(tilt));
-            Theme.Glow(g, new RectangleF(sx - 9, sy - 9, 18, 18), Color.FromArgb(150, 170, 205, 255));
-            using (var b = new SolidBrush(Color.White)) g.FillEllipse(b, sx - 2.5f, sy - 2.5f, 5, 5);
         }
 
         static void Crater(Graphics g, float x, float y, float r)
         {
-            using (var b = new SolidBrush(Color.FromArgb(40, 78, 98, 150))) g.FillEllipse(b, x - r, y - r, 2 * r, 2 * r);
-            using (var pen = new Pen(Color.FromArgb(80, 255, 255, 255), 1f)) g.DrawArc(pen, x - r, y - r, 2 * r, 2 * r, 20, 130);
+            using (var b = new SolidBrush(Color.FromArgb(56, 70, 90, 150))) g.FillEllipse(b, x - r, y - r, 2 * r, 2 * r);
         }
     }
 
-    // ================================================================ Contrôles dessinés à la main
+    // ================================================================ Contrôles dessinés à la main (boutons carrés)
 
     class SpaceControl : Control
     {
@@ -228,6 +267,7 @@ namespace LunaQuest
         protected override void OnTextChanged(EventArgs e) { Invalidate(); base.OnTextChanged(e); }
     }
 
+    // Bouton carré : rouge érable pour l'action principale, bleu translucide pour les autres (comme les boutons du site).
     class MoonButton : SpaceControl
     {
         readonly bool primary;
@@ -240,7 +280,7 @@ namespace LunaQuest
             Font = primary ? Theme.ButtonBig : Theme.Button;
         }
 
-        // Variante rouge, pour une action qui arrête tout (Déconnecter).
+        // Variante sombre bordée de rouge, pour une action qui arrête tout (Déconnecter).
         public bool Danger { get { return danger; } set { if (danger == value) return; danger = value; Invalidate(); } }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -248,33 +288,29 @@ namespace LunaQuest
             var g = e.Graphics;
             Theme.Smooth(g);
             var r = new RectangleF(0.5f, 0.5f, Width - 1.5f, Height - 1.5f);
-            float radius = primary ? Height / 2f : 12f;
-            using (var path = Theme.Round(r, radius))
+            Color text = Theme.Text;
+            if (primary && !danger)
             {
-                if (primary)
-                {
-                    Color top = Theme.AccentLight, bottom = Theme.AccentDark;
-                    if (danger) { top = Color.FromArgb(255, 140, 150); bottom = Color.FromArgb(196, 46, 72); }
-                    if (!Enabled) { top = Theme.Alpha(top, 80); bottom = Theme.Alpha(bottom, 80); }
-                    else if (Pressed) { top = danger ? Color.FromArgb(230, 90, 105) : Theme.Accent; bottom = danger ? Color.FromArgb(160, 30, 55) : Color.FromArgb(34, 72, 176); }
-                    else if (Hover) { top = danger ? Color.FromArgb(255, 170, 178) : Color.FromArgb(160, 204, 255); bottom = danger ? Color.FromArgb(220, 60, 85) : Theme.Accent; }
-                    using (var b = new LinearGradientBrush(r, top, bottom, 90f)) g.FillPath(b, path);
-                    var gloss = new RectangleF(r.X + 3, r.Y + 2, r.Width - 6, r.Height * 0.46f);
-                    using (var gp = Theme.Round(gloss, radius))
-                    using (var gb = new LinearGradientBrush(gloss, Color.FromArgb(75, 255, 255, 255), Color.FromArgb(0, 255, 255, 255), 90f))
-                        g.FillPath(gb, gp);
-                    using (var pen = new Pen(Color.FromArgb(Enabled ? 130 : 50, 205, 228, 255), 1f)) g.DrawPath(pen, path);
-                }
-                else
-                {
-                    int fill = !Enabled ? 16 : Pressed ? 85 : Hover ? 62 : 34;
-                    using (var b = new SolidBrush(Color.FromArgb(fill, 120, 165, 255))) g.FillPath(b, path);
-                    using (var pen = new Pen(Color.FromArgb(!Enabled ? 40 : Hover ? 170 : 100, 145, 185, 255), 1f)) g.DrawPath(pen, path);
-                }
+                Color fill = !Enabled ? Color.FromArgb(70, Theme.Maple) : Pressed ? Color.FromArgb(205, 20, 34) : Hover ? Theme.Text : Theme.Maple;
+                if (Hover && Enabled && !Pressed) text = Theme.NightTop;
+                if (Enabled && !Hover) Theme.Glow(g, new RectangleF(-20, -16, Width + 40, Height + 32), Color.FromArgb(40, 255, 31, 46));
+                using (var b = new SolidBrush(fill)) g.FillRectangle(b, r);
+            }
+            else if (primary)
+            {
+                int fill = !Enabled ? 20 : Pressed ? 120 : Hover ? 80 : 40;
+                using (var b = new SolidBrush(Color.FromArgb(fill, 255, 31, 46))) g.FillRectangle(b, r);
+                using (var pen = new Pen(Color.FromArgb(Enabled ? 220 : 80, Theme.MapleSoft), 1.5f)) g.DrawRectangle(pen, r.X + 0.5f, r.Y + 0.5f, r.Width - 1, r.Height - 1);
+            }
+            else
+            {
+                Color fill = !Enabled ? Color.FromArgb(18, 45, 91, 255) : Pressed ? Theme.AccentDark : Hover ? Theme.Electric : Color.FromArgb(56, 45, 91, 255);
+                using (var b = new SolidBrush(fill)) g.FillRectangle(b, r);
+                using (var pen = new Pen(Color.FromArgb(Enabled ? 105 : 40, Theme.ElectricSoft), 1f)) g.DrawRectangle(pen, r.X, r.Y, r.Width, r.Height);
             }
             using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
-            using (var tb = new SolidBrush(Enabled ? Theme.Text : Theme.Alpha(Theme.Text, 110)))
-                g.DrawString(Text, Font, tb, new RectangleF(0, 0, Width, Height), sf);
+            using (var tb = new SolidBrush(Enabled ? text : Theme.Alpha(Theme.Text, 110)))
+                g.DrawString(Text.ToUpperInvariant(), Font, tb, new RectangleF(0, 0, Width, Height), sf);
         }
     }
 
@@ -303,23 +339,18 @@ namespace LunaQuest
         {
             var g = e.Graphics;
             Theme.Smooth(g);
-            var track = new RectangleF(0.5f, (Height - 24) / 2f, 46, 24);
+            var track = new RectangleF(0.5f, (Height - 22) / 2f, 44, 22);
             int a = Enabled ? 255 : 110;
-            using (var path = Theme.Round(track, 12))
-            {
-                if (on)
-                    using (var b = new LinearGradientBrush(track, Theme.Alpha(Theme.AccentLight, a), Theme.Alpha(Theme.AccentDark, a), 90f)) g.FillPath(b, path);
-                else
-                    using (var b = new SolidBrush(Color.FromArgb(Hover ? 70 : 45, 140, 170, 230))) g.FillPath(b, path);
-                using (var pen = new Pen(Color.FromArgb(on ? 120 : 90, 170, 200, 255), 1f)) g.DrawPath(pen, path);
-            }
-            float kx = on ? track.Right - 21 : track.X + 3;
-            var knob = new RectangleF(kx, track.Y + 3, 18, 18);
-            using (var b = new SolidBrush(Color.FromArgb(60, 0, 0, 30))) g.FillEllipse(b, knob.X, knob.Y + 1, 18, 18);
-            using (var b = new SolidBrush(Theme.Alpha(Color.White, a))) g.FillEllipse(b, knob);
+            if (on)
+                using (var b = new LinearGradientBrush(track, Theme.Alpha(Theme.Maple, a), Theme.Alpha(Theme.Electric, a), 0f)) g.FillRectangle(b, track);
+            else
+                using (var b = new SolidBrush(Color.FromArgb(Hover ? 70 : 42, 143, 178, 255))) g.FillRectangle(b, track);
+            using (var pen = new Pen(Color.FromArgb(on ? 120 : 80, 170, 195, 255), 1f)) g.DrawRectangle(pen, track.X, track.Y, track.Width, track.Height);
+            float kx = on ? track.Right - 19 : track.X + 3;
+            using (var b = new SolidBrush(Theme.Alpha(Theme.Text, a))) g.FillRectangle(b, kx, track.Y + 3, 16, 16);
             using (var sf = new StringFormat { LineAlignment = StringAlignment.Center })
             using (var tb = new SolidBrush(Theme.Alpha(Theme.Text, a)))
-                g.DrawString(Text, Font, tb, new RectangleF(58, 0, Width - 58, Height), sf);
+                g.DrawString(Text, Font, tb, new RectangleF(56, 0, Width - 56, Height), sf);
         }
     }
 
@@ -353,34 +384,22 @@ namespace LunaQuest
         protected override void OnMouseLeave(EventArgs e) { hoverIndex = -1; base.OnMouseLeave(e); }
         protected override void OnMouseClick(MouseEventArgs e) { if (Enabled && e.Button == MouseButtons.Left) SelectedIndex = IndexAt(e.X); base.OnMouseClick(e); }
 
+        // Onglets du site : choix actif couleur lune sur texte nuit, les autres en bleu translucide.
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics;
             Theme.Smooth(g);
             int a = Enabled ? 255 : 110;
-            var outer = new RectangleF(0.5f, 0.5f, Width - 1.5f, Height - 1.5f);
-            using (var path = Theme.Round(outer, outer.Height / 2))
-            {
-                using (var b = new SolidBrush(Color.FromArgb(30, 120, 165, 255))) g.FillPath(b, path);
-                using (var pen = new Pen(Color.FromArgb(80, 145, 185, 255), 1f)) g.DrawPath(pen, path);
-            }
-            float w = (Width - 6f) / Items.Length;
+            float gap = 4, w = (Width - gap * (Items.Length - 1)) / Items.Length;
             using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
             {
                 for (int i = 0; i < Items.Length; i++)
                 {
-                    var seg = new RectangleF(3 + i * w, 3, w, Height - 6.5f);
-                    using (var sp = Theme.Round(seg, seg.Height / 2))
-                    {
-                        if (i == selected)
-                        {
-                            using (var b = new LinearGradientBrush(seg, Theme.Alpha(Theme.AccentLight, a), Theme.Alpha(Theme.AccentDark, a), 90f)) g.FillPath(b, sp);
-                            using (var pen = new Pen(Color.FromArgb(110, 205, 228, 255), 1f)) g.DrawPath(pen, sp);
-                        }
-                        else if (i == hoverIndex && Enabled)
-                            using (var b = new SolidBrush(Color.FromArgb(34, 160, 195, 255))) g.FillPath(b, sp);
-                    }
-                    using (var tb = new SolidBrush(Theme.Alpha(i == selected ? Theme.Text : Theme.Soft, a)))
+                    var seg = new RectangleF(i * (w + gap), 0, w, Height - 1);
+                    Color fill = i == selected ? Theme.Alpha(Theme.MoonLight, a)
+                        : Color.FromArgb(i == hoverIndex && Enabled ? 80 : 32, 45, 91, 255);
+                    using (var b = new SolidBrush(fill)) g.FillRectangle(b, seg);
+                    using (var tb = new SolidBrush(i == selected ? Theme.NightTop : Theme.Alpha(i == hoverIndex ? Theme.Text : Theme.Soft, a)))
                         g.DrawString(Items[i], Font, tb, seg, sf);
                 }
             }
@@ -391,7 +410,7 @@ namespace LunaQuest
     {
         int min, max = 100, step = 1, val;
         bool dragging;
-        const int Thumb = 20;
+        const int Thumb = 16;
         public event EventHandler ValueChanged;
 
         public MoonSlider(int min, int max, int step) { this.min = min; this.max = max; this.step = step; val = min; Height = 30; }
@@ -420,29 +439,26 @@ namespace LunaQuest
         protected override void OnMouseMove(MouseEventArgs e) { if (dragging) SetFromX(e.X); base.OnMouseMove(e); }
         protected override void OnMouseUp(MouseEventArgs e) { dragging = false; base.OnMouseUp(e); }
 
+        // Barre du site : piste sombre, remplissage rouge vers bleu, curseur carré.
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics;
             Theme.Smooth(g);
             int a = Enabled ? 255 : 110;
             float cy = Height / 2f;
-            var track = new RectangleF(Thumb / 2f, cy - 3, Width - Thumb, 6);
-            using (var p = Theme.Round(track, 3)) using (var b = new SolidBrush(Color.FromArgb(50, 150, 180, 255))) g.FillPath(b, p);
+            var track = new RectangleF(Thumb / 2f, cy - 4, Width - Thumb, 8);
+            using (var b = new SolidBrush(Color.FromArgb(32, 143, 178, 255))) g.FillRectangle(b, track);
             float t = max > min ? (float)(val - min) / (max - min) : 0;
             float x = track.X + t * track.Width;
             if (x - track.X > 1)
-            {
-                var fill = new RectangleF(track.X, track.Y, x - track.X, track.Height);
-                using (var p = Theme.Round(fill, 3))
-                using (var b = new LinearGradientBrush(new RectangleF(track.X, track.Y, track.Width, track.Height), Theme.Alpha(Theme.AccentDark, a), Theme.Alpha(Theme.AccentLight, a), 0f))
-                    g.FillPath(b, p);
-            }
-            if (Hover || dragging) Theme.Glow(g, new RectangleF(x - 15, cy - 15, 30, 30), Color.FromArgb(90, 120, 170, 255));
-            using (var b = new SolidBrush(Theme.Alpha(Color.White, a))) g.FillEllipse(b, x - 9, cy - 9, 18, 18);
-            using (var pen = new Pen(Theme.Alpha(Theme.Accent, a), 2f)) g.DrawEllipse(pen, x - 9, cy - 9, 18, 18);
+                using (var b = new LinearGradientBrush(track, Theme.Alpha(Theme.Maple, a), Theme.Alpha(Theme.Electric, a), 0f))
+                    g.FillRectangle(b, track.X, track.Y, x - track.X, track.Height);
+            if (Hover || dragging) Theme.Glow(g, new RectangleF(x - 16, cy - 16, 32, 32), Color.FromArgb(90, 255, 31, 46));
+            using (var b = new SolidBrush(Theme.Alpha(Theme.Text, a))) g.FillRectangle(b, x - 7, cy - 9, 14, 18);
         }
     }
 
+    // Témoin d'état : petit losange lumineux, comme les puces du site.
     class StatusDot : SpaceControl
     {
         Color dot = Theme.Dim;
@@ -455,9 +471,107 @@ namespace LunaQuest
         {
             var g = e.Graphics;
             Theme.Smooth(g);
-            Theme.Glow(g, new RectangleF(0, 0, Width, Height), Theme.Alpha(dot, 120));
-            float d = 9;
-            using (var b = new SolidBrush(dot)) g.FillEllipse(b, (Width - d) / 2, (Height - d) / 2, d, d);
+            Theme.Glow(g, new RectangleF(0, 0, Width, Height), Theme.Alpha(dot, 110));
+            float cx = Width / 2f, cy = Height / 2f, d = 5;
+            using (var b = new SolidBrush(dot))
+                g.FillPolygon(b, new[] { new PointF(cx, cy - d), new PointF(cx + d, cy), new PointF(cx, cy + d), new PointF(cx - d, cy) });
+        }
+    }
+
+    // Bouton carré de la barre de gauche, avec une icône au trait comme celles du site.
+    class NavButton : SpaceControl
+    {
+        public readonly string Icon;
+        bool selected;
+
+        public NavButton(string icon, string label) { Icon = icon; Text = label; Size = new Size(52, 52); }
+
+        public bool Selected { get { return selected; } set { if (selected == value) return; selected = value; Invalidate(); } }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics;
+            Theme.Smooth(g);
+            var r = new RectangleF(0, 0, Width - 1, Height - 1);
+            if (selected)
+            {
+                using (var b = new LinearGradientBrush(r, Theme.Maple, Theme.Electric, 45f)) g.FillRectangle(b, r);
+            }
+            else if (Hover)
+            {
+                using (var b = new SolidBrush(Color.FromArgb(70, 45, 91, 255))) g.FillRectangle(b, r);
+                using (var pen = new Pen(Color.FromArgb(110, Theme.ElectricSoft), 1f)) g.DrawRectangle(pen, r.X, r.Y, r.Width, r.Height);
+            }
+            Color stroke = selected || Hover ? Theme.Text : Theme.Soft;
+            var state = g.Save();
+            float s = 26f / 24f;
+            g.TranslateTransform((Width - 26) / 2f, (Height - 26) / 2f);
+            g.ScaleTransform(s, s);
+            using (var pen = new Pen(stroke, 1.9f) { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round })
+                DrawIcon(g, pen);
+            g.Restore(state);
+        }
+
+        // Tracés dans un repère 24×24, repris des icônes SVG du site.
+        void DrawIcon(Graphics g, Pen pen)
+        {
+            switch (Icon)
+            {
+                case "plug": // Connexion : une prise
+                    g.DrawLine(pen, 9, 7, 9, 3);
+                    g.DrawLine(pen, 15, 7, 15, 3);
+                    using (var p = new GraphicsPath())
+                    {
+                        p.AddLine(7, 7, 17, 7);
+                        p.AddLine(17, 7, 17, 12);
+                        p.AddArc(7, 7, 10, 10, 0, 180);
+                        p.CloseFigure();
+                        g.DrawPath(pen, p);
+                    }
+                    g.DrawLine(pen, 12, 17, 12, 21);
+                    break;
+                case "sliders": // Réglages : des curseurs
+                    g.DrawLine(pen, 4, 6, 20, 6);
+                    g.DrawLine(pen, 4, 12, 14, 12);
+                    g.DrawLine(pen, 4, 18, 11, 18);
+                    g.DrawEllipse(pen, 15, 12, 6, 6);
+                    break;
+                case "book": // Guide : un livre ouvert
+                    g.DrawLine(pen, 12, 7, 12, 20);
+                    g.DrawLines(pen, new[] { new PointF(12, 7), new PointF(9, 5), new PointF(3, 5), new PointF(3, 18), new PointF(9, 18), new PointF(12, 20) });
+                    g.DrawLines(pen, new[] { new PointF(12, 7), new PointF(15, 5), new PointF(21, 5), new PointF(21, 18), new PointF(15, 18), new PointF(12, 20) });
+                    break;
+            }
+        }
+    }
+
+    // Étiquette qui apparaît à droite d'une icône de la barre de gauche quand on la survole.
+    class NavTip : Control
+    {
+        public NavTip()
+        {
+            SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
+            Size = new Size(150, 34);
+            Visible = false;
+        }
+
+        public void ShowNext(Control target)
+        {
+            Width = (int)Math.Ceiling(Text.Length * 9.2f + 34);
+            Location = new Point(target.Right + 10, target.Top + (target.Height - Height) / 2);
+            Visible = true;
+            BringToFront();
+            Invalidate();
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics;
+            Theme.Smooth(g);
+            g.Clear(Color.FromArgb(10, 12, 32));
+            using (var pen = new Pen(Color.FromArgb(90, Theme.MapleSoft), 1f)) g.DrawRectangle(pen, 0, 0, Width - 1, Height - 1);
+            using (var b = new SolidBrush(Theme.Maple)) g.FillRectangle(b, 0, 0, 3, Height);
+            Theme.DrawSpaced(g, Text.ToUpperInvariant(), Theme.Eyebrow, Theme.Text, 14, (Height - Theme.Eyebrow.Height) / 2f + 1, 1.6f);
         }
     }
 
@@ -1128,8 +1242,12 @@ namespace LunaQuest
         int page;
         Bitmap space;
 
+        const int SidebarWidth = 80;
+        NavButton[] nav;
+        NavTip navTip;
+        Timer fxTimer;
+
         // Connexion
-        Segmented tabs;
         readonly StatusDot[] dots = new StatusDot[6];
         readonly Label[] values = new Label[6];
         Label battery;
@@ -1168,7 +1286,7 @@ namespace LunaQuest
             desktopViewer = new DesktopViewer(appDir, Log);
 
             Text = "LunaQuest";
-            ClientSize = new Size(960, 700);
+            ClientSize = new Size(1100, 760);
             FormBorderStyle = FormBorderStyle.FixedSingle;
             MaximizeBox = false;
             StartPosition = FormStartPosition.CenterScreen;
@@ -1178,8 +1296,8 @@ namespace LunaQuest
             DoubleBuffered = true;
             try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
 
-            space = SpaceArt.Render(ClientSize);
-            BuildHeader();
+            space = SpaceArt.Render(ClientSize, SidebarWidth);
+            BuildSidebar();
             BuildConnectionPage();
             BuildSettingsPage();
             BuildGuidePage();
@@ -1204,6 +1322,10 @@ namespace LunaQuest
             Poll();
 
             if (config.DesktopViewer) desktopViewer.Start();
+
+            fxTimer = new Timer { Interval = 40 };
+            fxTimer.Tick += delegate { Animate(); };
+            fxTimer.Start();
 
             // On rend au casque sa mise en veille normale en quittant.
             FormClosing += delegate
@@ -1252,48 +1374,66 @@ namespace LunaQuest
             return AddTo(pageIndex, new MoonButton(text, primary) { Location = new Point(x, y), Size = new Size(w, h) });
         }
 
-        void BuildHeader()
+        // Barre de gauche : une icône par page, le nom apparaît au survol. Le guide reste tout en bas.
+        void BuildSidebar()
         {
-            AddLabel(-1, "LunaQuest", Theme.Title, Theme.Text, 28, 20);
-            AddLabel(-1, "PC VR en USB pour Meta Quest · propulsé par ALVR", Theme.Body, Theme.Soft, 34, 70);
-            tabs = AddTo(-1, new Segmented("Connexion", "Réglages ALVR", "Guide") { Location = new Point(32, 110), Size = new Size(430, 40) });
-            tabs.SelectedIndex = 0;
-            tabs.SelectionChanged += delegate { ShowPage(tabs.SelectedIndex); };
+            navTip = new NavTip();
+            Controls.Add(navTip);
+            var items = new[] { new NavButton("plug", "Connexion"), new NavButton("sliders", "Réglages ALVR"), new NavButton("book", "Guide") };
+            int[] tops = { 96, 156, ClientSize.Height - 52 - 22 };
+            nav = items;
+            for (int i = 0; i < items.Length; i++)
+            {
+                int index = i;
+                var b = items[i];
+                b.Location = new Point((SidebarWidth - b.Width) / 2, tops[i]);
+                b.Click += delegate { ShowPage(index); };
+                b.MouseEnter += delegate { navTip.Text = b.Text; navTip.ShowNext(b); };
+                b.MouseLeave += delegate { navTip.Visible = false; };
+                AddTo(-1, b);
+            }
         }
 
         void BuildConnectionPage()
         {
-            cards[0].Add(new Card(32, 170, 440, 320, "État"));
-            cards[0].Add(new Card(492, 170, 436, 320, "Actions"));
-            cards[0].Add(new Card(32, 506, 896, 174, "Journal"));
+            cards[0].Add(new Card(104, 116, 470, 336, "État"));
+            cards[0].Add(new Card(590, 116, 482, 336, "Actions"));
+            cards[0].Add(new Card(104, 468, 968, 264, "Journal"));
 
-            battery = AddLabel(0, "", Theme.Small, Theme.Soft, 302, 184, 150);
+            battery = AddLabel(0, "", Theme.Small, Theme.Soft, 404, 128, 150);
             battery.TextAlign = ContentAlignment.MiddleRight;
 
             string[] names = { "ADB", "Casque", "ALVR (casque)", "Tunnel USB", "ALVR (PC)", "SteamVR" };
             for (int i = 0; i < names.Length; i++)
             {
-                int y = 216 + i * 40;
-                dots[i] = AddTo(0, new StatusDot { Location = new Point(50, y) });
-                AddLabel(0, names[i], Theme.Body, Theme.Soft, 78, y);
-                values[i] = AddLabel(0, "…", Theme.BodyBold, Theme.Text, 196, y - 1, 266);
+                int y = 168 + i * 42;
+                dots[i] = AddTo(0, new StatusDot { Location = new Point(122, y) });
+                AddLabel(0, names[i], Theme.Body, Theme.Soft, 150, y);
+                values[i] = AddLabel(0, "…", Theme.BodyBold, Theme.Text, 280, y - 1, 280);
             }
 
-            btnConnect = AddButton(0, "Connecter", true, 512, 212, 396, 58);
+            btnConnect = AddButton(0, "Connecter", true, 610, 158, 442, 60);
             btnConnect.Click += delegate { if (connectedState) RunBusy(FullDisconnect); else RunBusy(Connect); };
 
-            btnAdb = AddButton(0, "Installer ADB", false, 512, 286, 192, 42);
+            btnAdb = AddButton(0, "Installer ADB", false, 610, 234, 215, 42);
             btnAdb.Click += delegate { RunBusy(InstallAdb); };
-            btnApk = AddButton(0, "Installer l'appli casque", false, 716, 286, 192, 42);
+            btnApk = AddButton(0, "Installer l'appli casque", false, 837, 234, 215, 42);
             btnApk.Click += delegate { InstallApk(); };
-            btnFolder = AddButton(0, "Dossier ALVR…", false, 512, 338, 192, 42);
+            btnFolder = AddButton(0, "Dossier ALVR…", false, 610, 286, 215, 42);
             btnFolder.Click += delegate { PickAlvrFolder(); };
-            btnRestartVr = AddButton(0, "Relancer SteamVR", false, 716, 338, 192, 42);
+            btnRestartVr = AddButton(0, "Relancer SteamVR", false, 837, 286, 215, 42);
             btnRestartVr.Click += delegate { RunBusy(RestartSteamVr); };
 
-            tglAuto = AddTo(0, new ToggleSwitch("Connexion automatique au branchement") { Location = new Point(514, 392), Size = new Size(394, 28), Checked = config.AutoConnect });
+            tglAuto = AddTo(0, new ToggleSwitch("Connexion automatique au branchement") { Location = new Point(612, 344), Size = new Size(440, 28), Checked = config.AutoConnect });
             tglAuto.CheckedChanged += delegate { config.AutoConnect = tglAuto.Checked; config.Save(); };
-            tglDesktop = AddTo(0, new ToggleSwitch("Écran du PC dans le casque (2× menu gauche)") { Location = new Point(514, 456), Size = new Size(394, 28), Checked = config.DesktopViewer });
+            tglAwake = AddTo(0, new ToggleSwitch("Garder le casque éveillé (évite les jeux figés)") { Location = new Point(612, 376), Size = new Size(440, 28), Checked = config.KeepAwake });
+            tglAwake.CheckedChanged += delegate
+            {
+                config.KeepAwake = tglAwake.Checked;
+                config.Save();
+                if (last.Ready) { string serial = last.Serial; bool on = tglAwake.Checked; Task.Run(() => SetKeepAwake(serial, on)); }
+            };
+            tglDesktop = AddTo(0, new ToggleSwitch("Écran du PC dans le casque (2× menu gauche)") { Location = new Point(612, 408), Size = new Size(440, 28), Checked = config.DesktopViewer });
             tglDesktop.CheckedChanged += delegate
             {
                 config.DesktopViewer = tglDesktop.Checked;
@@ -1301,84 +1441,76 @@ namespace LunaQuest
                 if (tglDesktop.Checked) desktopViewer.Start();
                 else Task.Run(() => { desktopViewer.Stop(); Log("Écran PC désactivé."); });
             };
-            tglAwake = AddTo(0, new ToggleSwitch("Garder le casque éveillé (évite les jeux figés)") { Location = new Point(514, 424), Size = new Size(394, 28), Checked = config.KeepAwake });
-            tglAwake.CheckedChanged += delegate
-            {
-                config.KeepAwake = tglAwake.Checked;
-                config.Save();
-                if (last.Ready) { string serial = last.Serial; bool on = tglAwake.Checked; Task.Run(() => SetKeepAwake(serial, on)); }
-            };
 
             log = AddTo(0, new TextBox
             {
                 Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.None, BorderStyle = BorderStyle.None,
                 BackColor = Theme.Field, ForeColor = Theme.Soft, Font = Theme.Mono,
-                Location = new Point(52, 546), Size = new Size(856, 118)
+                Location = new Point(126, 510), Size = new Size(924, 202)
             });
             fields.Add(log);
         }
 
         void BuildSettingsPage()
         {
-            cards[1].Add(new Card(32, 170, 440, 322, "Image"));
-            cards[1].Add(new Card(492, 170, 436, 322, "Son, manettes et image"));
-            cards[1].Add(new Card(32, 508, 440, 108, "Casque filaire"));
-            cards[1].Add(new Card(492, 508, 436, 108, "Mes préréglages"));
+            cards[1].Add(new Card(104, 116, 470, 352, "Image"));
+            cards[1].Add(new Card(590, 116, 482, 352, "Son, manettes et image"));
+            cards[1].Add(new Card(104, 484, 470, 112, "Casque filaire"));
+            cards[1].Add(new Card(590, 484, 482, 112, "Mes préréglages"));
 
-            AddLabel(1, "Images par seconde (Hz)", Theme.Body, Theme.Soft, 52, 204);
-            segFps = AddTo(1, new Segmented("72", "80", "90", "120") { Location = new Point(52, 228), Size = new Size(400, 38) });
+            AddLabel(1, "Images par seconde (Hz)", Theme.Body, Theme.Soft, 124, 150);
+            segFps = AddTo(1, new Segmented("72", "80", "90", "120") { Location = new Point(124, 174), Size = new Size(430, 38) });
 
-            AddLabel(1, "Débit vidéo", Theme.Body, Theme.Soft, 52, 282);
-            lblBitrate = AddLabel(1, "", Theme.BodyBold, Theme.Text, 302, 281, 150);
+            AddLabel(1, "Débit vidéo", Theme.Body, Theme.Soft, 124, 228);
+            lblBitrate = AddLabel(1, "", Theme.BodyBold, Theme.Text, 404, 227, 150);
             lblBitrate.TextAlign = ContentAlignment.MiddleRight;
-            sldBitrate = AddTo(1, new MoonSlider(20, 300, 5) { Location = new Point(48, 306), Size = new Size(408, 30) });
+            sldBitrate = AddTo(1, new MoonSlider(20, 300, 5) { Location = new Point(122, 252), Size = new Size(434, 30) });
 
-            AddLabel(1, "Codec", Theme.Body, Theme.Soft, 52, 350);
-            segCodec = AddTo(1, new Segmented("H.264", "HEVC", "AV1") { Location = new Point(52, 374), Size = new Size(400, 38) });
+            AddLabel(1, "Codec", Theme.Body, Theme.Soft, 124, 296);
+            segCodec = AddTo(1, new Segmented("H.264", "HEVC", "AV1") { Location = new Point(124, 320), Size = new Size(430, 38) });
 
-            AddLabel(1, "Résolution par œil (largeur en pixels)", Theme.Body, Theme.Soft, 52, 422);
-            segRes = AddTo(1, new Segmented("1680", "2064", "2448", "2880", "3264", "3840") { Location = new Point(52, 446), Size = new Size(400, 38) });
+            AddLabel(1, "Résolution par œil (largeur en pixels)", Theme.Body, Theme.Soft, 124, 374);
+            segRes = AddTo(1, new Segmented("1680", "2064", "2448", "2880", "3264", "3840") { Location = new Point(124, 398), Size = new Size(430, 38) });
 
-            tglGameAudio = AddTo(1, new ToggleSwitch("Son du jeu dans le casque") { Location = new Point(512, 210), Size = new Size(396, 28) });
-            tglMic = AddTo(1, new ToggleSwitch("Micro du casque") { Location = new Point(512, 254), Size = new Size(396, 28) });
-            lblMicHint = AddLabel(1, "", Theme.Small, Theme.Dim, 570, 284, 340);
-            tglSkeleton = AddTo(1, new ToggleSwitch("Mains squelettiques (suivi des mains)") { Location = new Point(512, 320), Size = new Size(396, 28) });
-            AddLabel(1, "À laisser activé : sans lui, une manette peut manquer.", Theme.Small, Theme.Dim, 570, 350, 340);
-            tglFoveation = AddTo(1, new ToggleSwitch("Fovéation (bords de l'image moins nets)") { Location = new Point(512, 380), Size = new Size(396, 28) });
-            AddLabel(1, "Plus léger pour le câble, mais l'image paraît baveuse.", Theme.Small, Theme.Dim, 570, 408, 340);
-            tglZone = AddTo(1, new ToggleSwitch("Mémoire de zone (trackers)") { Location = new Point(512, 436), Size = new Size(396, 28) });
-            AddLabel(1, "Garde la calibration des trackers entre les sessions.", Theme.Small, Theme.Dim, 570, 464, 340);
+            tglGameAudio = AddTo(1, new ToggleSwitch("Son du jeu dans le casque") { Location = new Point(610, 156), Size = new Size(440, 28) });
+            tglMic = AddTo(1, new ToggleSwitch("Micro du casque") { Location = new Point(610, 200), Size = new Size(440, 28) });
+            lblMicHint = AddLabel(1, "", Theme.Small, Theme.Dim, 666, 230, 390);
+            tglSkeleton = AddTo(1, new ToggleSwitch("Mains squelettiques (suivi des mains)") { Location = new Point(610, 266), Size = new Size(440, 28) });
+            AddLabel(1, "À laisser activé : sans lui, une manette peut manquer.", Theme.Small, Theme.Dim, 666, 296, 390);
+            tglFoveation = AddTo(1, new ToggleSwitch("Fovéation (bords de l'image moins nets)") { Location = new Point(610, 326), Size = new Size(440, 28) });
+            AddLabel(1, "Plus léger pour le câble, mais l'image paraît baveuse.", Theme.Small, Theme.Dim, 666, 354, 390);
+            tglZone = AddTo(1, new ToggleSwitch("Mémoire de zone (trackers)") { Location = new Point(610, 384), Size = new Size(440, 28) });
+            AddLabel(1, "Garde la calibration des trackers entre les sessions.", Theme.Small, Theme.Dim, 666, 412, 390);
 
-            AddLabel(1, "Nom du casque (ex. 1234.client.alvr)", Theme.Body, Theme.Soft, 52, 542);
+            AddLabel(1, "Nom du casque (ex. 1234.client.alvr)", Theme.Body, Theme.Soft, 124, 518);
             txtHostname = AddTo(1, new TextBox
             {
                 BorderStyle = BorderStyle.None, BackColor = Theme.Field, ForeColor = Theme.Text, Font = new Font("Segoe UI", 10.5f),
-                Location = new Point(56, 576), Size = new Size(190, 24)
+                Location = new Point(130, 552), Size = new Size(200, 24)
             });
             fields.Add(txtHostname);
-            lblClients = AddLabel(1, "", Theme.Small, Theme.Soft, 268, 578, 194);
+            lblClients = AddLabel(1, "", Theme.Small, Theme.Soft, 352, 554, 210);
 
             // Mes préréglages : on choisit un nom dans la liste ou on en tape un nouveau.
             presets = new PresetStore(Path.Combine(appDir, "LunaQuest.presets"));
             cmbPresets = AddTo(1, new ComboBox
             {
                 DropDownStyle = ComboBoxStyle.DropDown, FlatStyle = FlatStyle.Flat, BackColor = Theme.Field, ForeColor = Theme.Text,
-                Font = new Font("Segoe UI", 10f), Location = new Point(516, 542), Size = new Size(388, 26)
+                Font = new Font("Segoe UI", 10f), Location = new Point(616, 518), Size = new Size(430, 26)
             });
             fields.Add(cmbPresets);
-            btnPresetLoad = AddButton(1, "Charger", false, 512, 578, 124, 30);
+            btnPresetLoad = AddButton(1, "Charger", false, 610, 556, 140, 30);
             btnPresetLoad.Click += delegate { LoadPreset(); };
-            btnPresetSave = AddButton(1, "Sauvegarder", false, 644, 578, 140, 30);
+            btnPresetSave = AddButton(1, "Sauvegarder", false, 758, 556, 150, 30);
             btnPresetSave.Click += delegate { SavePreset(); };
-            btnPresetDelete = AddButton(1, "Supprimer", false, 792, 578, 116, 30);
+            btnPresetDelete = AddButton(1, "Supprimer", false, 916, 556, 136, 30);
             btnPresetDelete.Click += delegate { DeletePreset(); };
             RefreshPresetList(null);
 
-            lblSettingsStatus = AddLabel(1, "", Theme.Small, Theme.Soft, 34, 646, 490);
-            btnOpenAlvr = AddButton(1, "Ouvrir ALVR (avancé)", false, 540, 632, 180, 44);
+            lblSettingsStatus = AddLabel(1, "", Theme.Small, Theme.Soft, 106, 636, 560);
+            btnOpenAlvr = AddButton(1, "Ouvrir ALVR (avancé)", false, 682, 620, 200, 46);
             btnOpenAlvr.Click += delegate { OpenAlvrDashboard(); };
-            btnSave = AddButton(1, "Enregistrer", true, 734, 632, 194, 46);
-            btnSave.Font = Theme.BodyBold;
+            btnSave = AddButton(1, "Enregistrer", true, 892, 620, 180, 46);
             btnSave.Click += delegate { SaveSettings(); };
 
             EventHandler dirty = delegate { MarkDirty(); };
@@ -1396,8 +1528,8 @@ namespace LunaQuest
 
         void BuildGuidePage()
         {
-            cards[2].Add(new Card(32, 170, 896, 510, "Premiers pas"));
-            var open = AddButton(2, "Ouvrir le tutoriel complet", false, 704, 624, 204, 40);
+            cards[2].Add(new Card(104, 116, 968, 616, "Premiers pas"));
+            var open = AddButton(2, "Ouvrir le tutoriel complet", false, 828, 670, 224, 42);
             open.Click += delegate
             {
                 string tuto = Path.Combine(appDir, "Tutoriel.html");
@@ -1421,15 +1553,15 @@ namespace LunaQuest
             for (int i = 0; i < GuideSteps.GetLength(0); i++)
             {
                 int col = i % 2, row = i / 2;
-                int x = 56 + col * 444, y = 214 + row * 118;
-                var circle = new RectangleF(x, y, 34, 34);
-                Theme.Glow(g, new RectangleF(x - 10, y - 10, 54, 54), Color.FromArgb(70, 110, 160, 255));
-                using (var b = new LinearGradientBrush(circle, Theme.AccentLight, Theme.AccentDark, 90f)) g.FillEllipse(b, circle);
+                int x = 132 + col * 484, y = 166 + row * 140;
+                var badge = new RectangleF(x, y, 34, 34);
+                Theme.Glow(g, new RectangleF(x - 12, y - 12, 58, 58), Color.FromArgb(60, 255, 31, 46));
+                using (var b = new LinearGradientBrush(badge, Theme.Maple, Theme.Electric, 45f)) g.FillRectangle(b, badge);
                 using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
                 using (var tb = new SolidBrush(Theme.Text))
-                    g.DrawString((i + 1).ToString(), Theme.BodyBold, tb, circle, sf);
-                using (var tb = new SolidBrush(Theme.Text)) g.DrawString(GuideSteps[i, 0], Theme.StepTitle, tb, x + 48, y + 4);
-                using (var tb = new SolidBrush(Theme.Soft)) g.DrawString(GuideSteps[i, 1], Theme.Body, tb, new RectangleF(x + 48, y + 30, 368, 78));
+                    g.DrawString((i + 1).ToString("00"), Theme.Button, tb, badge, sf);
+                using (var tb = new SolidBrush(Theme.Text)) g.DrawString(GuideSteps[i, 0], Theme.StepTitle, tb, x + 50, y + 4);
+                using (var tb = new SolidBrush(Theme.Soft)) g.DrawString(GuideSteps[i, 1], Theme.Body, tb, new RectangleF(x + 50, y + 32, 400, 96));
             }
         }
 
@@ -1440,33 +1572,141 @@ namespace LunaQuest
             for (int i = 0; i < pages.Length; i++)
                 foreach (var c in pages[i]) c.Visible = i == index;
             ResumeLayout();
+            for (int i = 0; i < nav.Length; i++) nav[i].Selected = i == index;
             if (index == 1 && !settingsDirty) LoadSettingsUi();
+            glitchTicks = 7; // petit glitch du titre à chaque changement de page, comme sur le site
             Invalidate();
+        }
+
+        // ---------------------------------------------------------------- Décor animé : glitch du titre et feuilles d'érable
+
+        static readonly Rectangle TitleArea = new Rectangle(98, 6, 440, 100);
+        readonly Random fx = new Random();
+        int glitchTicks, nextGlitch = 90;
+        float gx1, gx2, gy1, gy2;
+
+        class FallingLeaf { public float X, Y, Size, Angle, Spin, Speed, Sway; public Color Color; public bool Drawn; public Rectangle Last; }
+        readonly List<FallingLeaf> leaves = new List<FallingLeaf>();
+
+        FallingLeaf NewLeaf(bool top)
+        {
+            bool blue = fx.NextDouble() < .15;
+            return new FallingLeaf
+            {
+                X = SidebarWidth + (float)fx.NextDouble() * (ClientSize.Width - SidebarWidth),
+                Y = top ? -30 : (float)fx.NextDouble() * ClientSize.Height,
+                Size = 7 + (float)fx.NextDouble() * 10,
+                Angle = (float)fx.NextDouble() * 360,
+                Spin = ((float)fx.NextDouble() - .5f) * 2.4f,
+                Speed = .45f + (float)fx.NextDouble() * .7f,
+                Sway = (float)fx.NextDouble() * 6.28f,
+                Color = blue ? Color.FromArgb(70 + fx.Next(70), 45, 91, 255) : Color.FromArgb(70 + fx.Next(80), 255, 31, 46)
+            };
+        }
+
+        static Rectangle LeafBounds(FallingLeaf l)
+        {
+            int r = (int)Math.Ceiling(l.Size * 1.1f) + 2;
+            return new Rectangle((int)l.X - r, (int)l.Y - r, 2 * r, 2 * r);
+        }
+
+        // Une feuille n'est dessinée que sur le fond nu : jamais sur une carte, un contrôle ou la barre de gauche,
+        // sinon elle resterait figée dans le fond des contrôles transparents.
+        bool LeafVisible(Rectangle r)
+        {
+            if (r.Left < SidebarWidth + 2) return false;
+            foreach (var card in cards[page]) if (card.Bounds.IntersectsWith(r)) return false;
+            foreach (Control c in Controls) if (c.Visible && c.Bounds.IntersectsWith(r)) return false;
+            return true;
+        }
+
+        void Animate()
+        {
+            if (WindowState == FormWindowState.Minimized) return;
+            while (leaves.Count < 12) leaves.Add(NewLeaf(false));
+            for (int i = 0; i < leaves.Count; i++)
+            {
+                var l = leaves[i];
+                if (l.Drawn) Invalidate(l.Last);
+                l.Sway += .03f;
+                l.X += (float)Math.Sin(l.Sway) * .7f;
+                l.Y += l.Speed;
+                l.Angle += l.Spin;
+                if (l.Y > ClientSize.Height + 30) { leaves[i] = l = NewLeaf(true); }
+                var r = LeafBounds(l);
+                l.Drawn = LeafVisible(r);
+                l.Last = r;
+                if (l.Drawn) Invalidate(r);
+            }
+
+            if (glitchTicks > 0)
+            {
+                glitchTicks--;
+                gx1 = fx.Next(-7, 8); gx2 = fx.Next(-7, 8);
+                gy1 = fx.Next(0, 70); gy2 = fx.Next(0, 70);
+                Invalidate(TitleArea);
+                if (glitchTicks == 0) nextGlitch = 70 + fx.Next(110);
+            }
+            else if (--nextGlitch <= 0) glitchTicks = 6;
+        }
+
+        void PaintTitle(Graphics g)
+        {
+            const float x = 104, y = 10;
+            var luna = g.MeasureString("LUNA", Theme.Display, PointF.Empty, StringFormat.GenericTypographic);
+            var quest = g.MeasureString("QUEST", Theme.Display, PointF.Empty, StringFormat.GenericTypographic);
+            using (var sf = StringFormat.GenericTypographic)
+            {
+                if (glitchTicks > 0)
+                {
+                    // Séparation rouge / bleue sur deux bandes horizontales, comme le titre du site.
+                    var clip = g.Clip;
+                    g.SetClip(new RectangleF(x - 10, y + gy1, 420, 18), CombineMode.Intersect);
+                    using (var b = new SolidBrush(Color.FromArgb(200, 255, 31, 46))) { g.DrawString("LUNA", Theme.Display, b, x + gx1, y, sf); g.DrawString("QUEST", Theme.Display, b, x + luna.Width + gx1, y, sf); }
+                    g.Clip = clip;
+                    g.SetClip(new RectangleF(x - 10, y + gy2, 420, 16), CombineMode.Intersect);
+                    using (var b = new SolidBrush(Color.FromArgb(200, 45, 91, 255))) { g.DrawString("LUNA", Theme.Display, b, x + gx2, y, sf); g.DrawString("QUEST", Theme.Display, b, x + luna.Width + gx2, y, sf); }
+                    g.Clip = clip;
+                }
+                using (var b = new SolidBrush(Theme.Text)) g.DrawString("LUNA", Theme.Display, b, x, y, sf);
+                using (var b = new SolidBrush(Theme.Maple)) g.DrawString("QUEST", Theme.Display, b, x + luna.Width, y, sf);
+            }
+            // « by LD » griffonné en rouge, penché, au-dessus de la fin du titre.
+            var state = g.Save();
+            g.TranslateTransform(x + luna.Width + quest.Width + 6, y - 6);
+            g.RotateTransform(12);
+            using (var b = new SolidBrush(Theme.Maple)) g.DrawString("by LD", Theme.Tag, b, 0, 0);
+            g.Restore(state);
+            Theme.DrawSpaced(g, "PC VR · META QUEST · CÂBLE USB", Theme.Eyebrow, Theme.MapleSoft, x + 2, 74, 2.4f);
         }
 
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics;
-            g.DrawImageUnscaled(space, 0, 0);
+            var clip = e.ClipRectangle;
+            g.DrawImage(space, clip, clip, GraphicsUnit.Pixel);
             Theme.Smooth(g);
+            if (clip.IntersectsWith(TitleArea)) PaintTitle(g);
+            foreach (var l in leaves)
+                if (l.Drawn && clip.IntersectsWith(l.Last)) Theme.DrawLeaf(g, l.X, l.Y, l.Size, l.Angle, l.Color);
             foreach (var card in cards[page])
             {
-                using (var path = Theme.Round(card.Bounds, 18))
-                {
-                    using (var b = new SolidBrush(Theme.CardFill)) g.FillPath(b, path);
-                    using (var pen = new Pen(Theme.CardBorder, 1f)) g.DrawPath(pen, path);
-                }
-                using (var tb = new SolidBrush(Theme.Dim)) g.DrawString(card.Title.ToUpperInvariant(), Theme.CardTitle, tb, card.Bounds.X + 20, card.Bounds.Y + 14);
+                if (!clip.IntersectsWith(card.Bounds)) continue;
+                var r = new RectangleF(card.Bounds.X + .5f, card.Bounds.Y + .5f, card.Bounds.Width - 1, card.Bounds.Height - 1);
+                using (var b = new SolidBrush(Theme.CardFill)) g.FillRectangle(b, r);
+                using (var pen = new Pen(Theme.CardBorder, 1f)) g.DrawRectangle(pen, r.X, r.Y, r.Width, r.Height);
+                // Titre de carte façon « eyebrow » du site, souligné d'un trait rouge vers bleu.
+                Theme.DrawSpaced(g, card.Title.ToUpperInvariant(), Theme.CardTitle, Theme.MapleSoft, card.Bounds.X + 20, card.Bounds.Y + 14, 2f);
+                var bar = new RectangleF(card.Bounds.X + 20, card.Bounds.Y + 32, 46, 2);
+                using (var b = new LinearGradientBrush(new RectangleF(bar.X, bar.Y, bar.Width + 1, bar.Height), Theme.Maple, Theme.Electric, 0f)) g.FillRectangle(b, bar);
             }
             foreach (var f in fields)
             {
                 if (!f.Visible) continue;
                 var r = new RectangleF(f.Left - 10, f.Top - 7, f.Width + 20, f.Height + 14);
-                using (var path = Theme.Round(r, 10))
-                {
-                    using (var b = new SolidBrush(Theme.Field)) g.FillPath(b, path);
-                    using (var pen = new Pen(Color.FromArgb(70, 145, 185, 255), 1f)) g.DrawPath(pen, path);
-                }
+                if (!clip.IntersectsWith(Rectangle.Ceiling(r))) continue;
+                using (var b = new SolidBrush(Theme.Field)) g.FillRectangle(b, r);
+                using (var pen = new Pen(Color.FromArgb(60, 143, 178, 255), 1f)) g.DrawRectangle(pen, r.X, r.Y, r.Width, r.Height);
             }
             if (page == 2) PaintGuide(g);
         }
