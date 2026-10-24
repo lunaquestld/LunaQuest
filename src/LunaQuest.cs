@@ -735,6 +735,25 @@ namespace LunaQuest
             set { Set(S + "video.foveated_encoding.enabled", value); }
         }
 
+        // Au-delà de l'écran du casque, l'image est réduite par le compositeur de Meta. Son filtre « super
+        // sampling » fait la moyenne de plusieurs pixels au lieu d'en sauter : plus de détail, moins de scintillement.
+        // La netteté artificielle (sharpening) reste toujours coupée.
+        public const int HeadsetPanelWidth = 2064;
+        public bool SuperSampling
+        {
+            get
+            {
+                return GetBool(S + "video.clientside_post_processing.enabled")
+                    && GetString(S + "video.clientside_post_processing.content.super_sampling.variant") != "Disabled";
+            }
+            set
+            {
+                Set(S + "video.clientside_post_processing.enabled", value);
+                Set(S + "video.clientside_post_processing.content.super_sampling.variant", "Quality");
+                Set(S + "video.clientside_post_processing.content.sharpening.variant", "Disabled");
+            }
+        }
+
         // La quantification adaptative « Spatial » de NVENC (défaut d'ALVR) retire des bits aux zones chargées
         // de détails : ce sont justement les objets lointains, qui deviennent flous alors que le proche reste net.
         public string NvencAdaptiveQuantization
@@ -971,6 +990,7 @@ namespace LunaQuest
             s.Foveation = Foveation;
             s.Protocol = "Tcp"; // seul protocole qui passe par le tunnel USB
             s.NvencAdaptiveQuantization = "Disabled";
+            if (EyeWidth > 0) s.SuperSampling = EyeWidth > AlvrSession.HeadsetPanelWidth;
             if (!string.IsNullOrEmpty(NewClient)) s.AddWiredClient(NewClient);
         }
     }
@@ -2099,6 +2119,8 @@ namespace LunaQuest
                 v.ApplyTo(s);
                 if (s.FixCodecForWidth())
                     Log("Image de " + s.EncodedWidth + " px de large : trop pour le H264 (" + AlvrSession.H264MaxWidth + " px max), codec passé en HEVC.");
+                if (s.SuperSampling)
+                    Log("Résolution au-delà de l'écran du casque : filtre de réduction « super sampling » de Meta activé.");
                 s.Save();
                 Log("Réglages ALVR enregistrés.");
                 if (v.EyeWidth > 0)
