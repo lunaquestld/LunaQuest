@@ -1163,6 +1163,23 @@ namespace LunaQuest
             File.WriteAllText(path, json.Serialize(root), new UTF8Encoding(false));
         }
 
+        // Après un plantage, SteamVR bloque les drivers chargés à ce moment (« mode sans échec ») et ALVR
+        // ne se lance plus. On lève ce blocage (SteamVR doit être fermé). Renvoie true si c'était bloqué.
+        public static bool UnblockDriver(string driver)
+        {
+            string path = FilePath();
+            if (!File.Exists(path)) return false;
+            var json = new JavaScriptSerializer();
+            var root = json.DeserializeObject(File.ReadAllText(path)) as Dictionary<string, object>;
+            object o;
+            var section = root != null && root.TryGetValue("driver_" + driver, out o) ? o as Dictionary<string, object> : null;
+            if (section == null || !section.ContainsKey("blocked_by_safe_mode")) return false;
+            section.Remove("blocked_by_safe_mode");
+            File.Copy(path, path + ".lunaquest.bak", true);
+            File.WriteAllText(path, json.Serialize(root), new UTF8Encoding(false));
+            return true;
+        }
+
         // Rôles donnés aux vrais trackers Vive dans SteamVR (Gérer les trackers) : numéro de série → rôle.
         public static Dictionary<string, string> ReadViveTrackerRoles()
         {
@@ -2288,6 +2305,12 @@ namespace LunaQuest
                     try { AlvrInstall.Register(s.AlvrFolder); Log("Driver ALVR ajouté à SteamVR."); }
                     catch (Exception e) { Log("Impossible d'ajouter ALVR à SteamVR : " + e.Message); }
                 }
+                try
+                {
+                    if (SteamVrConfig.UnblockDriver("alvr_server"))
+                        Log("ALVR avait été bloqué par SteamVR après un plantage : réactivé.");
+                }
+                catch (Exception e) { Log("Impossible de réactiver ALVR dans SteamVR : " + e.Message); }
                 try
                 {
                     var session = AlvrSession.Load(AlvrInstall.SessionPath(s.AlvrFolder));
