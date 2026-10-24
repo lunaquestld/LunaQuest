@@ -552,109 +552,292 @@ namespace LunaQuest
         }
     }
 
-    // Aperçu en direct des appareils SteamVR : silhouette vue de dos avec chaque appareil à sa place,
-    // couleur selon le suivi, puis la liste avec le niveau de batterie.
+    // Aperçu en direct des appareils SteamVR : scène 3D (sol en grille, squelette lumineux) qu'on fait
+    // tourner à la souris, puis la liste des appareils avec leur suivi et leur batterie.
     class TrackerPreview : Control
     {
+        struct P3 { public float X, Y, Z; public P3(float x, float y, float z) { X = x; Y = y; Z = z; } }
+
+        // Positions affichées, lissées vers le dernier relevé pour un mouvement fluide.
+        readonly Dictionary<string, P3> shown = new Dictionary<string, P3>();
+        float yawOffset = 200f, pitch = 26f, forwardYaw;
+        bool haveForward, dragging;
+        Point dragStart;
+        float dragYaw, dragPitch;
+        const int SceneHeight = 330;
+
         public TrackerPreview()
         {
             SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
+            Cursor = Cursors.SizeWE;
         }
 
-        static Color StatusColor(VrDevice d)
+        // Appelé ~60 fois par seconde par la fenêtre tant que la page Corps est affichée.
+        public void Tick()
         {
-            return !d.Connected ? Theme.Dim : d.Tracking ? Theme.Green : Theme.Orange;
+            var devices = DesktopViewer.Devices;
+            if (devices != null)
+            {
+                foreach (var d in devices)
+                {
+                    if (!d.Connected) continue;
+                    string key = d.Index + d.Serial;
+                    P3 p;
+                    var target = new P3(d.X, d.Y, d.Z);
+                    if (!shown.TryGetValue(key, out p) || Dist(p, target) > 1f) p = target;
+                    else p = new P3(p.X + (target.X - p.X) * 0.35f, p.Y + (target.Y - p.Y) * 0.35f, p.Z + (target.Z - p.Z) * 0.35f);
+                    shown[key] = p;
+                    if (d.Class == Valve.VR.ETrackedDeviceClass.HMD && (d.ForwardX != 0 || d.ForwardZ != 0))
+                    {
+                        float yaw = (float)(Math.Atan2(d.ForwardX, -d.ForwardZ) * 180 / Math.PI);
+                        if (!haveForward) forwardYaw = yaw;
+                        float diff = ((yaw - forwardYaw + 540) % 360) - 180;
+                        forwardYaw += diff * 0.04f; // la caméra suit le joueur doucement
+                        haveForward = true;
+                    }
+                }
+            }
+            Invalidate();
         }
 
-        static string StatusText(VrDevice d)
+        static float Dist(P3 a, P3 b) { float x = a.X - b.X, y = a.Y - b.Y, z = a.Z - b.Z; return (float)Math.Sqrt(x * x + y * y + z * z); }
+
+        protected override void OnMouseDown(MouseEventArgs e)
         {
-            return !d.Connected ? "Éteint" : d.Tracking ? "Suivi OK" : "Perte de suivi";
+            if (e.Y > SceneHeight) return;
+            dragging = true; dragStart = e.Location; dragYaw = yawOffset; dragPitch = pitch;
+            base.OnMouseDown(e);
         }
+
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            if (dragging)
+            {
+                yawOffset = dragYaw + (e.X - dragStart.X) * 0.5f;
+                pitch = Math.Max(2, Math.Min(60, dragPitch + (e.Y - dragStart.Y) * 0.3f));
+            }
+            base.OnMouseMove(e);
+        }
+
+        protected override void OnMouseUp(MouseEventArgs e) { dragging = false; base.OnMouseUp(e); }
+        protected override void OnDoubleClick(EventArgs e) { yawOffset = 200f; pitch = 26f; base.OnDoubleClick(e); }
+
+        static Color StatusColor(VrDevice d) { return !d.Connected ? Theme.Dim : d.Tracking ? Theme.Green : Theme.Orange; }
+        static string StatusText(VrDevice d) { return !d.Connected ? "Éteint" : d.Tracking ? "Suivi OK" : "Perte de suivi"; }
 
         protected override void OnPaint(PaintEventArgs e)
         {
             var g = e.Graphics;
             Theme.Smooth(g);
-            g.Clear(Color.FromArgb(4, 6, 18));
-            var devices = DesktopViewer.Devices;
-            var view = new Rectangle(0, 0, Width, 300);
-            using (var pen = new Pen(Color.FromArgb(40, 143, 178, 255), 1f)) g.DrawRectangle(pen, 0, 0, Width - 1, view.Height - 1);
+            var scene = new Rectangle(0, 0, Width, SceneHeight);
+            using (var b = new LinearGradientBrush(scene, Color.FromArgb(6, 9, 26), Color.FromArgb(2, 3, 10), 90f)) g.FillRectangle(b, scene);
+            Theme.Glow(g, new RectangleF(Width / 2f - 170, SceneHeight - 150, 340, 190), Color.FromArgb(40, 45, 91, 255));
 
+            var devices = DesktopViewer.Devices;
             VrDevice hmd = null;
-            if (devices != null) foreach (var d in devices) if (d.Class == Valve.VR.ETrackedDeviceClass.HMD) hmd = d;
-            if (devices == null || hmd == null)
+            if (devices != null) foreach (var d in devices) if (d.Class == Valve.VR.ETrackedDeviceClass.HMD && d.Connected) hmd = d;
+            if (hmd == null || !shown.ContainsKey(hmd.Index + hmd.Serial))
             {
                 using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
                 using (var b = new SolidBrush(Theme.Soft))
-                    g.DrawString("Connexion à SteamVR…\nL'aperçu apparaît une fois le casque connecté.", Theme.Small, b, view, sf);
+                    g.DrawString("En attente de SteamVR…\nL'aperçu s'affiche quand le casque est connecté.", Theme.Small, b, scene, sf);
+                PaintList(g, devices);
                 return;
             }
 
-            // Repère vu de dos : axe « droite » du joueur à l'horizontale, hauteur à la verticale.
-            float fx = hmd.ForwardX, fz = hmd.ForwardZ, len = (float)Math.Sqrt(fx * fx + fz * fz);
-            if (len < 1e-3f) { fx = 0; fz = -1; len = 1; }
-            fx /= len; fz /= len;
-            float rx = -fz, rz = fx;
-            float scale = (view.Height - 30) / 2.1f, groundY = view.Height - 14, centerX = Width / 2f;
-
-            // Sol et silhouette repère (1,75 m).
-            using (var pen = new Pen(Color.FromArgb(60, 143, 178, 255), 1f)) g.DrawLine(pen, 14, groundY, Width - 14, groundY);
-            using (var pen = new Pen(Color.FromArgb(34, 207, 224, 255), 6f) { StartCap = LineCap.Round, EndCap = LineCap.Round })
+            P3 head = shown[hmd.Index + hmd.Serial];
+            // Caméra en orbite autour du joueur, qui tourne avec lui ; cible à hauteur de hanches.
+            var target = new P3(head.X, 0.9f, head.Z);
+            double yaw = (forwardYaw + yawOffset) * Math.PI / 180, pit = pitch * Math.PI / 180;
+            float cy = (float)Math.Cos(yaw), sy = (float)Math.Sin(yaw), cp = (float)Math.Cos(pit), sp = (float)Math.Sin(pit);
+            const float camDist = 3.6f;
+            float focal = SceneHeight * 1.45f, ox = Width / 2f, oy = SceneHeight * 0.52f;
+            Func<P3, PointF?> project = p =>
             {
-                float top = groundY - 1.75f * scale, unit = scale;
-                g.DrawEllipse(pen, centerX - 0.1f * unit, top, 0.2f * unit, 0.22f * unit);
-                g.DrawLine(pen, centerX, top + 0.25f * unit, centerX, groundY - 0.9f * unit);
-                g.DrawLine(pen, centerX - 0.35f * unit, groundY - 1.4f * unit, centerX + 0.35f * unit, groundY - 1.4f * unit);
-                g.DrawLine(pen, centerX, groundY - 0.9f * unit, centerX - 0.15f * unit, groundY);
-                g.DrawLine(pen, centerX, groundY - 0.9f * unit, centerX + 0.15f * unit, groundY);
+                float x = p.X - target.X, y = p.Y - target.Y, z = p.Z - target.Z;
+                float rx = x * cy - z * sy, rz = x * sy + z * cy;          // rotation autour de la verticale
+                float ry = y * cp - rz * sp, rz2 = y * sp + rz * cp;       // inclinaison
+                float depth = camDist + rz2;
+                if (depth < 0.2f) return null;
+                return new PointF(ox + focal * rx / depth, oy - focal * ry / depth);
+            };
+
+            // Sol : grille de 3 × 3 m autour du joueur, qui s'estompe sur les bords.
+            for (int i = -6; i <= 6; i++)
+            {
+                float t = i * 0.25f;
+                int alpha = 70 - Math.Abs(i) * 9;
+                using (var pen = new Pen(Color.FromArgb(Math.Max(10, alpha), 90, 120, 230), 1f))
+                {
+                    DrawLine3(g, pen, project, new P3(head.X + t, 0, head.Z - 1.5f), new P3(head.X + t, 0, head.Z + 1.5f));
+                    DrawLine3(g, pen, project, new P3(head.X - 1.5f, 0, head.Z + t), new P3(head.X + 1.5f, 0, head.Z + t));
+                }
+            }
+            // Cercle lumineux sous le joueur.
+            var ring = new List<PointF>();
+            for (int a = 0; a <= 36; a++)
+            {
+                var q = project(new P3(head.X + 0.35f * (float)Math.Cos(a * Math.PI / 18), 0, head.Z + 0.35f * (float)Math.Sin(a * Math.PI / 18)));
+                if (q.HasValue) ring.Add(q.Value);
+            }
+            if (ring.Count > 2) using (var pen = new Pen(Color.FromArgb(120, 255, 31, 46), 1.5f)) g.DrawLines(pen, ring.ToArray());
+
+            // Squelette : chaque partie du corps, réelle, virtuelle ou estimée.
+            var joints = BuildSkeleton(devices, head);
+            string[,] bones = { { "head", "chest" }, { "chest", "waist" }, { "chest", "lshoulder" }, { "chest", "rshoulder" },
+                                { "lshoulder", "lelbow" }, { "rshoulder", "relbow" }, { "lelbow", "lhand" }, { "relbow", "rhand" },
+                                { "waist", "lknee" }, { "waist", "rknee" }, { "lknee", "lfoot" }, { "rknee", "rfoot" } };
+            for (int i = 0; i < bones.GetLength(0); i++)
+            {
+                Joint a, b;
+                if (!joints.TryGetValue(bones[i, 0], out a) || !joints.TryGetValue(bones[i, 1], out b)) continue;
+                var pa = project(a.Pos); var pb = project(b.Pos);
+                if (!pa.HasValue || !pb.HasValue) continue;
+                bool estimated = a.Estimated || b.Estimated;
+                using (var glow = new Pen(Color.FromArgb(estimated ? 25 : 55, 255, 60, 90), 7f) { StartCap = LineCap.Round, EndCap = LineCap.Round })
+                    g.DrawLine(glow, pa.Value, pb.Value);
+                using (var line = new LinearGradientBrush(pa.Value, new PointF(pb.Value.X + 0.1f, pb.Value.Y + 0.1f),
+                    Color.FromArgb(estimated ? 90 : 230, Theme.MapleSoft), Color.FromArgb(estimated ? 90 : 230, Theme.ElectricSoft)))
+                using (var pen = new Pen(line, 2f) { StartCap = LineCap.Round, EndCap = LineCap.Round })
+                {
+                    if (estimated) pen.DashStyle = DashStyle.Dash;
+                    g.DrawLine(pen, pa.Value, pb.Value);
+                }
             }
 
-            var listed = new List<VrDevice>();
+            // Appareils : point lumineux, forme selon le type, couleur selon le suivi.
+            if (devices != null)
+                foreach (var d in devices)
+                {
+                    if (!d.Connected || d.Class == Valve.VR.ETrackedDeviceClass.TrackingReference) continue;
+                    P3 p;
+                    if (!shown.TryGetValue(d.Index + d.Serial, out p)) continue;
+                    var q = project(p);
+                    if (!q.HasValue) continue;
+                    float x = q.Value.X, y = q.Value.Y;
+                    var c = StatusColor(d);
+                    // Ombre au sol, pour lire la profondeur.
+                    var shadow = project(new P3(p.X, 0, p.Z));
+                    if (shadow.HasValue) using (var b = new SolidBrush(Color.FromArgb(50, 0, 0, 0))) g.FillEllipse(b, shadow.Value.X - 7, shadow.Value.Y - 2.5f, 14, 5);
+                    Theme.Glow(g, new RectangleF(x - 16, y - 16, 32, 32), Color.FromArgb(110, c));
+                    using (var b = new SolidBrush(c))
+                    using (var edge = new Pen(Color.FromArgb(200, 255, 255, 255), 1f))
+                    {
+                        if (d.Class == Valve.VR.ETrackedDeviceClass.HMD) { g.FillRectangle(b, x - 9, y - 5, 18, 10); g.DrawRectangle(edge, x - 9, y - 5, 18, 10); }
+                        else if (d.Class == Valve.VR.ETrackedDeviceClass.Controller) { g.FillEllipse(b, x - 6, y - 6, 12, 12); g.DrawEllipse(edge, x - 6, y - 6, 12, 12); }
+                        else if (d.IsVirtualTracker)
+                        {
+                            var diamond = new[] { new PointF(x, y - 7), new PointF(x + 7, y), new PointF(x, y + 7), new PointF(x - 7, y) };
+                            g.FillPolygon(b, diamond); g.DrawPolygon(edge, diamond);
+                        }
+                        else { g.FillRectangle(b, x - 6, y - 6, 12, 12); g.DrawRectangle(edge, x - 6, y - 6, 12, 12); }
+                    }
+                }
+
+            using (var b = new SolidBrush(Color.FromArgb(150, Theme.Dim)))
+                g.DrawString("Glisse pour tourner · double-clic pour recentrer", Theme.Small, b, 8, SceneHeight - 20);
+            using (var b = new SolidBrush(Theme.Dim)) g.DrawString("▬ casque  ● manette  ■ tracker  ◆ virtuel", Theme.Small, b, 8, 6);
+            PaintList(g, devices);
+        }
+
+        struct Joint { public P3 Pos; public bool Estimated; }
+
+        // Associe les appareils aux parties du corps ; ce qui manque est estimé (en pointillés).
+        Dictionary<string, Joint> BuildSkeleton(VrDevice[] devices, P3 head)
+        {
+            var j = new Dictionary<string, Joint>();
+            Action<string, P3, bool> set = (name, p, est) => j[name] = new Joint { Pos = p, Estimated = est };
+            set("head", new P3(head.X, head.Y - 0.08f, head.Z), false);
+            double yaw = forwardYaw * Math.PI / 180;
+            float fx = (float)Math.Sin(yaw), fz = -(float)Math.Cos(yaw), rx = -fz, rz = fx;
+            var reals = new List<P3>();
+            foreach (var d in devices)
+            {
+                P3 p;
+                if (!d.Connected || !shown.TryGetValue(d.Index + d.Serial, out p)) continue;
+                if (d.Class == Valve.VR.ETrackedDeviceClass.Controller)
+                    set(d.Role == Valve.VR.ETrackedControllerRole.LeftHand ? "lhand" : "rhand", p, false);
+                else if (d.IsVirtualTracker)
+                {
+                    string joint = d.Type.Substring(d.Type.LastIndexOf('/') + 1);
+                    var map = new Dictionary<string, string> { { "chest", "chest" }, { "waist", "waist" }, { "left_elbow", "lelbow" }, { "right_elbow", "relbow" },
+                        { "left_knee", "lknee" }, { "right_knee", "rknee" }, { "left_foot", "lfoot" }, { "right_foot", "rfoot" } };
+                    string name;
+                    if (map.TryGetValue(joint, out name)) set(name, p, false);
+                }
+                else if (d.Class == Valve.VR.ETrackedDeviceClass.GenericTracker) reals.Add(p);
+            }
+            // Vrais trackers : le plus haut aux hanches, les plus bas aux pieds (gauche / droite selon le corps).
+            reals.Sort((a, b) => b.Y.CompareTo(a.Y));
+            if (reals.Count >= 1 && !j.ContainsKey("waist") && reals[0].Y > 0.5f) { set("waist", reals[0], false); reals.RemoveAt(0); }
+            var feet = reals.FindAll(p => p.Y < 0.4f);
+            if (feet.Count >= 2)
+            {
+                bool firstIsLeft = (feet[0].X - feet[1].X) * rx + (feet[0].Z - feet[1].Z) * rz < 0;
+                if (!j.ContainsKey("lfoot")) set("lfoot", firstIsLeft ? feet[0] : feet[1], false);
+                if (!j.ContainsKey("rfoot")) set("rfoot", firstIsLeft ? feet[1] : feet[0], false);
+            }
+
+            // Estimations pour relier le tout.
+            P3 h = j["head"].Pos;
+            if (!j.ContainsKey("waist")) set("waist", new P3(h.X, Math.Max(0.6f, h.Y * 0.56f), h.Z), true);
+            P3 w = j["waist"].Pos;
+            if (!j.ContainsKey("chest")) set("chest", new P3(h.X + (w.X - h.X) * 0.35f, h.Y + (w.Y - h.Y) * 0.35f, h.Z + (w.Z - h.Z) * 0.35f), true);
+            P3 c = j["chest"].Pos;
+            set("lshoulder", new P3(c.X - rx * 0.18f, c.Y + 0.05f, c.Z - rz * 0.18f), true);
+            set("rshoulder", new P3(c.X + rx * 0.18f, c.Y + 0.05f, c.Z + rz * 0.18f), true);
+            foreach (var side in new[] { "l", "r" })
+            {
+                Joint hand, sh = j[side + "shoulder"];
+                if (!j.ContainsKey(side + "elbow") && j.TryGetValue(side + "hand", out hand))
+                    set(side + "elbow", new P3((sh.Pos.X + hand.Pos.X) / 2, (sh.Pos.Y + hand.Pos.Y) / 2 - 0.08f, (sh.Pos.Z + hand.Pos.Z) / 2), true);
+                Joint foot;
+                if (!j.TryGetValue(side + "foot", out foot)) continue;
+                if (!j.ContainsKey(side + "knee"))
+                    set(side + "knee", new P3((w.X + foot.Pos.X) / 2 + fx * 0.08f, (w.Y + foot.Pos.Y) / 2, (w.Z + foot.Pos.Z) / 2 + fz * 0.08f), true);
+            }
+            return j;
+        }
+
+        static void DrawLine3(Graphics g, Pen pen, Func<P3, PointF?> project, P3 a, P3 b)
+        {
+            var pa = project(a); var pb = project(b);
+            if (pa.HasValue && pb.HasValue) g.DrawLine(pen, pa.Value, pb.Value);
+        }
+
+        // Liste : nom, état du suivi (pastille) et batterie (jauge).
+        void PaintList(Graphics g, VrDevice[] devices)
+        {
+            float y = SceneHeight + 12;
+            Theme.DrawSpaced(g, "APPAREILS", Theme.CardTitle, Theme.MapleSoft, 2, y, 2f);
+            y += 24;
+            if (devices == null) return;
             foreach (var d in devices)
             {
                 if (d.Class == Valve.VR.ETrackedDeviceClass.TrackingReference || d.Class == Valve.VR.ETrackedDeviceClass.Invalid) continue;
-                listed.Add(d);
-                if (!d.Connected) continue;
-                float dx = d.X - hmd.X, dz = d.Z - hmd.Z;
-                float px = centerX + (dx * rx + dz * rz) * scale, py = groundY - d.Y * scale;
-                if (px < 6 || px > Width - 6 || py < 6 || py > view.Height - 4) continue;
+                if (y > Height - 22) break;
                 var c = StatusColor(d);
-                Theme.Glow(g, new RectangleF(px - 12, py - 12, 24, 24), Color.FromArgb(90, c));
-                using (var b = new SolidBrush(c))
-                {
-                    if (d.Class == Valve.VR.ETrackedDeviceClass.HMD) g.FillRectangle(b, px - 9, py - 5, 18, 10);
-                    else if (d.Class == Valve.VR.ETrackedDeviceClass.Controller) g.FillEllipse(b, px - 6, py - 6, 12, 12);
-                    else if (d.IsVirtualTracker) g.FillPolygon(b, new[] { new PointF(px, py - 7), new PointF(px + 7, py), new PointF(px, py + 7), new PointF(px - 7, py) });
-                    else g.FillRectangle(b, px - 6, py - 6, 12, 12);
-                }
-            }
-
-            // Légende des formes.
-            using (var b = new SolidBrush(Theme.Dim)) g.DrawString("▬ casque  ● manette  ■ vrai tracker  ◆ virtuel", Theme.Small, b, 8, 6);
-
-            // Liste : nom, état du suivi, batterie.
-            float y = view.Height + 10;
-            Theme.DrawSpaced(g, "APPAREILS", Theme.CardTitle, Theme.MapleSoft, 4, y, 2f);
-            y += 22;
-            foreach (var d in listed)
-            {
-                if (y > Height - 18) break;
-                var c = StatusColor(d);
-                using (var b = new SolidBrush(c)) g.FillPolygon(b, new[] { new PointF(10, y + 3), new PointF(15, y + 8), new PointF(10, y + 13), new PointF(5, y + 8) });
-                using (var b = new SolidBrush(Theme.Text)) g.DrawString(d.Label, Theme.Small, b, 22, y);
-                using (var b = new SolidBrush(c)) g.DrawString(StatusText(d), Theme.Small, b, 176, y);
-                // Les trackers virtuels annoncent toujours 100 % : pas de batterie à afficher.
+                using (var b = new SolidBrush(Color.FromArgb(18, 143, 178, 255))) g.FillRectangle(b, 0, y - 2, Width, 22);
+                using (var b = new SolidBrush(c)) g.FillRectangle(b, 0, y - 2, 3, 22);
+                using (var b = new SolidBrush(Theme.Text)) g.DrawString(d.Label, Theme.Small, b, 10, y + 1);
+                // Pastille d'état.
+                string status = StatusText(d);
+                var chip = new RectangleF(180, y + 1, 86, 16);
+                using (var b = new SolidBrush(Color.FromArgb(40, c))) g.FillRectangle(b, chip);
+                using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
+                using (var b = new SolidBrush(c)) g.DrawString(status, Theme.Small, b, chip, sf);
+                // Jauge de batterie (les trackers virtuels n'en ont pas).
                 if (d.Battery >= 0 && !d.IsVirtualTracker)
                 {
                     int pct = (int)Math.Round(d.Battery * 100);
-                    var bar = new RectangleF(278, y + 4, 36, 9);
-                    using (var b = new SolidBrush(Color.FromArgb(40, 143, 178, 255))) g.FillRectangle(b, bar);
+                    var bar = new RectangleF(276, y + 5, 30, 9);
+                    using (var pen = new Pen(Color.FromArgb(120, Theme.Soft), 1f)) { g.DrawRectangle(pen, bar.X, bar.Y, bar.Width, bar.Height); g.FillRectangle(Brushes.Transparent, bar); }
+                    using (var b = new SolidBrush(Theme.Soft)) g.FillRectangle(b, bar.Right + 1, bar.Y + 2.5f, 2, 4);
                     using (var b = new SolidBrush(pct <= 20 ? Theme.Red : pct <= 40 ? Theme.Orange : Theme.Green))
-                        g.FillRectangle(b, bar.X, bar.Y, bar.Width * Math.Max(0, Math.Min(1, d.Battery)), bar.Height);
-                    using (var b = new SolidBrush(Theme.Soft)) g.DrawString(pct + "%" + (d.Charging ? "⚡" : ""), Theme.Small, b, 318, y);
+                        g.FillRectangle(b, bar.X + 1.5f, bar.Y + 1.5f, (bar.Width - 3) * Math.Max(0, Math.Min(1, d.Battery)), bar.Height - 3);
+                    using (var b = new SolidBrush(Theme.Soft)) g.DrawString(pct + "%" + (d.Charging ? "⚡" : ""), Theme.Small, b, 312, y + 1);
                 }
-                else using (var b = new SolidBrush(Theme.Dim)) g.DrawString("—", Theme.Small, b, 290, y);
-                y += 22;
+                y += 25;
             }
         }
     }
@@ -1809,6 +1992,7 @@ namespace LunaQuest
         readonly NumericUpDown[] numOffsets = new NumericUpDown[6];
         MoonButton btnBodySave;
         TrackerPreview trackerPreview;
+        Timer previewTimer;
         BodyConfig body = new BodyConfig();
         bool loadingBody, bodyTrackingSaved;
         string bodyModeSaved = "fbt", bodyJointsSaved = "";
@@ -1881,6 +2065,8 @@ namespace LunaQuest
             btnBodySave.Click += delegate { SaveBody(); };
 
             trackerPreview = AddTo(3, new TrackerPreview { Location = new Point(696, 152), Size = new Size(360, 566) });
+            previewTimer = new Timer { Interval = 16 };
+            previewTimer.Tick += delegate { trackerPreview.Tick(); };
         }
 
         string SelectedBodyMode { get { return BodyModes[Math.Max(0, segBodyMode.SelectedIndex)]; } }
@@ -2037,6 +2223,7 @@ namespace LunaQuest
         {
             desktopViewer.ScreenEnabled = config.DesktopViewer;
             desktopViewer.MonitorEnabled = page == 3;
+            if (previewTimer != null) previewTimer.Enabled = page == 3;
             bool need = config.DesktopViewer || page == 3;
             if (need && !desktopViewer.IsRunning) desktopViewer.Start();
             else if (!need && desktopViewer.IsRunning) Task.Run(() => desktopViewer.Stop());
@@ -2126,12 +2313,9 @@ namespace LunaQuest
             return true;
         }
 
-        int previewTick;
-
         void Animate()
         {
             if (WindowState == FormWindowState.Minimized) return;
-            if (page == 3 && trackerPreview != null && ++previewTick % 5 == 0) trackerPreview.Invalidate();
             while (leaves.Count < 12) leaves.Add(NewLeaf(false));
             for (int i = 0; i < leaves.Count; i++)
             {

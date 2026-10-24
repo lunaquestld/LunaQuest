@@ -233,7 +233,7 @@ namespace LunaQuest
                     overlay = dashboard = thumbnail = 0;
                     visible = false;
                 }
-                if (MonitorEnabled && (DateTime.UtcNow - lastSample).TotalMilliseconds >= 100) { lastSample = DateTime.UtcNow; SampleDevices(); }
+                if (MonitorEnabled && (DateTime.UtcNow - lastSample).TotalMilliseconds >= 30) { lastSample = DateTime.UtcNow; SampleDevices(); }
 
                 var ov = OpenVR.Overlay;
                 if (visible) PumpMouse(overlay, ref ev, evSize);
@@ -246,7 +246,7 @@ namespace LunaQuest
                     if (dashVisible) Upload(dashboard, frame);
                 }
 
-                int wait = (visible || dashVisible ? 33 : 50) - (int)sw.ElapsedMilliseconds;
+                int wait = (MonitorEnabled ? 15 : visible || dashVisible ? 33 : 50) - (int)sw.ElapsedMilliseconds;
                 if (wait > 0) Thread.Sleep(wait);
             }
             if (overlay != 0) OpenVR.Overlay.HideOverlay(overlay);
