@@ -552,6 +552,113 @@ namespace LunaQuest
         }
     }
 
+    // Aperçu en direct des appareils SteamVR : silhouette vue de dos avec chaque appareil à sa place,
+    // couleur selon le suivi, puis la liste avec le niveau de batterie.
+    class TrackerPreview : Control
+    {
+        public TrackerPreview()
+        {
+            SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
+        }
+
+        static Color StatusColor(VrDevice d)
+        {
+            return !d.Connected ? Theme.Dim : d.Tracking ? Theme.Green : Theme.Orange;
+        }
+
+        static string StatusText(VrDevice d)
+        {
+            return !d.Connected ? "Éteint" : d.Tracking ? "Suivi OK" : "Perte de suivi";
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics;
+            Theme.Smooth(g);
+            g.Clear(Color.FromArgb(4, 6, 18));
+            var devices = DesktopViewer.Devices;
+            var view = new Rectangle(0, 0, Width, 300);
+            using (var pen = new Pen(Color.FromArgb(40, 143, 178, 255), 1f)) g.DrawRectangle(pen, 0, 0, Width - 1, view.Height - 1);
+
+            VrDevice hmd = null;
+            if (devices != null) foreach (var d in devices) if (d.Class == Valve.VR.ETrackedDeviceClass.HMD) hmd = d;
+            if (devices == null || hmd == null)
+            {
+                using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
+                using (var b = new SolidBrush(Theme.Soft))
+                    g.DrawString("Connexion à SteamVR…\nL'aperçu apparaît une fois le casque connecté.", Theme.Small, b, view, sf);
+                return;
+            }
+
+            // Repère vu de dos : axe « droite » du joueur à l'horizontale, hauteur à la verticale.
+            float fx = hmd.ForwardX, fz = hmd.ForwardZ, len = (float)Math.Sqrt(fx * fx + fz * fz);
+            if (len < 1e-3f) { fx = 0; fz = -1; len = 1; }
+            fx /= len; fz /= len;
+            float rx = -fz, rz = fx;
+            float scale = (view.Height - 30) / 2.1f, groundY = view.Height - 14, centerX = Width / 2f;
+
+            // Sol et silhouette repère (1,75 m).
+            using (var pen = new Pen(Color.FromArgb(60, 143, 178, 255), 1f)) g.DrawLine(pen, 14, groundY, Width - 14, groundY);
+            using (var pen = new Pen(Color.FromArgb(34, 207, 224, 255), 6f) { StartCap = LineCap.Round, EndCap = LineCap.Round })
+            {
+                float top = groundY - 1.75f * scale, unit = scale;
+                g.DrawEllipse(pen, centerX - 0.1f * unit, top, 0.2f * unit, 0.22f * unit);
+                g.DrawLine(pen, centerX, top + 0.25f * unit, centerX, groundY - 0.9f * unit);
+                g.DrawLine(pen, centerX - 0.35f * unit, groundY - 1.4f * unit, centerX + 0.35f * unit, groundY - 1.4f * unit);
+                g.DrawLine(pen, centerX, groundY - 0.9f * unit, centerX - 0.15f * unit, groundY);
+                g.DrawLine(pen, centerX, groundY - 0.9f * unit, centerX + 0.15f * unit, groundY);
+            }
+
+            var listed = new List<VrDevice>();
+            foreach (var d in devices)
+            {
+                if (d.Class == Valve.VR.ETrackedDeviceClass.TrackingReference || d.Class == Valve.VR.ETrackedDeviceClass.Invalid) continue;
+                listed.Add(d);
+                if (!d.Connected) continue;
+                float dx = d.X - hmd.X, dz = d.Z - hmd.Z;
+                float px = centerX + (dx * rx + dz * rz) * scale, py = groundY - d.Y * scale;
+                if (px < 6 || px > Width - 6 || py < 6 || py > view.Height - 4) continue;
+                var c = StatusColor(d);
+                Theme.Glow(g, new RectangleF(px - 12, py - 12, 24, 24), Color.FromArgb(90, c));
+                using (var b = new SolidBrush(c))
+                {
+                    if (d.Class == Valve.VR.ETrackedDeviceClass.HMD) g.FillRectangle(b, px - 9, py - 5, 18, 10);
+                    else if (d.Class == Valve.VR.ETrackedDeviceClass.Controller) g.FillEllipse(b, px - 6, py - 6, 12, 12);
+                    else if (d.IsVirtualTracker) g.FillPolygon(b, new[] { new PointF(px, py - 7), new PointF(px + 7, py), new PointF(px, py + 7), new PointF(px - 7, py) });
+                    else g.FillRectangle(b, px - 6, py - 6, 12, 12);
+                }
+            }
+
+            // Légende des formes.
+            using (var b = new SolidBrush(Theme.Dim)) g.DrawString("▬ casque  ● manette  ■ vrai tracker  ◆ virtuel", Theme.Small, b, 8, 6);
+
+            // Liste : nom, état du suivi, batterie.
+            float y = view.Height + 10;
+            Theme.DrawSpaced(g, "APPAREILS", Theme.CardTitle, Theme.MapleSoft, 4, y, 2f);
+            y += 22;
+            foreach (var d in listed)
+            {
+                if (y > Height - 18) break;
+                var c = StatusColor(d);
+                using (var b = new SolidBrush(c)) g.FillPolygon(b, new[] { new PointF(10, y + 3), new PointF(15, y + 8), new PointF(10, y + 13), new PointF(5, y + 8) });
+                using (var b = new SolidBrush(Theme.Text)) g.DrawString(d.Label, Theme.Small, b, 22, y);
+                using (var b = new SolidBrush(c)) g.DrawString(StatusText(d), Theme.Small, b, 176, y);
+                // Les trackers virtuels annoncent toujours 100 % : pas de batterie à afficher.
+                if (d.Battery >= 0 && !d.IsVirtualTracker)
+                {
+                    int pct = (int)Math.Round(d.Battery * 100);
+                    var bar = new RectangleF(278, y + 4, 36, 9);
+                    using (var b = new SolidBrush(Color.FromArgb(40, 143, 178, 255))) g.FillRectangle(b, bar);
+                    using (var b = new SolidBrush(pct <= 20 ? Theme.Red : pct <= 40 ? Theme.Orange : Theme.Green))
+                        g.FillRectangle(b, bar.X, bar.Y, bar.Width * Math.Max(0, Math.Min(1, d.Battery)), bar.Height);
+                    using (var b = new SolidBrush(Theme.Soft)) g.DrawString(pct + "%" + (d.Charging ? "⚡" : ""), Theme.Small, b, 318, y);
+                }
+                else using (var b = new SolidBrush(Theme.Dim)) g.DrawString("—", Theme.Small, b, 290, y);
+                y += 22;
+            }
+        }
+    }
+
     // Étiquette qui apparaît à droite d'une icône de la barre de gauche quand on la survole.
     class NavTip : Control
     {
@@ -1210,6 +1317,7 @@ namespace LunaQuest
         public readonly Dictionary<string, bool> Enabled = new Dictionary<string, bool>();
         public readonly Dictionary<string, double[]> Offsets = new Dictionary<string, double[]>();
         public bool KneesFromRealTrackers = true;
+        public string Mode = "fbt"; // fbe : FBE Unique, mix : FBE Mix, fbt : vrais trackers seuls
 
         public static string FilePath
         {
@@ -1236,6 +1344,7 @@ namespace LunaQuest
                 if (root == null) return c;
                 object o;
                 if (root.TryGetValue("knees_from_real_trackers", out o) && o is bool) c.KneesFromRealTrackers = (bool)o;
+                if (root.TryGetValue("mode", out o) && o is string) c.Mode = (string)o;
                 var joints = root.TryGetValue("joints", out o) ? o as Dictionary<string, object> : null;
                 if (joints != null)
                     foreach (var j in Joints)
@@ -1262,7 +1371,7 @@ namespace LunaQuest
                 joints[j] = Enabled[j];
                 offsets[j] = Offsets[j];
             }
-            var root = new Dictionary<string, object> { { "knees_from_real_trackers", KneesFromRealTrackers }, { "joints", joints }, { "offsets", offsets } };
+            var root = new Dictionary<string, object> { { "mode", Mode }, { "knees_from_real_trackers", KneesFromRealTrackers }, { "joints", joints }, { "offsets", offsets } };
             Directory.CreateDirectory(Path.GetDirectoryName(FilePath));
             File.WriteAllText(FilePath, new JavaScriptSerializer().Serialize(root), new UTF8Encoding(false));
         }
@@ -1461,7 +1570,7 @@ namespace LunaQuest
             timer.Start();
             Poll();
 
-            if (config.DesktopViewer) desktopViewer.Start();
+            UpdateVrLink();
 
             fxTimer = new Timer { Interval = 40 };
             fxTimer.Tick += delegate { Animate(); };
@@ -1579,8 +1688,8 @@ namespace LunaQuest
             {
                 config.DesktopViewer = tglDesktop.Checked;
                 config.Save();
-                if (tglDesktop.Checked) desktopViewer.Start();
-                else Task.Run(() => { desktopViewer.Stop(); Log("Écran PC désactivé."); });
+                UpdateVrLink();
+                if (!tglDesktop.Checked) Log("Écran PC désactivé.");
             };
 
             log = AddTo(0, new TextBox
@@ -1681,49 +1790,59 @@ namespace LunaQuest
 
         // ---------------------------------------------------------------- Page Corps et trackers
 
-        ToggleSwitch tglBody, tglKneesIk;
+        // Trois façons de suivre le corps : FBE Unique (tout estimé par le casque), FBE Mix (vrais trackers
+        // complétés par le casque, expérimental) et FBT (seulement les vrais trackers).
+        static readonly string[] BodyModes = { "fbe", "mix", "fbt" };
+        static readonly string[] BodyModeNames = { "FBE Unique", "FBE Mix", "FBT" };
+        static readonly string[] BodyModeTexts =
+        {
+            "Tout le corps estimé par les caméras du casque, sans vrais trackers : choisis les trackers virtuels à créer.",
+            "Expérimental, en pause : tes vrais trackers aux hanches et aux pieds, complétés par le casque (torse, coudes, genoux).",
+            "Seulement tes vrais trackers Vive, suivis par tes bases. Le suivi du corps par le casque est coupé."
+        };
+
+        Segmented segBodyMode;
+        Label lblBodyModeActive, lblBodyModeText, lblRealTrackers, lblBodyStatus;
+        ToggleSwitch tglKneesIk;
         readonly ToggleSwitch[] tglJoints = new ToggleSwitch[BodyConfig.Joints.Length];
-        Label lblRealTrackers, lblBodyStatus;
         ComboBox cmbOffsetJoint;
         readonly NumericUpDown[] numOffsets = new NumericUpDown[6];
         MoonButton btnBodySave;
+        TrackerPreview trackerPreview;
         BodyConfig body = new BodyConfig();
         bool loadingBody, bodyTrackingSaved;
-        string bodyJointsSaved = "";
+        string bodyModeSaved = "fbt", bodyJointsSaved = "";
 
         void BuildBodyPage()
         {
-            cards[3].Add(new Card(104, 116, 470, 300, "Suivi du corps"));
-            cards[3].Add(new Card(590, 116, 482, 300, "Trackers virtuels"));
-            cards[3].Add(new Card(104, 432, 968, 170, "Décalages des trackers virtuels"));
+            segBodyMode = AddTo(3, new Segmented(BodyModeNames) { Location = new Point(104, 116), Size = new Size(560, 40) });
+            segBodyMode.SelectionChanged += delegate { if (!loadingBody) BodyModeChanged(true); };
+            lblBodyModeActive = AddLabel(3, "", Theme.Small, Theme.Soft, 104, 164, 560);
 
-            tglBody = AddTo(3, new ToggleSwitch("Suivi du corps par le casque") { Location = new Point(124, 156), Size = new Size(430, 28) });
-            AddLabel(3, "Caméras du Quest 3 : torse, coudes et jambes estimées.", Theme.Small, Theme.Dim, 180, 186, 380);
-            tglKneesIk = AddTo(3, new ToggleSwitch("Genoux calculés depuis mes vrais trackers") { Location = new Point(124, 218), Size = new Size(430, 28) });
-            AddLabel(3, "À partir de tes vrais trackers de hanches et de pieds.", Theme.Small, Theme.Dim, 180, 248, 390);
-            lblRealTrackers = AddLabel(3, "", Theme.Small, Theme.Soft, 124, 284, 430);
-            lblRealTrackers.AutoSize = false;
-            lblRealTrackers.Size = new Size(434, 120);
+            cards[3].Add(new Card(104, 192, 560, 320, "Réglages du mode"));
+            cards[3].Add(new Card(104, 528, 560, 140, "Décalages des trackers virtuels"));
+            cards[3].Add(new Card(680, 116, 392, 616, "Aperçu en direct"));
+
+            lblBodyModeText = AddLabel(3, "", Theme.Body, Theme.Soft, 124, 232, 520);
+            lblBodyModeText.AutoSize = false;
+            lblBodyModeText.Size = new Size(520, 50);
 
             for (int i = 0; i < tglJoints.Length; i++)
             {
                 int col = i % 2, row = i / 2;
-                tglJoints[i] = AddTo(3, new ToggleSwitch(BodyConfig.JointLabels[i]) { Location = new Point(610 + col * 230, 156 + row * 40), Size = new Size(220, 28) });
+                tglJoints[i] = AddTo(3, new ToggleSwitch(BodyConfig.JointLabels[i]) { Location = new Point(124 + col * 260, 296 + row * 36), Size = new Size(250, 28) });
                 tglJoints[i].CheckedChanged += delegate { if (!loadingBody) MarkBodyDirty(); };
             }
-            var presetReal = AddButton(3, "Hanches + pieds réels", false, 610, 330, 156, 34);
-            presetReal.Click += delegate { SetJoints("chest", "left_elbow", "right_elbow", "left_knee", "right_knee"); };
-            var presetUpper = AddButton(3, "Haut du corps", false, 774, 330, 130, 34);
-            presetUpper.Click += delegate { SetJoints("chest", "left_elbow", "right_elbow"); };
-            var presetAll = AddButton(3, "Tout virtuel", false, 912, 330, 140, 34);
-            presetAll.Click += delegate { SetJoints(BodyConfig.Joints); };
-            AddLabel(3, "N'active pas un tracker virtuel là où tu portes un vrai tracker.", Theme.Small, Theme.Dim, 610, 376, 440);
+            tglKneesIk = AddTo(3, new ToggleSwitch("Genoux calculés depuis mes vrais trackers") { Location = new Point(124, 452), Size = new Size(520, 28) });
+            tglKneesIk.CheckedChanged += delegate { if (!loadingBody) MarkBodyDirty(); };
+            lblRealTrackers = AddLabel(3, "", Theme.Small, Theme.Soft, 124, 296, 520);
+            lblRealTrackers.AutoSize = false;
+            lblRealTrackers.Size = new Size(520, 190);
 
-            AddLabel(3, "Tracker", Theme.Body, Theme.Soft, 124, 470);
             cmbOffsetJoint = AddTo(3, new ComboBox
             {
                 DropDownStyle = ComboBoxStyle.DropDownList, FlatStyle = FlatStyle.Flat, BackColor = Theme.Field, ForeColor = Theme.Text,
-                Font = new Font("Segoe UI", 10f), Location = new Point(128, 496), Size = new Size(200, 26)
+                Font = new Font("Segoe UI", 10f), Location = new Point(128, 568), Size = new Size(196, 26)
             });
             // Liste dessinée à la main : sinon Windows l'affiche en blanc.
             cmbOffsetJoint.DrawMode = DrawMode.OwnerDrawFixed;
@@ -1740,29 +1859,49 @@ namespace LunaQuest
             cmbOffsetJoint.SelectedIndexChanged += delegate { ShowOffsets(); };
             fields.Add(cmbOffsetJoint);
 
-            string[] axes = { "Gauche/droite (cm)", "Haut/bas (cm)", "Avant/arrière (cm)", "Rotation X (°)", "Rotation Y (°)", "Rotation Z (°)" };
+            string[] axes = { "Côté (cm)", "Hauteur (cm)", "Avant (cm)", "Rot. X (°)", "Rot. Y (°)", "Rot. Z (°)" };
             for (int i = 0; i < 6; i++)
             {
-                int index = i;
-                AddLabel(3, axes[i], Theme.Small, Theme.Soft, 360 + i * 116, 472, 112);
+                int index = i, col = i % 3, row = i / 3;
+                AddLabel(3, axes[i], Theme.Small, Theme.Soft, 348 + col * 104, 552 + row * 52, 100);
                 numOffsets[i] = AddTo(3, new NumericUpDown
                 {
                     Minimum = i < 3 ? -50 : -180, Maximum = i < 3 ? 50 : 180, DecimalPlaces = i < 3 ? 1 : 0, Increment = i < 3 ? 0.5m : 5,
                     BorderStyle = BorderStyle.None, BackColor = Theme.Field, ForeColor = Theme.Text, Font = new Font("Segoe UI", 10f),
-                    Location = new Point(364 + i * 116, 498), Size = new Size(92, 24), TextAlign = HorizontalAlignment.Center
+                    Location = new Point(352 + col * 104, 572 + row * 52), Size = new Size(84, 24), TextAlign = HorizontalAlignment.Center
                 });
                 numOffsets[i].ValueChanged += delegate { OffsetChanged(index); };
                 fields.Add(numOffsets[i]);
             }
-            var reset = AddButton(3, "Remettre à zéro", false, 124, 548, 204, 34);
+            var reset = AddButton(3, "Remettre à zéro", false, 124, 616, 204, 34);
             reset.Click += delegate { for (int i = 0; i < 6; i++) numOffsets[i].Value = 0; };
-            AddLabel(3, "Dans le repère du tracker. Appliqué en direct, sans redémarrer SteamVR.", Theme.Small, Theme.Dim, 362, 556, 560);
 
-            lblBodyStatus = AddLabel(3, "", Theme.Small, Theme.Soft, 106, 636, 700);
-            btnBodySave = AddButton(3, "Enregistrer", true, 892, 620, 180, 46);
+            lblBodyStatus = AddLabel(3, "", Theme.Small, Theme.Soft, 106, 694, 350);
+            btnBodySave = AddButton(3, "Activer ce mode", true, 464, 682, 200, 44);
             btnBodySave.Click += delegate { SaveBody(); };
-            tglBody.CheckedChanged += delegate { if (!loadingBody) MarkBodyDirty(); };
-            tglKneesIk.CheckedChanged += delegate { if (!loadingBody) MarkBodyDirty(); };
+
+            trackerPreview = AddTo(3, new TrackerPreview { Location = new Point(696, 152), Size = new Size(360, 566) });
+        }
+
+        string SelectedBodyMode { get { return BodyModes[Math.Max(0, segBodyMode.SelectedIndex)]; } }
+
+        // Affiche les réglages du mode choisi ; userChange : on propose les trackers habituels de ce mode.
+        void BodyModeChanged(bool userChange)
+        {
+            string mode = SelectedBodyMode;
+            lblBodyModeText.Text = BodyModeTexts[segBodyMode.SelectedIndex];
+            bool fbe = mode == "fbe", mix = mode == "mix", fbt = mode == "fbt";
+            foreach (var t in tglJoints) t.Visible = fbe || mix;
+            tglKneesIk.Visible = mix;
+            lblRealTrackers.Visible = fbt;
+            if (userChange)
+            {
+                loadingBody = true;
+                if (fbe) SetJoints(BodyConfig.Joints);
+                else if (mix) SetJoints("chest", "left_elbow", "right_elbow", "left_knee", "right_knee");
+                loadingBody = false;
+                MarkBodyDirty();
+            }
         }
 
         void SetJoints(params string[] on)
@@ -1772,7 +1911,7 @@ namespace LunaQuest
 
         void MarkBodyDirty()
         {
-            lblBodyStatus.Text = "Modifications non enregistrées.";
+            lblBodyStatus.Text = "Clique sur « Activer ce mode » pour l'appliquer.";
             lblBodyStatus.ForeColor = Theme.Orange;
         }
 
@@ -1798,30 +1937,29 @@ namespace LunaQuest
                     tracking = AlvrSession.Load(AlvrInstall.SessionPath(config.AlvrFolder)).BodyTracking;
             }
             catch { }
-            tglBody.Checked = tracking;
+            // Sans suivi du corps dans ALVR, on est forcément en FBT.
+            string mode = tracking ? body.Mode : "fbt";
+            if (tracking && mode == "fbt") mode = "fbe";
+            segBodyMode.SelectedIndex = Array.IndexOf(BodyModes, mode);
             tglKneesIk.Checked = body.KneesFromRealTrackers;
             for (int i = 0; i < BodyConfig.Joints.Length; i++) tglJoints[i].Checked = body.Enabled[BodyConfig.Joints[i]];
             bodyTrackingSaved = tracking;
+            bodyModeSaved = mode;
             bodyJointsSaved = body.JointsKey();
+            BodyModeChanged(false);
             ShowOffsets();
             loadingBody = false;
+            lblBodyModeActive.Text = "Mode actif : " + BodyModeNames[Array.IndexOf(BodyModes, mode)];
 
-            // Vrais trackers : rôles choisis dans SteamVR → Gérer les trackers.
             var roles = SteamVrConfig.ReadViveTrackerRoles();
-            var sb = new StringBuilder("Vrais trackers Vive (rôles dans SteamVR) :\n");
-            string[] wanted = { "TrackerRole_Waist", "TrackerRole_LeftFoot", "TrackerRole_RightFoot" };
-            string[] names = { "Hanches", "Pied gauche", "Pied droit" };
-            for (int i = 0; i < wanted.Length; i++)
-            {
-                string serial = null;
-                foreach (var kv in roles) if (kv.Value == wanted[i]) serial = kv.Key;
-                sb.Append(names[i]).Append(" : ").Append(serial ?? "détection automatique").Append('\n');
-            }
-            sb.Append("Sans rôle : le tracker le plus haut = hanches, les deux plus bas = pieds.");
-            lblRealTrackers.Text = sb.ToString().TrimEnd();
+            var sb = new StringBuilder("Vrais trackers Vive (rôles dans SteamVR → Gérer les trackers) :\n");
+            if (roles.Count == 0) sb.Append("Aucun rôle réglé. Les jeux comme VRChat s'en passent : ils reconnaissent les trackers à la calibration.\n");
+            foreach (var kv in roles) sb.Append(kv.Key).Append(" : ").Append(kv.Value.Replace("TrackerRole_", "")).Append('\n');
+            sb.Append("\nL'aperçu à droite montre en direct leur suivi et leur batterie.");
+            lblRealTrackers.Text = sb.ToString();
 
             bool luna = IsLunaStreamer(config.AlvrFolder);
-            lblBodyStatus.Text = luna ? "" : "La partie PC d'ALVR installée ne gère pas encore le corps combiné (version LunaQuest nécessaire).";
+            lblBodyStatus.Text = luna ? "" : "Modes FBE : ALVR version LunaQuest requis.";
             lblBodyStatus.ForeColor = luna ? Theme.Soft : Theme.Orange;
         }
 
@@ -1851,16 +1989,18 @@ namespace LunaQuest
 
         void SaveBody()
         {
-            body.KneesFromRealTrackers = tglKneesIk.Checked;
-            for (int i = 0; i < BodyConfig.Joints.Length; i++) body.Enabled[BodyConfig.Joints[i]] = tglJoints[i].Checked;
+            string mode = SelectedBodyMode;
+            body.Mode = mode;
+            body.KneesFromRealTrackers = mode == "mix" && tglKneesIk.Checked;
+            for (int i = 0; i < BodyConfig.Joints.Length; i++) body.Enabled[BodyConfig.Joints[i]] = mode != "fbt" && tglJoints[i].Checked;
             try { body.Save(); }
             catch (Exception e) { lblBodyStatus.Text = "Impossible d'enregistrer : " + e.Message; lblBodyStatus.ForeColor = Theme.Red; return; }
 
-            // Activer le suivi ou changer la liste des trackers demande un redémarrage de SteamVR.
-            bool tracking = tglBody.Checked;
-            if (tracking == bodyTrackingSaved && body.JointsKey() == bodyJointsSaved)
+            // Changer de mode ou de trackers virtuels demande un redémarrage de SteamVR.
+            bool tracking = mode != "fbt";
+            if (tracking == bodyTrackingSaved && body.JointsKey() == bodyJointsSaved && mode == bodyModeSaved)
             {
-                lblBodyStatus.Text = "Enregistré.";
+                lblBodyStatus.Text = "Déjà actif.";
                 lblBodyStatus.ForeColor = Theme.Green;
                 return;
             }
@@ -1868,25 +2008,38 @@ namespace LunaQuest
             bool vrRunning = IsRunning("vrserver");
             bool dashRunning = IsRunning("ALVR Dashboard");
             if ((vrRunning || dashRunning) &&
-                MessageBox.Show(this, "SteamVR doit redémarrer pour créer les trackers virtuels.\n\nRedémarrer maintenant ?",
+                MessageBox.Show(this, "SteamVR doit redémarrer pour changer de mode.\n\nRedémarrer maintenant ?",
                     "LunaQuest", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                 return;
             string path = AlvrInstall.SessionPath(config.AlvrFolder);
+            string name = BodyModeNames[Array.IndexOf(BodyModes, mode)];
             RunBusy(() =>
             {
-                if (vrRunning || dashRunning) { StopSteamVr(); Log("SteamVR fermé pour appliquer le suivi du corps."); }
+                if (vrRunning || dashRunning) { StopSteamVr(); Log("SteamVR fermé pour changer de mode de suivi du corps."); }
                 var s = AlvrSession.Load(path);
                 s.BodyTracking = tracking;
                 s.Save();
-                Log(tracking ? "Suivi du corps activé : trackers virtuels au prochain lancement de SteamVR." : "Suivi du corps désactivé.");
+                Log("Mode " + name + " activé.");
                 if (vrRunning) { Process.Start("steam://rungameid/250820"); Log("Redémarrage de SteamVR…"); }
             }, () =>
             {
                 bodyTrackingSaved = tracking;
+                bodyModeSaved = mode;
                 bodyJointsSaved = body.JointsKey();
-                lblBodyStatus.Text = vrRunning ? "Enregistré, SteamVR redémarre." : "Enregistré. Appliqué au prochain lancement de SteamVR.";
+                lblBodyModeActive.Text = "Mode actif : " + name;
+                lblBodyStatus.Text = vrRunning ? "Activé, SteamVR redémarre." : "Activé au prochain lancement de SteamVR.";
                 lblBodyStatus.ForeColor = Theme.Green;
             });
+        }
+
+        // Lien SteamVR : écran PC si activé, relevé des appareils tant que la page Corps est ouverte.
+        void UpdateVrLink()
+        {
+            desktopViewer.ScreenEnabled = config.DesktopViewer;
+            desktopViewer.MonitorEnabled = page == 3;
+            bool need = config.DesktopViewer || page == 3;
+            if (need && !desktopViewer.IsRunning) desktopViewer.Start();
+            else if (!need && desktopViewer.IsRunning) Task.Run(() => desktopViewer.Stop());
         }
 
         static readonly string[,] GuideSteps =
@@ -1926,6 +2079,7 @@ namespace LunaQuest
             for (int i = 0; i < nav.Length; i++) nav[i].Selected = navPages[i] == index;
             if (index == 1 && !settingsDirty) LoadSettingsUi();
             if (index == 3) LoadBodyUi();
+            UpdateVrLink();
             glitchTicks = 7; // petit glitch du titre à chaque changement de page, comme sur le site
             Invalidate();
         }
@@ -1972,9 +2126,12 @@ namespace LunaQuest
             return true;
         }
 
+        int previewTick;
+
         void Animate()
         {
             if (WindowState == FormWindowState.Minimized) return;
+            if (page == 3 && trackerPreview != null && ++previewTick % 5 == 0) trackerPreview.Invalidate();
             while (leaves.Count < 12) leaves.Add(NewLeaf(false));
             for (int i = 0; i < leaves.Count; i++)
             {

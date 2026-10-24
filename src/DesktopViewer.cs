@@ -1,5 +1,7 @@
-// Écran du PC dans le casque : une fenêtre SteamVR (overlay) qui affiche le bureau en direct,
-// affichée ou masquée par un double appui sur le bouton menu de la manette gauche.
+// Lien avec SteamVR de LunaQuest :
+// - écran du PC dans le casque : une fenêtre SteamVR (overlay) qui affiche le bureau en direct,
+//   affichée ou masquée par un double appui sur le bouton menu de la manette gauche ;
+// - relevé en direct des appareils (casque, manettes, trackers) pour l'aperçu de la page Corps.
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -38,6 +40,13 @@ namespace LunaQuest
         readonly Action<string> log;
         Thread thread;
         volatile bool running;
+
+        // Ce que LunaQuest demande au lien : l'écran PC, l'aperçu des trackers, ou les deux.
+        public volatile bool ScreenEnabled;
+        public volatile bool MonitorEnabled;
+        // Dernier relevé des appareils SteamVR (null tant que SteamVR n'est pas joint).
+        public static volatile VrDevice[] Devices;
+        DateTime lastSample = DateTime.MinValue;
 
         ulong overlay, dashboard, thumbnail;
         bool visible;
@@ -81,7 +90,8 @@ namespace LunaQuest
             {
                 if (Process.GetProcessesByName("vrserver").Length == 0)
                 {
-                    if (!waitingLogged) { log("Écran PC : en attente de SteamVR…"); waitingLogged = true; }
+                    Devices = null;
+                    if (!waitingLogged && ScreenEnabled) { log("Écran PC : en attente de SteamVR…"); waitingLogged = true; }
                     Thread.Sleep(2000);
                     continue;
                 }
@@ -94,9 +104,9 @@ namespace LunaQuest
                 if (err != EVRInitError.None) { Thread.Sleep(3000); continue; }
                 try
                 {
-                    if (CreateOverlays())
+                    if (!ScreenEnabled || CreateOverlays())
                     {
-                        log("Écran PC prêt : double appui sur le bouton menu gauche pour l'afficher.");
+                        if (ScreenEnabled) log("Écran PC prêt : double appui sur le bouton menu gauche pour l'afficher.");
                         RunSession();
                     }
                 }
@@ -104,6 +114,8 @@ namespace LunaQuest
                 finally
                 {
                     visible = false;
+                    overlay = dashboard = thumbnail = 0;
+                    Devices = null;
                     try { OpenVR.Shutdown(); } catch { }
                 }
             }
@@ -115,7 +127,7 @@ namespace LunaQuest
             while (running && Process.GetProcessesByName("vrserver").Length > 0)
             {
                 stableSeconds = OpenVR.IsHmdPresent() ? stableSeconds + 1 : 0;
-                if (stableSeconds >= 10) return true;
+                if (stableSeconds >= (ScreenEnabled ? 10 : 4)) return true;
                 Thread.Sleep(1000);
             }
             return false;
@@ -199,7 +211,7 @@ namespace LunaQuest
                     if (type == EVREventType.VREvent_DashboardActivated) dashboardOpened = DateTime.UtcNow;
                     if (type == EVREventType.VREvent_DashboardDeactivated)
                     {
-                        if ((DateTime.UtcNow - dashboardOpened).TotalMilliseconds < DashboardFlickMs) Toggle();
+                        if ((DateTime.UtcNow - dashboardOpened).TotalMilliseconds < DashboardFlickMs && ScreenEnabled) Toggle();
                         dashboardOpened = DateTime.MinValue;
                     }
                     // Casques où le bouton menu gauche n'est pas réservé au tableau de bord : double appui brut.
@@ -207,10 +219,21 @@ namespace LunaQuest
                         && ev.trackedDeviceIndex == OpenVR.System.GetTrackedDeviceIndexForControllerRole(ETrackedControllerRole.LeftHand))
                     {
                         var now = DateTime.UtcNow;
-                        if ((now - lastMenuPress).TotalMilliseconds < DoublePressMs) { Toggle(); lastMenuPress = DateTime.MinValue; }
+                        if ((now - lastMenuPress).TotalMilliseconds < DoublePressMs) { if (ScreenEnabled) Toggle(); lastMenuPress = DateTime.MinValue; }
                         else lastMenuPress = now;
                     }
                 }
+
+                // L'écran PC peut être activé ou coupé pendant que le lien tourne.
+                if (ScreenEnabled && overlay == 0 && !CreateOverlays()) ScreenEnabled = false;
+                if (!ScreenEnabled && overlay != 0)
+                {
+                    OpenVR.Overlay.DestroyOverlay(overlay);
+                    if (dashboard != 0) OpenVR.Overlay.DestroyOverlay(dashboard);
+                    overlay = dashboard = thumbnail = 0;
+                    visible = false;
+                }
+                if (MonitorEnabled && (DateTime.UtcNow - lastSample).TotalMilliseconds >= 100) { lastSample = DateTime.UtcNow; SampleDevices(); }
 
                 var ov = OpenVR.Overlay;
                 if (visible) PumpMouse(overlay, ref ev, evSize);
@@ -227,6 +250,49 @@ namespace LunaQuest
                 if (wait > 0) Thread.Sleep(wait);
             }
             if (overlay != 0) OpenVR.Overlay.HideOverlay(overlay);
+        }
+
+        // ---------------------------------------------------------------- Relevé des appareils
+
+        void SampleDevices()
+        {
+            var sys = OpenVR.System;
+            if (sys == null) return;
+            var poses = new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
+            sys.GetDeviceToAbsoluteTrackingPose(ETrackingUniverseOrigin.TrackingUniverseStanding, 0, poses);
+            var list = new List<VrDevice>();
+            for (uint i = 0; i < OpenVR.k_unMaxTrackedDeviceCount; i++)
+            {
+                var cls = sys.GetTrackedDeviceClass(i);
+                if (cls == ETrackedDeviceClass.Invalid) continue;
+                var d = new VrDevice { Index = i, Class = cls };
+                d.Serial = GetString(sys, i, ETrackedDeviceProperty.Prop_SerialNumber_String);
+                d.System = GetString(sys, i, ETrackedDeviceProperty.Prop_TrackingSystemName_String);
+                d.Type = GetString(sys, i, ETrackedDeviceProperty.Prop_RegisteredDeviceType_String);
+                d.ControllerType = GetString(sys, i, ETrackedDeviceProperty.Prop_ControllerType_String);
+                d.Connected = sys.IsTrackedDeviceConnected(i);
+                d.Tracking = poses[i].bPoseIsValid && poses[i].eTrackingResult == ETrackingResult.Running_OK;
+                d.Role = cls == ETrackedDeviceClass.Controller ? sys.GetControllerRoleForTrackedDeviceIndex(i) : ETrackedControllerRole.Invalid;
+                var err = ETrackedPropertyError.TrackedProp_Success;
+                if (sys.GetBoolTrackedDeviceProperty(i, ETrackedDeviceProperty.Prop_DeviceProvidesBatteryStatus_Bool, ref err))
+                {
+                    d.Battery = sys.GetFloatTrackedDeviceProperty(i, ETrackedDeviceProperty.Prop_DeviceBatteryPercentage_Float, ref err);
+                    d.Charging = sys.GetBoolTrackedDeviceProperty(i, ETrackedDeviceProperty.Prop_DeviceIsCharging_Bool, ref err);
+                }
+                var m = poses[i].mDeviceToAbsoluteTracking;
+                d.X = m.m3; d.Y = m.m7; d.Z = m.m11;
+                if (cls == ETrackedDeviceClass.HMD) { d.ForwardX = -m.m2; d.ForwardZ = -m.m10; }
+                list.Add(d);
+            }
+            Devices = list.ToArray();
+        }
+
+        static string GetString(CVRSystem sys, uint index, ETrackedDeviceProperty prop)
+        {
+            var err = ETrackedPropertyError.TrackedProp_Success;
+            var sb = new StringBuilder(128);
+            sys.GetStringTrackedDeviceProperty(index, prop, sb, (uint)sb.Capacity, ref err);
+            return err == ETrackedPropertyError.TrackedProp_Success ? sb.ToString() : "";
         }
 
         // ---------------------------------------------------------------- Souris
@@ -363,6 +429,52 @@ namespace LunaQuest
                 OpenVR.Overlay.SetOverlayMouseScale(handle, ref scale);
             }
             finally { bmp.UnlockBits(data); }
+        }
+    }
+}
+
+namespace LunaQuest
+{
+    // Un appareil SteamVR relevé par le lien : identité, suivi, batterie et position (mètres, repère debout).
+    class VrDevice
+    {
+        public uint Index;
+        public ETrackedDeviceClass Class;
+        public ETrackedControllerRole Role;
+        public string Serial = "", System = "", Type = "", ControllerType = "";
+        public bool Connected, Tracking, Charging;
+        public float Battery = -1;
+        public float X, Y, Z, ForwardX, ForwardZ;
+
+        public bool IsVirtualTracker { get { return System.StartsWith("ALVR", StringComparison.OrdinalIgnoreCase) && Class == ETrackedDeviceClass.GenericTracker; } }
+
+        static readonly Dictionary<string, string> Joints = new Dictionary<string, string>
+        {
+            { "chest", "Torse" }, { "waist", "Hanches" }, { "left_elbow", "Coude gauche" }, { "right_elbow", "Coude droit" },
+            { "left_knee", "Genou gauche" }, { "right_knee", "Genou droit" }, { "left_foot", "Pied gauche" }, { "right_foot", "Pied droit" }
+        };
+
+        public string Label
+        {
+            get
+            {
+                switch (Class)
+                {
+                    case ETrackedDeviceClass.HMD: return "Casque";
+                    case ETrackedDeviceClass.Controller:
+                        return Role == ETrackedControllerRole.LeftHand ? "Manette gauche" : Role == ETrackedControllerRole.RightHand ? "Manette droite" : "Manette";
+                    case ETrackedDeviceClass.TrackingReference: return "Base " + Serial;
+                    case ETrackedDeviceClass.GenericTracker:
+                        if (IsVirtualTracker)
+                        {
+                            string joint = Type.Substring(Type.LastIndexOf('/') + 1);
+                            string name;
+                            return (Joints.TryGetValue(joint, out name) ? name : joint) + " (virtuel)";
+                        }
+                        return "Tracker " + Serial;
+                    default: return Serial;
+                }
+            }
         }
     }
 }
