@@ -4,9 +4,10 @@ LunaQuest — composants tiers et licences
 LunaQuest n'est pas affilié à Meta, Valve ni au projet ALVR, et n'est pas approuvé par eux.
 Meta Quest est une marque de Meta Platforms, Inc. SteamVR est une marque de Valve Corporation.
 
-1. LunaQuest-Client.apk (application pour le casque)
-   Version modifiée du client ALVR v20.14.1 (thème LunaQuest : nom, icône, décor, panneau d'accueil,
-   espace couleur natif du casque). Code source d'ALVR : https://github.com/alvr-org/ALVR
+1. LunaQuest-Client.apk (application pour le casque) et dossier ALVR (partie PC)
+   Versions modifiées du client et du serveur ALVR v20.14.1. Côté casque (thème LunaQuest : nom, icône, décor, panneau d'accueil,
+   espace couleur natif du casque). Côté PC : suivi du corps
+   LunaQuest (modes FBE), compilé sans les bibliothèques FFmpeg. Code source d'ALVR : https://github.com/alvr-org/ALVR
    Licence MIT :
 
    Copyright (c) 2018-2019 polygraphene
@@ -69,7 +70,6 @@ Meta Quest est une marque de Meta Platforms, Inc. SteamVR est une marque de Valv
    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 3. Logiciels téléchargés à part par l'utilisateur (non inclus) :
-   - ALVR Streamer (https://github.com/alvr-org/ALVR) — licence MIT
    - SteamVR (Valve) — conditions de Steam
    - Android Platform Tools / ADB (Google), téléchargés par LunaQuest depuis dl.google.com
      sous les conditions de Google

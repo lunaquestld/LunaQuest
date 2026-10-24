@@ -84,9 +84,8 @@
   </div></div>
 
   <div class="card step"><div class="num">2</div><div>
-    <h3>Installe ALVR sur le PC</h3>
-    <p>Va sur <a href="https://github.com/alvr-org/ALVR/releases/tag/v20.14.1">github.com/alvr-org/ALVR, version 20.14.1</a> et prends seulement <code>alvr_streamer_windows.zip</code> : la partie PC. L'appli du casque est fournie avec LunaQuest.</p>
-    <p>Extrais le zip dans <b>Documents</b> (par exemple <code>Documents\alvr_streamer_windows</code>), puis lance <b>ALVR Dashboard.exe</b> une fois. Suis l'assistant, puis ferme ALVR. Tu n'auras plus besoin de l'ouvrir.</p>
+    <h3>Installe SteamVR</h3>
+    <p>Dans Steam, installe <b>SteamVR</b> (gratuit), lance-le une fois puis ferme-le. La partie PC d'ALVR est déjà incluse dans LunaQuest : rien d'autre à télécharger.</p>
   </div></div>
 
   <div class="card step"><div class="num">3</div><div>
@@ -112,6 +111,17 @@
     <p>Pour arrêter, quitte simplement LunaQuest Client dans le casque : LunaQuest déconnecte tout proprement.</p>
   </div></div>
 
+  <h2>Corps entier (FBE)</h2>
+  <div class="card">
+    <p style="margin-top:0">Onglet <b>Corps et trackers</b> : choisis un mode, puis clique sur <b>Activer ce mode</b>. Il s'applique au prochain lancement de SteamVR. L'aperçu 3D montre en direct le casque, les manettes et les trackers, leur suivi et leur batterie.</p>
+    <table>
+      <tr><td>FBE Unique</td><td>Tout le corps estimé par les caméras du casque, sans vrais trackers. Choisis les trackers virtuels à créer (torse, hanches, coudes, genoux, pieds).</td></tr>
+      <tr><td>FBE Mix <b>(bêta)</b></td><td>Tes vrais trackers aux hanches et aux pieds ; le torse, les coudes et les genoux sont estimés à partir du casque, des manettes et des trackers. Indique ta taille, tiens-toi debout bien droit et clique sur <b>Calibrer</b>.</td></tr>
+      <tr><td>FBT</td><td>Seulement tes vrais trackers (Vive, Tundra…), suivis par tes bases.</td></tr>
+    </table>
+    <div class="note">FBE Mix est en bêta : il marche déjà, mais pas encore parfaitement. Il sera amélioré dans les prochaines versions.</div>
+  </div>
+
   <h2>Réglages conseillés</h2>
   <div class="card">
     <table>
@@ -131,11 +141,12 @@
       <tr><td>Pas de son</td><td>Active <b>Son du jeu dans le casque</b> dans Réglages ALVR.</td></tr>
       <tr><td>Une manette n'est pas détectée</td><td>Active <b>Mains squelettiques</b> dans Réglages ALVR (sans lui, la manette gauche peut ne jamais apparaître dans SteamVR), puis vérifie les piles.</td></tr>
       <tr><td>« Casque : autorise le débogage USB »</td><td>Mets le casque et accepte la fenêtre de débogage USB.</td></tr>
-      <tr><td>« ALVR (PC) : introuvable »</td><td>Clique sur <b>Dossier ALVR…</b> et choisis <code>ALVR Dashboard.exe</code>.</td></tr>
+      <tr><td>Le corps bouge mal en FBE Mix</td><td>Refais la calibration debout, bien droit, les bras le long du corps. Si ça ne suffit pas, passe en FBT ou en FBE Unique.</td></tr>
+      <tr><td>« ALVR (PC) : introuvable »</td><td>Réinstalle LunaQuest, ou clique sur <b>Dossier ALVR…</b> et choisis <code>ALVR Dashboard.exe</code> dans le dossier <code>ALVR</code> de LunaQuest.</td></tr>
     </table>
   </div>
 
-  <footer>LunaQuest est un lanceur pour <a href="https://github.com/alvr-org/ALVR">ALVR</a>, un logiciel libre. Il n'est affilié ni à Meta ni à Valve.</footer>
+  <footer>LunaQuest est basé sur <a href="https://github.com/alvr-org/ALVR">ALVR</a>, un logiciel libre. Il n'est affilié ni à Meta ni à Valve.</footer>
 </main>
 </body>
 </html>

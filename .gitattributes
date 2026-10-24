@@ -1,0 +1,2 @@
+# Le patch ALVR doit garder ses fins de ligne pour que git apply fonctionne
+*.patch -text

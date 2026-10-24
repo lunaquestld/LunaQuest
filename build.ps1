@@ -72,7 +72,7 @@ foreach ($p in $pngs) { $w.Write($p) }
 $w.Close()
 
 # ---- Version publique (affichée dans l'installateur et dans « Applications installées »).
-$version = "0.2.1"
+$version = "0.3.0"
 $versionCs = "$bin\Version.cs"
 Set-Content -Encoding utf8 $versionCs "[assembly: System.Reflection.AssemblyVersion(""$version.0"")]`r`n[assembly: System.Reflection.AssemblyFileVersion(""$version.0"")]"
 
@@ -98,6 +98,18 @@ if (Test-Path "$PSScriptRoot\LICENSE") { Copy-Item "$PSScriptRoot\LICENSE" "$sta
 # Client ALVR au thème LunaQuest, s'il a été compilé (voir Documents\LunaQuest-ALVR).
 $lunaClient = "$env:USERPROFILE\Documents\LunaQuest-ALVR\ALVR\build\alvr_client_android\alvr_client_android.apk"
 if (Test-Path $lunaClient) { Copy-Item $lunaClient "$stage\LunaQuest-Client.apk" }
+# Partie PC d'ALVR compilée pour LunaQuest (modes FBE), avec une configuration de départ neutre.
+$alvrRepo = "$env:USERPROFILE\Documents\LunaQuest-ALVR\ALVR"
+$streamer = "$alvrRepo\build\alvr_streamer_windows"
+if (Test-Path "$streamer\bin\win64\driver_alvr_server.dll") {
+    $alvr = "$stage\ALVR"
+    New-Item -ItemType Directory -Force "$alvr\bin\win64", "$alvr\licenses" | Out-Null
+    Copy-Item "$streamer\ALVR Dashboard.exe", "$streamer\driver.vrdrivermanifest" $alvr
+    Copy-Item "$streamer\bin\win64\driver_alvr_server.dll", "$streamer\bin\win64\openvr_api.dll", "$streamer\bin\win64\vcruntime140_1.dll" "$alvr\bin\win64"
+    Copy-Item "$alvrRepo\LICENSE" "$alvr\licenses\ALVR.txt"
+    Copy-Item "$alvrRepo\openvr\LICENSE" "$alvr\licenses\Valve.txt"
+    Copy-Item "$res\alvr-session-default.json" "$alvr\session.json"
+}
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $payload = "$dist\.zip-stage\payload.zip"
 [System.IO.Compression.ZipFile]::CreateFromDirectory($stage, $payload, [System.IO.Compression.CompressionLevel]::Optimal, $false)
@@ -106,7 +118,7 @@ $payload = "$dist\.zip-stage\payload.zip"
 # (chemin relatif : csc n'accepte pas d'espaces dans /resource, et le dossier du projet en contient)
 Push-Location "$dist\.zip-stage"
 & "$fw\csc.exe" /nologo /target:winexe /optimize+ /win32icon:"$ico" /out:"$bin\LunaQuest-Setup.exe" `
-    /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Core.dll `
+    /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Core.dll /r:System.Web.Extensions.dll `
     /r:"$fw\System.IO.Compression.dll" /r:"$fw\System.IO.Compression.FileSystem.dll" /resource:payload.zip `
     "$PSScriptRoot\src\Setup.cs" "$versionCs"
 $setupExit = $LASTEXITCODE

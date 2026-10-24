@@ -10,6 +10,8 @@ using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
+using System.Collections.Generic;
+using System.Web.Script.Serialization;
 using Microsoft.Win32;
 
 [assembly: AssemblyTitle("Installation de LunaQuest")]
@@ -83,6 +85,36 @@ namespace LunaQuestSetup
             return Process.GetProcessesByName(AppName).Length > 0;
         }
 
+        // SteamVR garde le pilote ALVR ouvert : impossible de le remplacer ou de le supprimer pendant ce temps.
+        public static bool SteamVrRunning()
+        {
+            return Process.GetProcessesByName("vrserver").Length > 0 || Process.GetProcessesByName("vrmonitor").Length > 0;
+        }
+
+        // Retire de SteamVR les pilotes installés dans ce dossier (l'ALVR fourni avec LunaQuest).
+        static void UnregisterDrivers(string dir)
+        {
+            try
+            {
+                string vrpath = Environment.ExpandEnvironmentVariables(@"%LocalAppData%\openvr\openvrpaths.vrpath");
+                if (!File.Exists(vrpath)) return;
+                var json = new JavaScriptSerializer();
+                var root = json.DeserializeObject(File.ReadAllText(vrpath)) as Dictionary<string, object>;
+                object list;
+                if (root == null || !root.TryGetValue("external_drivers", out list) || !(list is object[])) return;
+                string prefix = Path.GetFullPath(dir).TrimEnd('\\') + "\\";
+                var kept = new List<object>();
+                foreach (var item in (object[])list)
+                {
+                    var p = item as string;
+                    if (p == null || !(Path.GetFullPath(p).TrimEnd('\\') + "\\").StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) kept.Add(item);
+                }
+                root["external_drivers"] = kept.ToArray();
+                File.WriteAllText(vrpath, json.Serialize(root));
+            }
+            catch { }
+        }
+
         // Copie les fichiers, puis les raccourcis et l'entrée de désinstallation.
         public static void Install(string dir, bool desktop, Action<string> progress)
         {
@@ -96,6 +128,8 @@ namespace LunaQuestSetup
                     string target = Path.GetFullPath(Path.Combine(dir, entry.FullName));
                     // Jamais en dehors du dossier d'installation.
                     if (!target.StartsWith(Path.GetFullPath(dir) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) continue;
+                    // Mise à jour : on garde les réglages ALVR déjà présents.
+                    if (entry.FullName.Replace('\\', '/').Equals("ALVR/session.json", StringComparison.OrdinalIgnoreCase) && File.Exists(target)) continue;
                     progress("Copie de " + entry.Name + "…");
                     Directory.CreateDirectory(Path.GetDirectoryName(target));
                     entry.ExtractToFile(target, true);
@@ -158,9 +192,9 @@ namespace LunaQuestSetup
                         + "ALVR, SteamVR et l'appli du casque ne sont pas touchés.",
                         "LunaQuest", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                     return;
-                while (LunaQuestRunning())
+                while (LunaQuestRunning() || SteamVrRunning())
                 {
-                    if (MessageBox.Show("Ferme LunaQuest avant de continuer.", "LunaQuest",
+                    if (MessageBox.Show("Ferme LunaQuest et SteamVR avant de continuer.", "LunaQuest",
                             MessageBoxButtons.RetryCancel, MessageBoxIcon.Warning) != DialogResult.Retry)
                         return;
                 }
@@ -178,6 +212,7 @@ namespace LunaQuestSetup
             try
             {
                 System.Threading.Thread.Sleep(800); // laisse le premier désinstallateur se fermer
+                if (ok) UnregisterDrivers(dir);
                 if (ok) Directory.Delete(dir, true);
                 // Seulement nos raccourcis : ceux qui pointent dans le dossier d'installation.
                 foreach (var link in new[] { StartMenuShortcut, DesktopShortcut })
@@ -278,7 +313,7 @@ namespace LunaQuestSetup
             string dir;
             try { dir = Path.GetFullPath(txtDir.Text.Trim()); }
             catch { SetStatus("Ce dossier n'est pas valide.", Red); return; }
-            if (Program.LunaQuestRunning()) { SetStatus("Ferme LunaQuest, puis clique à nouveau sur Installer.", Red); return; }
+            if (Program.LunaQuestRunning() || Program.SteamVrRunning()) { SetStatus("Ferme LunaQuest et SteamVR, puis clique à nouveau sur Installer.", Red); return; }
 
             foreach (Control c in Controls) if (c is Button || c is TextBox || c is CheckBox) c.Enabled = false;
             bool desktop = chkDesktop.Checked, launch = chkLaunch.Checked;

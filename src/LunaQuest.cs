@@ -1287,8 +1287,12 @@ namespace LunaQuest
 
         public static string DashboardPath(string folder) { return Path.Combine(folder, "ALVR Dashboard.exe"); }
 
+        // ALVR (partie PC) fourni avec LunaQuest, dans le dossier d'installation.
+        public static string Bundled { get { return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ALVR"); } }
+
         public static string Find()
         {
+            if (IsValidFolder(Bundled)) return Bundled;
             var roots = new List<string> {
                 Environment.ExpandEnvironmentVariables(@"%ProgramFiles%\ALVR"),
                 Environment.ExpandEnvironmentVariables(@"%LocalAppData%\Programs\ALVR"),
@@ -1743,6 +1747,29 @@ namespace LunaQuest
             BuildBodyPage();
             ShowPage(0);
 
+            // Depuis la 0.3.0, LunaQuest fournit son propre ALVR (nécessaire pour les modes FBE) : on passe
+            // dessus en reprenant les réglages de l'ALVR utilisé jusque-là.
+            string bundled = AlvrInstall.Bundled;
+            if (AlvrInstall.IsValidFolder(bundled) && AlvrInstall.IsValidFolder(config.AlvrFolder)
+                && !string.Equals(Path.GetFullPath(config.AlvrFolder).TrimEnd('\\'), Path.GetFullPath(bundled).TrimEnd('\\'), StringComparison.OrdinalIgnoreCase)
+                && !IsLunaStreamer(config.AlvrFolder))
+            {
+                try
+                {
+                    string marker = Path.Combine(bundled, "lunaquest-settings-imported");
+                    string oldSession = AlvrInstall.SessionPath(config.AlvrFolder);
+                    if (!File.Exists(marker) && File.Exists(oldSession))
+                    {
+                        File.Copy(oldSession, AlvrInstall.SessionPath(bundled), true);
+                        File.WriteAllText(marker, config.AlvrFolder);
+                    }
+                    Log("ALVR fourni avec LunaQuest utilisé, avec tes réglages de " + config.AlvrFolder + ".");
+                }
+                catch (Exception e) { Log("Réglages ALVR non repris : " + e.Message); }
+                config.AlvrFolder = bundled;
+                config.Save();
+            }
+
             if (!AlvrInstall.IsValidFolder(config.AlvrFolder))
             {
                 config.AlvrFolder = AlvrInstall.Find() ?? "";
@@ -1984,11 +2011,11 @@ namespace LunaQuest
         // Trois façons de suivre le corps : FBE Unique (tout estimé par le casque), FBE Mix (vrais trackers
         // complétés par le casque, expérimental) et FBT (seulement les vrais trackers).
         static readonly string[] BodyModes = { "fbe", "mix", "fbt" };
-        static readonly string[] BodyModeNames = { "FBE Unique", "FBE Mix", "FBT" };
+        static readonly string[] BodyModeNames = { "FBE Unique", "FBE Mix (bêta)", "FBT" };
         static readonly string[] BodyModeTexts =
         {
             "Tout le corps estimé par les caméras du casque, sans vrais trackers : choisis les trackers virtuels à créer.",
-            "Tes vrais trackers aux hanches et aux pieds, le reste (torse, coudes, genoux) estimé à partir du casque, des manettes et des trackers. Sans le suivi du casque : les manettes restent visibles.",
+            "BÊTA : marche déjà bien, mais pas encore parfait. Tes vrais trackers aux hanches et aux pieds, le reste (torse, coudes, genoux) estimé à partir du casque, des manettes et des trackers. Sans le suivi du casque : les manettes restent visibles.",
             "Seulement tes vrais trackers Vive, suivis par tes bases. Le suivi du corps par le casque est coupé."
         };
 
@@ -2022,12 +2049,12 @@ namespace LunaQuest
 
             lblBodyModeText = AddLabel(3, "", Theme.Body, Theme.Soft, 124, 232, 520);
             lblBodyModeText.AutoSize = false;
-            lblBodyModeText.Size = new Size(520, 50);
+            lblBodyModeText.Size = new Size(520, 62);
 
             for (int i = 0; i < tglJoints.Length; i++)
             {
                 int col = i % 2, row = i / 2;
-                tglJoints[i] = AddTo(3, new ToggleSwitch(BodyConfig.JointLabels[i]) { Location = new Point(124 + col * 260, 296 + row * 36), Size = new Size(250, 28) });
+                tglJoints[i] = AddTo(3, new ToggleSwitch(BodyConfig.JointLabels[i]) { Location = new Point(124 + col * 260, 302 + row * 36), Size = new Size(250, 28) });
                 tglJoints[i].CheckedChanged += delegate { if (!loadingBody) MarkBodyDirty(); };
             }
             tglKneesIk = AddTo(3, new ToggleSwitch("Genoux calculés depuis mes vrais trackers") { Location = new Point(124, 452), Size = new Size(520, 28), Visible = false });
@@ -2101,6 +2128,7 @@ namespace LunaQuest
         {
             string mode = SelectedBodyMode;
             lblBodyModeText.Text = BodyModeTexts[segBodyMode.SelectedIndex];
+            lblBodyModeText.ForeColor = SelectedBodyMode == "mix" ? Theme.Orange : Theme.Soft;
             bool fbe = mode == "fbe", mix = mode == "mix", fbt = mode == "fbt";
             foreach (var t in tglJoints) t.Visible = fbe || mix;
             foreach (Control c in new Control[] { lblHeight, numHeight, btnCalibrate, lblCalib }) c.Visible = mix;
@@ -2329,7 +2357,7 @@ namespace LunaQuest
         static readonly string[,] GuideSteps =
         {
             { "Active le mode développeur", "Appli Meta Horizon sur ton téléphone › Appareils › ton casque › Mode développeur." },
-            { "Installe ALVR sur le PC", "Sur github.com/alvr-org/ALVR, version 20.14.1, prends alvr_streamer_windows.zip. Extrais-le, par exemple dans Documents, et lance ALVR Dashboard une seule fois." },
+            { "Installe SteamVR", "Sur Steam, installe SteamVR (gratuit) et lance-le une fois. La partie PC d'ALVR est déjà incluse dans LunaQuest : rien d'autre à télécharger." },
             { "Prépare le casque", "Onglet Connexion : Installer ADB, branche le casque avec le câble USB, puis accepte le débogage USB qui s'affiche dans le casque." },
             { "Installe l'appli du casque", "Clique sur Installer l'appli casque : LunaQuest Client, fourni avec LunaQuest, s'installe et s'enregistre tout seul. Rien à recopier." },
             { "Joue !", "Clique sur Connecter : LunaQuest ouvre le tunnel USB, SteamVR et l'appli du casque. Ensuite, il suffit de brancher le casque." },

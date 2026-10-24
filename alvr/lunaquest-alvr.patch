@@ -1,0 +1,1618 @@
+diff --git a/Cargo.toml b/Cargo.toml
+index d471a4a..52c1d4d 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -26,8 +26,9 @@ alvr_sockets = { path = "alvr/sockets" }
+ alvr_system_info = { path = "alvr/system_info" }
+ 
+ [profile.release]
+-debug = "limited"
+-strip = false
++# LunaQuest : version publique sans infos de débogage (elles contiennent les chemins du PC qui compile)
++debug = false
++strip = true
+ 
+ [profile.distribution]
+ inherits = "release"
+diff --git a/alvr/client_core/src/storage.rs b/alvr/client_core/src/storage.rs
+index 65455b3..def4d47 100644
+--- a/alvr/client_core/src/storage.rs
++++ b/alvr/client_core/src/storage.rs
+@@ -1,6 +1,5 @@
+ use alvr_common::{error, info};
+ use app_dirs2::{AppDataType, AppInfo};
+-use rand::Rng;
+ use serde::{Deserialize, Serialize};
+ use std::{fs, path::PathBuf};
+ 
+@@ -24,16 +23,9 @@ pub struct Config {
+ 
+ impl Default for Config {
+     fn default() -> Self {
+-        let mut rng = rand::rng();
+-
+         Self {
+-            hostname: format!(
+-                "{}{}{}{}.client",
+-                rng.random_range(0..10),
+-                rng.random_range(0..10),
+-                rng.random_range(0..10),
+-                rng.random_range(0..10),
+-            ),
++            // LunaQuest : nom fixe, pour que LunaQuest enregistre le casque tout seul (connexion par câble)
++            hostname: "lunaquest.client".to_owned(),
+             protocol_id: alvr_common::protocol_id(),
+         }
+     }
+diff --git a/alvr/client_openxr/Cargo.toml b/alvr/client_openxr/Cargo.toml
+index 152e38d..12ac018 100644
+--- a/alvr/client_openxr/Cargo.toml
++++ b/alvr/client_openxr/Cargo.toml
+@@ -26,7 +26,7 @@ libc = "0.2"
+ ndk-context = "0.1"
+ 
+ [package.metadata.android]
+-package = "alvr.client.stable"             # Changed for Meta Store
++package = "alvr.client.lunaquest"          # LunaQuest : s'installe à côté de l'ALVR officiel
+ install_location = "auto"
+ build_targets = ["aarch64-linux-android"]
+ runtime_libs = "../../deps/android_openxr"
+@@ -82,7 +82,7 @@ authorities = "org.khronos.openxr.runtime_broker;org.khronos.openxr.system_runti
+ debuggable = false
+ theme = "@android:style/Theme.Black.NoTitleBar.Fullscreen"
+ icon = "@mipmap/ic_launcher"
+-label = "ALVR"
++label = "LunaQuest"
+ 
+ [package.metadata.android.application.activity]
+ config_changes = "density|keyboard|keyboardHidden|navigation|orientation|screenLayout|screenSize|uiMode"
+diff --git a/alvr/client_openxr/resources/drawable/ic_launcher_foreground.xml b/alvr/client_openxr/resources/drawable/ic_launcher_foreground.xml
+index 1af9baa..3260bbe 100644
+--- a/alvr/client_openxr/resources/drawable/ic_launcher_foreground.xml
++++ b/alvr/client_openxr/resources/drawable/ic_launcher_foreground.xml
+@@ -2,63 +2,24 @@
+     xmlns:aapt="http://schemas.android.com/aapt"
+     android:width="108dp"
+     android:height="108dp"
+-    android:viewportWidth="247.19"
+-    android:viewportHeight="247.2">
+-  <group android:scaleX="0.48997378"
+-      android:scaleY="0.49"
+-      android:translateX="63.03669"
+-      android:translateY="63.036">
+-    <group>
+-      <clip-path
+-          android:pathData="m19.24,27.3 l48.9,43.32 -19.6,44.33 18.17,46.96 -45.21,41.35 2.17,43.95 223.52,-0.01 0.01,-247.19 -215.11,0.14z"/>
+-      <path
+-          android:pathData="M123.59,123.6m-115.38,0a115.38,115.38 0,1 1,230.77 0a115.38,115.38 0,1 1,-230.77 0"
+-          android:strokeWidth="16.4055"
+-          android:fillColor="#00000000">
+-        <aapt:attr name="android:strokeColor">
+-          <gradient 
+-              android:startX="-0"
+-              android:startY="123.6"
+-              android:endX="247.17"
+-              android:endY="123.6"
+-              android:type="linear">
+-            <item android:offset="0" android:color="#FF3ED2E3"/>
+-            <item android:offset="1" android:color="#FF1D89CF"/>
+-          </gradient>
+-        </aapt:attr>
+-      </path>
+-      <path
+-          android:pathData="M123.59,123.6m-85.3,0a85.3,85.3 0,1 1,170.6 0a85.3,85.3 0,1 1,-170.6 0"
+-          android:strokeWidth="15.875"
+-          android:fillColor="#00000000">
+-        <aapt:attr name="android:strokeColor">
+-          <gradient 
+-              android:startX="32.22"
+-              android:startY="123.6"
+-              android:endX="214.95"
+-              android:endY="123.6"
+-              android:type="linear">
+-            <item android:offset="0" android:color="#FF3ED2E3"/>
+-            <item android:offset="1" android:color="#FF2192D1"/>
+-          </gradient>
+-        </aapt:attr>
+-      </path>
+-      <path
+-          android:pathData="M123.59,123.6m-56.33,0a56.33,56.33 0,1 1,112.67 0a56.33,56.33 0,1 1,-112.67 0"
+-          android:strokeWidth="15.5123"
+-          android:fillColor="#00000000">
+-        <aapt:attr name="android:strokeColor">
+-          <gradient 
+-              android:startX="63.25"
+-              android:startY="123.6"
+-              android:endX="183.92"
+-              android:endY="123.6"
+-              android:type="linear">
+-            <item android:offset="0" android:color="#FF3ED2E3"/>
+-            <item android:offset="1" android:color="#FF279ED4"/>
+-          </gradient>
+-        </aapt:attr>
+-      </path>
+-    </group>
+-  </group>
++    android:viewportWidth="108"
++    android:viewportHeight="108">
++  <!-- LunaQuest : une lune claire sur fond nuit, avec un croissant d'ombre -->
++  <path
++      android:pathData="M54,54m-25,0a25,25 0,1 1,50 0a25,25 0,1 1,-50 0">
++    <aapt:attr name="android:fillColor">
++      <gradient
++          android:centerX="46"
++          android:centerY="46"
++          android:gradientRadius="34"
++          android:type="radial">
++        <item android:offset="0" android:color="#FFFCFDFF"/>
++        <item android:offset="1" android:color="#FF9FB3E0"/>
++      </gradient>
++    </aapt:attr>
++  </path>
++  <path android:fillColor="#2E4E62A0" android:pathData="M45,57m-6,0a6,6 0,1 1,12 0a6,6 0,1 1,-12 0"/>
++  <path android:fillColor="#2E4E62A0" android:pathData="M61,44m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0"/>
++  <path android:fillColor="#2E4E62A0" android:pathData="M57,66m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0"/>
++  <path android:fillColor="#99080D24" android:pathData="M79,54A25,25 0,0 1,54 79A27,27 0,0 0,66 54A27,27 0,0 0,54 29A25,25 0,0 1,79 54Z"/>
+ </vector>
+diff --git a/alvr/client_openxr/resources/values/ic_launcher_background.xml b/alvr/client_openxr/resources/values/ic_launcher_background.xml
+index c5d5899..d6e3ec7 100644
+--- a/alvr/client_openxr/resources/values/ic_launcher_background.xml
++++ b/alvr/client_openxr/resources/values/ic_launcher_background.xml
+@@ -1,4 +1,4 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <resources>
+-    <color name="ic_launcher_background">#FFFFFF</color>
++    <color name="ic_launcher_background">#080D24</color>
+ </resources>
+\ No newline at end of file
+diff --git a/alvr/client_openxr/src/lib.rs b/alvr/client_openxr/src/lib.rs
+index 3e35add..ab1fc92 100644
+--- a/alvr/client_openxr/src/lib.rs
++++ b/alvr/client_openxr/src/lib.rs
+@@ -255,9 +255,10 @@ pub fn entry_point() {
+             vec![90.0]
+         };
+ 
++        // LunaQuest : espace couleur natif des casques Meta (celui des jeux Quest), plus vif que Rec.709
+         if exts.fb_color_space {
+             xr_session
+-                .set_color_space(xr::ColorSpaceFB::REC709)
++                .set_color_space(xr::ColorSpaceFB::RIFT_CV1)
+                 .unwrap();
+         }
+ 
+diff --git a/alvr/client_openxr/src/lobby.rs b/alvr/client_openxr/src/lobby.rs
+index a20149e..4446b01 100644
+--- a/alvr/client_openxr/src/lobby.rs
++++ b/alvr/client_openxr/src/lobby.rs
+@@ -206,7 +206,7 @@ impl Lobby {
+             additional_motions,
+             body_skeleton,
+             body_tracking_type,
+-            false,
++            true, // LunaQuest : toujours dessiner le ciel étoilé et le sol lunaire
+             cfg!(debug_assertions),
+         );
+ 
+diff --git a/alvr/graphics/resources/lobby_quad.wgsl b/alvr/graphics/resources/lobby_quad.wgsl
+index 2cb8623..7374195 100644
+--- a/alvr/graphics/resources/lobby_quad.wgsl
++++ b/alvr/graphics/resources/lobby_quad.wgsl
+@@ -13,64 +13,132 @@ struct VertexOutput {
+     @location(0) uv: vec2f,
+ }
+ 
++// LunaQuest : couleurs de la nuit lunaire
++const SKY_HORIZON = vec3f(0.050, 0.085, 0.210);
++const SKY_ZENITH = vec3f(0.008, 0.012, 0.040);
++const MOON_GLOW = vec3f(0.350, 0.500, 1.000);
++
+ @vertex
+ fn vertex_main(@builtin(vertex_index) vertex_index: u32) -> VertexOutput {
+     var result: VertexOutput;
+ 
+     result.uv = vec2f(f32(vertex_index & 1), f32(vertex_index >> 1));
+-    result.position = pc.transform * vec4f(result.uv.x - 0.5, 0.5 - result.uv.y, 0.0, 1.0);
++    if pc.object_type == 2 {
++        // Ciel : un quad plein écran, la direction de vue est reconstruite dans le fragment shader
++        result.position = vec4f(result.uv.x * 2.0 - 1.0, 1.0 - result.uv.y * 2.0, 0.5, 1.0);
++    } else {
++        result.position = pc.transform * vec4f(result.uv.x - 0.5, 0.5 - result.uv.y, 0.0, 1.0);
++    }
+ 
+     return result;
+ }
+ 
++fn hash3(p: vec3f) -> f32 {
++    return fract(sin(dot(p, vec3f(127.1, 311.7, 74.7))) * 43758.5453);
++}
++
++fn hash2(p: vec2f) -> f32 {
++    return fract(sin(dot(p, vec2f(127.1, 311.7))) * 43758.5453);
++}
++
++// Étoiles fixes dans le ciel : une étoile dans une petite partie des cellules d'une grille 3D
++fn stars(dir: vec3f) -> vec3f {
++    let p = dir * 140.0;
++    let cell = floor(p);
++    if hash3(cell) < 0.982 {
++        return vec3f(0.0);
++    }
++    let star_pos = cell + vec3f(hash3(cell + 1.3), hash3(cell + 2.7), hash3(cell + 4.1));
++    let size = 0.12 + 0.22 * hash3(cell + 7.7);
++    let intensity = smoothstep(size, 0.0, length(p - star_pos)) * (0.45 + 0.55 * hash3(cell + 9.1));
++    let tint = mix(vec3f(1.0, 1.0, 1.0), vec3f(0.62, 0.75, 1.0), hash3(cell + 5.5));
++    return tint * intensity;
++}
++
++fn sky(dir: vec3f) -> vec3f {
++    let height = clamp(dir.y, 0.0, 1.0);
++    var color = mix(SKY_HORIZON, SKY_ZENITH, sqrt(height));
++    color += stars(dir) * smoothstep(-0.02, 0.10, dir.y);
++
++    // Lune, éclairée par la gauche, avec quelques cratères
++    let moon_dir = normalize(vec3f(-0.50, 0.45, -0.75));
++    let moon_radius = 0.06;
++    let angle = acos(clamp(dot(dir, moon_dir), -1.0, 1.0));
++    color += MOON_GLOW * 0.22 * exp(-angle * 11.0);
++    if angle < moon_radius * 1.05 {
++        let right = normalize(cross(moon_dir, vec3f(0.0, 1.0, 0.0)));
++        let up = cross(right, moon_dir);
++        let local = vec2f(dot(dir - moon_dir, right), dot(dir - moon_dir, up)) / moon_radius;
++        let z = sqrt(max(0.0, 1.0 - dot(local, local)));
++        let light = normalize(vec3f(-0.65, 0.35, 0.68));
++        let diffuse = clamp(dot(vec3f(local, z), light), 0.0, 1.0);
++        var moon = mix(vec3f(0.70, 0.76, 0.88), vec3f(1.0, 1.0, 1.0), z) * (0.18 + 0.90 * diffuse);
++        var craters = array<vec3f, 5>(
++            vec3f(-0.35, 0.10, 0.26),
++            vec3f(0.28, 0.40, 0.17),
++            vec3f(0.10, -0.45, 0.14),
++            vec3f(-0.05, -0.12, 0.09),
++            vec3f(0.48, -0.05, 0.11),
++        );
++        for (var i = 0; i < 5; i++) {
++            if distance(local, craters[i].xy) < craters[i].z {
++                moon *= 0.84;
++            }
++        }
++        color = mix(color, moon, smoothstep(1.0, 0.95, length(local)));
++    }
++    return color;
++}
++
+ @fragment
+ fn fragment_main(@location(0) uv: vec2f) -> @location(0) vec4f {
+-    if pc.object_type == 0 { // Ground
++    if pc.object_type == 0 { // Sol lunaire
+         let world_xz = (uv - 0.5) * pc.floor_side;
+ 
+-        let ground_center = vec3f(0.0, 0.0, 0.0);
+-        let ground_horizon = vec3f(0.0, 0.0, 0.015);
++        // Poussière lunaire : légères variations de teinte sur le sol bleu nuit
++        let dust = hash2(floor(world_xz * 1.5));
++        let ground_center = vec3f(0.018, 0.028, 0.072) * (0.85 + 0.30 * dust);
+ 
+-        let grid_close = vec3f(0.114, 0.545, 0.804);
+-        let grid_far = vec3f(0.259, 0.863, 0.886);
++        let grid_close = vec3f(0.30, 0.48, 0.95);
++        let grid_far = vec3f(0.55, 0.70, 1.00);
+ 
+-        let line_fade_start = 10.0;
+-        let line_fade_end = 50.0;
++        let line_fade_start = 8.0;
++        let line_fade_end = 30.0;
+         let line_fade_dist = line_fade_end - line_fade_start;
+ 
+-        let line_bloom = 10.0;
++        let line_bloom = 4.0;
+ 
+         let distance = length(world_xz);
+ 
+-        // Pick a coordinate to visualize in a grid
++        // Grille discrète pour garder un repère au sol
+         let cell_size = 2.0;
+         let coord = world_xz / cell_size;
+ 
+-        // Compute anti-aliased world-space grid lines
+-        let screen_space_line_width = 1.0 * fwidth(coord); // todo: make resolution agnostic?
++        let screen_space_line_width = 1.0 * fwidth(coord);
+         let grid = abs(fract(coord - 0.5) - 0.5) / screen_space_line_width;
+ 
+-        // Create mask for grid lines and fade over distance
+         var line = clamp(1.0 - min(grid.x, grid.y), 0.0, 1.0);
+-        line *= clamp((line_fade_start - distance) / line_fade_dist, 0.0, 1.0);
+-    
+-        // Fill in normal ground colour
++        line *= clamp((line_fade_start - distance) / line_fade_dist + 1.0, 0.0, 1.0) * 0.6;
++
+         var out_color = ground_center * (1.0 - line);
+ 
+-        // Add cheap and simple "bloom" to the grid lines
+         line *= 1.0 + line_bloom;
+ 
+-        // Fill in grid line colour
+-        out_color += line * mix(grid_far, grid_close, clamp((line_fade_end - distance) / line_fade_end, 0.0, 1.0));
++        out_color += line * mix(grid_far, grid_close, clamp((line_fade_end - distance) / line_fade_end, 0.0, 1.0)) * 0.35;
+ 
+-        // Fade to the horizon colour over distance
++        // Fondu vers l'horizon, de la même couleur que le bas du ciel
+         if distance > 10.0 {
+             let coef = 1.0 - 10.0 / distance;
+-            out_color = (1.0 - coef) * out_color + coef * ground_horizon;
++            out_color = (1.0 - coef) * out_color + coef * SKY_HORIZON;
+         }
+ 
+         return vec4f(out_color, 1.0);
+-    } else { // HUD
++    } else if pc.object_type == 2 { // Ciel étoilé
++        let ndc = vec2f(uv.x * 2.0 - 1.0, 1.0 - uv.y * 2.0);
++        let p = pc.transform * vec4f(ndc, 0.5, 1.0);
++        let dir = normalize(p.xyz / p.w);
++        return vec4f(sky(dir), 1.0);
++    } else { // Panneau d'informations
+         return textureSample(hud_texture, hud_sampler, uv);
+     }
+ }
+diff --git a/alvr/graphics/src/lobby.rs b/alvr/graphics/src/lobby.rs
+index e311d00..66d594c 100644
+--- a/alvr/graphics/src/lobby.rs
++++ b/alvr/graphics/src/lobby.rs
+@@ -1,11 +1,12 @@
+ use super::{GraphicsContext, MAX_PUSH_CONSTANTS_SIZE, SDR_FORMAT};
+ use alvr_common::{
+-    glam::{IVec2, Mat4, Quat, UVec2, Vec3},
++    glam::{Mat4, Quat, UVec2, Vec3},
+     DeviceMotion, Fov, Pose,
+ };
+ use glyph_brush_layout::{
+     ab_glyph::{Font, FontRef, ScaleFont},
+-    FontId, GlyphPositioner, HorizontalAlign, Layout, SectionGeometry, SectionText, VerticalAlign,
++    FontId, GlyphPositioner, HorizontalAlign, Layout, SectionGeometry, SectionGlyph, SectionText,
++    VerticalAlign,
+ };
+ use std::{f32::consts::FRAC_PI_2, mem, rc::Rc};
+ use wgpu::{
+@@ -45,17 +46,23 @@ const HUD_SIDE: f32 = 3.5;
+ const HUD_TEXTURE_SIDE: usize = 1024;
+ const FONT_SIZE: f32 = 50.0;
+ 
+-const FAST_BORDER_OFFSETS: [IVec2; 8] = [
+-    IVec2::new(0, -3),
+-    IVec2::new(2, -2),
+-    IVec2::new(3, 0),
+-    IVec2::new(2, 2),
+-    IVec2::new(0, 3),
+-    IVec2::new(-2, 2),
+-    IVec2::new(-3, 0),
+-    IVec2::new(-2, -2),
+-];
+-const MAX_BORDER_OFFSET: i32 = 3;
++// LunaQuest : panneau bleu nuit arrondi, titre et petite lune
++const PANEL_FILL: [f32; 4] = [13.0, 22.0, 58.0, 225.0];
++const PANEL_BORDER: [f32; 4] = [132.0, 186.0, 255.0, 240.0];
++const PANEL_BORDER_WIDTH: f32 = 4.0;
++const PANEL_PADDING: f32 = 48.0;
++const PANEL_RADIUS: f32 = 40.0;
++const TEXT_COLOR: [f32; 3] = [242.0, 245.0, 255.0];
++const TITLE_COLOR: [f32; 3] = [132.0, 186.0, 255.0];
++const TITLE_TEXT: &str = "LunaQuest";
++const TITLE_SIZE: f32 = 72.0;
++const TITLE_GAP: f32 = 34.0;
++const FOOTER_TEXT: &str = "Pour te déconnecter, quitte l'appli LunaQuest";
++const FOOTER_SIZE: f32 = 34.0;
++const FOOTER_GAP: f32 = 30.0;
++const FOOTER_COLOR: [f32; 3] = [140.0, 165.0, 220.0];
++const MOON_ICON_RADIUS: f32 = 26.0;
++const ACCENT_LINE_COLOR: [u8; 4] = [132, 186, 255, 255];
+ 
+ const HAND_SKELETON_BONES: [(usize, usize); 19] = [
+     // Thumb
+@@ -216,6 +223,159 @@ fn create_pipeline(
+     })
+ }
+ 
++// ---- LunaQuest : dessin du panneau d'informations (texture RGBA non prémultipliée) ----
++
++fn lerp(a: f32, b: f32, t: f32) -> f32 {
++    a + (b - a) * t
++}
++
++fn layout_text(
++    font: &FontRef<'_>,
++    text: &str,
++    scale: f32,
++    center: (f32, f32),
++) -> Vec<SectionGlyph> {
++    Layout::default()
++        .h_align(HorizontalAlign::Center)
++        .v_align(VerticalAlign::Center)
++        .calculate_glyphs(
++            &[font],
++            &SectionGeometry {
++                screen_position: center,
++                ..Default::default()
++            },
++            &[SectionText {
++                text,
++                scale: scale.into(),
++                font_id: FontId(0),
++            }],
++        )
++}
++
++fn glyph_bounds(
++    font: &FontRef<'_>,
++    scale: f32,
++    glyphs: &[SectionGlyph],
++) -> Option<((f32, f32), (f32, f32))> {
++    let scaled_font = font.as_scaled(scale);
++    let mut result: Option<((f32, f32), (f32, f32))> = None;
++    for section_glyph in glyphs {
++        if let Some(outlined) = scaled_font.outline_glyph(section_glyph.glyph.clone()) {
++            let b = outlined.px_bounds();
++            result = Some(match result {
++                None => ((b.min.x, b.min.y), (b.max.x, b.max.y)),
++                Some((min, max)) => (
++                    (min.0.min(b.min.x), min.1.min(b.min.y)),
++                    (max.0.max(b.max.x), max.1.max(b.max.y)),
++                ),
++            });
++        }
++    }
++    result
++}
++
++// Compose une couleur par-dessus le pixel existant (opérateur « over »)
++fn blend_pixel(buffer: &mut [u8], x: i32, y: i32, rgb: [f32; 3], alpha: f32) {
++    let side = HUD_TEXTURE_SIDE as i32;
++    if alpha <= 0.0 || x < 0 || y < 0 || x >= side || y >= side {
++        return;
++    }
++    let i = (y as usize * HUD_TEXTURE_SIDE + x as usize) * 4;
++    let a = alpha.min(1.0);
++    let dst_a = buffer[i + 3] as f32 / 255.0;
++    let out_a = a + dst_a * (1.0 - a);
++    if out_a <= 0.0 {
++        return;
++    }
++    for c in 0..3 {
++        let dst = buffer[i + c] as f32;
++        buffer[i + c] = ((rgb[c] * a + dst * dst_a * (1.0 - a)) / out_a)
++            .round()
++            .clamp(0.0, 255.0) as u8;
++    }
++    buffer[i + 3] = (out_a * 255.0).round() as u8;
++}
++
++// Rectangle arrondi bleu nuit avec une bordure bleu clair, bords anticrénelés
++fn draw_panel(buffer: &mut [u8], (left, top, right, bottom): (f32, f32, f32, f32)) {
++    let (cx, cy) = ((left + right) / 2.0, (top + bottom) / 2.0);
++    let (hw, hh) = ((right - left) / 2.0, (bottom - top) / 2.0);
++    let radius = PANEL_RADIUS.min(hw).min(hh);
++    for y in top.floor() as i32..=bottom.ceil() as i32 {
++        for x in left.floor() as i32..=right.ceil() as i32 {
++            let qx = (x as f32 + 0.5 - cx).abs() - (hw - radius);
++            let qy = (y as f32 + 0.5 - cy).abs() - (hh - radius);
++            let outside = (qx.max(0.0).powi(2) + qy.max(0.0).powi(2)).sqrt();
++            let dist = outside + qx.max(qy).min(0.0) - radius;
++            let coverage = (0.5 - dist).clamp(0.0, 1.0);
++            if coverage <= 0.0 {
++                continue;
++            }
++            let border = (dist + PANEL_BORDER_WIDTH + 0.5).clamp(0.0, 1.0);
++            let rgb = [
++                lerp(PANEL_FILL[0], PANEL_BORDER[0], border),
++                lerp(PANEL_FILL[1], PANEL_BORDER[1], border),
++                lerp(PANEL_FILL[2], PANEL_BORDER[2], border),
++            ];
++            let alpha = lerp(PANEL_FILL[3], PANEL_BORDER[3], border) / 255.0 * coverage;
++            blend_pixel(buffer, x, y, rgb, alpha);
++        }
++    }
++}
++
++// Petite lune éclairée par la gauche, avec trois cratères
++fn draw_moon_icon(buffer: &mut [u8], (cx, cy): (f32, f32), radius: f32) {
++    let craters = [(-0.35, 0.15, 0.27), (0.28, -0.38, 0.17), (0.08, 0.45, 0.14)];
++    for y in (cy - radius - 2.0) as i32..=(cy + radius + 2.0) as i32 {
++        for x in (cx - radius - 2.0) as i32..=(cx + radius + 2.0) as i32 {
++            let (dx, dy) = (x as f32 + 0.5 - cx, y as f32 + 0.5 - cy);
++            let coverage = (radius + 0.5 - (dx * dx + dy * dy).sqrt()).clamp(0.0, 1.0);
++            if coverage <= 0.0 {
++                continue;
++            }
++            let (lx, ly) = (dx / radius, dy / radius);
++            let z = (1.0 - (lx * lx + ly * ly)).max(0.0).sqrt();
++            let light = (-0.65 * lx - 0.35 * ly + 0.68 * z).clamp(0.0, 1.0);
++            let shade = 0.25 + 0.85 * light;
++            let mut rgb = [
++                lerp(176.0, 252.0, z) * shade,
++                lerp(194.0, 253.0, z) * shade,
++                lerp(232.0, 255.0, z) * shade,
++            ];
++            for (ox, oy, cr) in craters {
++                if ((lx - ox) * (lx - ox) + (ly - oy) * (ly - oy)).sqrt() < cr {
++                    rgb = rgb.map(|c| c * 0.82);
++                }
++            }
++            blend_pixel(buffer, x, y, rgb.map(|c| c.min(255.0)), coverage);
++        }
++    }
++}
++
++fn draw_glyphs(
++    buffer: &mut [u8],
++    font: &FontRef<'_>,
++    scale: f32,
++    glyphs: Vec<SectionGlyph>,
++    rgb: [f32; 3],
++) {
++    let scaled_font = font.as_scaled(scale);
++    for section_glyph in glyphs {
++        if let Some(outlined) = scaled_font.outline_glyph(section_glyph.glyph) {
++            let b = outlined.px_bounds();
++            outlined.draw(|x, y, coverage| {
++                blend_pixel(
++                    buffer,
++                    x as i32 + b.min.x as i32,
++                    y as i32 + b.min.y as i32,
++                    rgb,
++                    coverage,
++                );
++            });
++        }
++    }
++}
++
+ pub struct LobbyViewParams {
+     pub swapchain_index: u32,
+     pub pose: Pose,
+@@ -329,59 +489,54 @@ impl LobbyRenderer {
+         let ubuntu_font =
+             FontRef::try_from_slice(include_bytes!("../resources/Ubuntu-Medium.ttf")).unwrap();
+ 
+-        let section_glyphs = Layout::default()
+-            .h_align(HorizontalAlign::Center)
+-            .v_align(VerticalAlign::Center)
+-            .calculate_glyphs(
+-                &[&ubuntu_font],
+-                &SectionGeometry {
+-                    screen_position: (
+-                        HUD_TEXTURE_SIDE as f32 / 2_f32,
+-                        HUD_TEXTURE_SIDE as f32 / 2_f32,
+-                    ),
+-                    ..Default::default()
+-                },
+-                &[SectionText {
+-                    text: message,
+-                    scale: FONT_SIZE.into(),
+-                    font_id: FontId(0),
+-                }],
++        let side = HUD_TEXTURE_SIDE as f32;
++        let mut buffer = vec![0_u8; HUD_TEXTURE_SIDE * HUD_TEXTURE_SIDE * 4];
++
++        if !message.trim().is_empty() {
++            // Mesure du texte pour dimensionner le panneau : titre au-dessus, message en dessous
++            let measure = layout_text(&ubuntu_font, message, FONT_SIZE, (side / 2.0, side / 2.0));
++            let (msg_min, msg_max) = glyph_bounds(&ubuntu_font, FONT_SIZE, &measure)
++                .unwrap_or(((side / 2.0, side / 2.0), (side / 2.0, side / 2.0)));
++            let msg_h = msg_max.1 - msg_min.1;
++            let block_h = TITLE_SIZE + TITLE_GAP + msg_h + FOOTER_GAP + FOOTER_SIZE;
++            let block_top = (side - block_h) / 2.0;
++
++            let title_center = (side / 2.0 + MOON_ICON_RADIUS, block_top + TITLE_SIZE / 2.0);
++            let title = layout_text(&ubuntu_font, TITLE_TEXT, TITLE_SIZE, title_center);
++            let message_glyphs = layout_text(
++                &ubuntu_font,
++                message,
++                FONT_SIZE,
++                (side / 2.0, block_top + TITLE_SIZE + TITLE_GAP + msg_h / 2.0),
++            );
++            let title_bounds = glyph_bounds(&ubuntu_font, TITLE_SIZE, &title)
++                .unwrap_or((title_center, title_center));
++            let moon_center = (title_bounds.0 .0 - MOON_ICON_RADIUS - 18.0, title_center.1);
++
++            // Aide en bas du panneau : quitter l'appli déclenche la déconnexion complète côté PC (LunaQuest)
++            let footer_center = (side / 2.0, block_top + block_h - FOOTER_SIZE / 2.0);
++            let footer = layout_text(&ubuntu_font, FOOTER_TEXT, FOOTER_SIZE, footer_center);
++            let footer_bounds = glyph_bounds(&ubuntu_font, FOOTER_SIZE, &footer)
++                .unwrap_or((footer_center, footer_center));
++
++            let left = f32::min(
++                f32::min(msg_min.0, moon_center.0 - MOON_ICON_RADIUS),
++                footer_bounds.0 .0,
++            ) - PANEL_PADDING;
++            let right = f32::max(f32::max(msg_max.0, title_bounds.1 .0), footer_bounds.1 .0)
++                + PANEL_PADDING;
++            let panel = (
++                f32::max(left, 2.0),
++                f32::max(block_top - PANEL_PADDING, 2.0),
++                f32::min(right, side - 2.0),
++                f32::min(block_top + block_h + PANEL_PADDING, side - 2.0),
+             );
+ 
+-        let scaled_font = ubuntu_font.as_scaled(FONT_SIZE);
+-
+-        let mut buffer = vec![0; HUD_TEXTURE_SIDE * HUD_TEXTURE_SIDE * 4];
+-
+-        for section_glyph in section_glyphs {
+-            if let Some(outlined) = scaled_font.outline_glyph(section_glyph.glyph) {
+-                let bounds = outlined.px_bounds();
+-
+-                outlined.draw(|x, y, alpha| {
+-                    let x = x as i32 + bounds.min.x as i32;
+-                    let y = y as i32 + bounds.min.y as i32;
+-
+-                    if x >= MAX_BORDER_OFFSET
+-                        && y >= MAX_BORDER_OFFSET
+-                        && x < HUD_TEXTURE_SIDE as i32 - MAX_BORDER_OFFSET
+-                        && y < HUD_TEXTURE_SIDE as i32 - MAX_BORDER_OFFSET
+-                    {
+-                        let coord = (y as usize * HUD_TEXTURE_SIDE + x as usize) * 4;
+-                        let value = (alpha * 255.0) as u8;
+-
+-                        buffer[coord] = value;
+-                        buffer[coord + 1] = value;
+-                        buffer[coord + 2] = value;
+-
+-                        // Render opacity with border
+-                        for offset in &FAST_BORDER_OFFSETS {
+-                            let coord = ((y + offset.y) as usize * HUD_TEXTURE_SIDE
+-                                + (x + offset.x) as usize)
+-                                * 4;
+-                            buffer[coord + 3] = u8::max(buffer[coord + 3], value);
+-                        }
+-                    }
+-                });
+-            }
++            draw_panel(&mut buffer, panel);
++            draw_moon_icon(&mut buffer, moon_center, MOON_ICON_RADIUS);
++            draw_glyphs(&mut buffer, &ubuntu_font, TITLE_SIZE, title, TITLE_COLOR);
++            draw_glyphs(&mut buffer, &ubuntu_font, FONT_SIZE, message_glyphs, TEXT_COLOR);
++            draw_glyphs(&mut buffer, &ubuntu_font, FOOTER_SIZE, footer, FOOTER_COLOR);
+         }
+ 
+         self.context.queue.write_texture(
+@@ -432,10 +587,11 @@ impl LobbyRenderer {
+             let view_proj = super::projection_from_fov(view_input.fov) * view;
+ 
+             let clear_color = if render_background {
++                // LunaQuest : bleu nuit (le ciel étoilé est dessiné par-dessus)
+                 Color {
+-                    r: 0.0,
+-                    g: 0.0,
+-                    b: 0.02,
++                    r: 0.008,
++                    g: 0.012,
++                    b: 0.04,
+                     a: 1.0,
+                 }
+             } else {
+@@ -476,6 +632,17 @@ impl LobbyRenderer {
+             pass.set_bind_group(0, &self.bind_group, &[]);
+ 
+             if render_background {
++                // LunaQuest : ciel étoilé avec la lune, dessiné en plein écran à partir de la direction de vue
++                pass.set_push_constants(
++                    ShaderStages::VERTEX_FRAGMENT,
++                    OBJECT_TYPE_CONST_OFFSET,
++                    &2_u32.to_le_bytes(),
++                );
++                let sky_transform = (super::projection_from_fov(view_input.fov)
++                    * Mat4::from_quat(view_input.pose.orientation.inverse()))
++                .inverse();
++                transform_draw(&mut pass, sky_transform, 4);
++
+                 // Render ground
+                 pass.set_push_constants(
+                     ShaderStages::VERTEX_FRAGMENT,
+@@ -527,7 +694,7 @@ impl LobbyRenderer {
+                 pass.set_push_constants(
+                     ShaderStages::VERTEX_FRAGMENT,
+                     COLOR_CONST_OFFSET,
+-                    &[255, 255, 255, 255],
++                    &ACCENT_LINE_COLOR,
+                 );
+                 for rot in &segment_rotations {
+                     let transform = hand_transform
+@@ -573,7 +740,7 @@ impl LobbyRenderer {
+                     pass.set_push_constants(
+                         ShaderStages::VERTEX_FRAGMENT,
+                         COLOR_CONST_OFFSET,
+-                        &[255, 255, 255, 255],
++                        &ACCENT_LINE_COLOR,
+                     );
+ 
+                     for (joint1_idx, joint2_idx) in HAND_SKELETON_BONES {
+diff --git a/alvr/server_openvr/cpp/alvr_server/LunaBody.cpp b/alvr/server_openvr/cpp/alvr_server/LunaBody.cpp
+new file mode 100644
+index 0000000..d6b6d1f
+--- /dev/null
++++ b/alvr/server_openvr/cpp/alvr_server/LunaBody.cpp
+@@ -0,0 +1,696 @@
++#include "LunaBody.h"
++
++#include "Logger.h"
++#include "Paths.h"
++#include "openvr_driver_wrap.h"
++#include "include/picojson.h"
++
++#include <algorithm>
++#include <array>
++#include <chrono>
++#include <cmath>
++#include <cstdlib>
++#include <filesystem>
++#include <fstream>
++#include <mutex>
++#include <sstream>
++#include <string>
++#include <vector>
++
++namespace {
++
++struct V3 {
++    float x, y, z;
++};
++V3 operator+(V3 a, V3 b) { return { a.x + b.x, a.y + b.y, a.z + b.z }; }
++V3 operator-(V3 a, V3 b) { return { a.x - b.x, a.y - b.y, a.z - b.z }; }
++V3 operator*(V3 a, float s) { return { a.x * s, a.y * s, a.z * s }; }
++float Dot(V3 a, V3 b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
++V3 Cross(V3 a, V3 b) { return { a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x }; }
++float Length(V3 a) { return std::sqrt(Dot(a, a)); }
++V3 Normalize(V3 a, V3 fallback) {
++    float l = Length(a);
++    return l > 1e-5f ? a * (1.f / l) : fallback;
++}
++
++FfiQuat Mul(FfiQuat a, FfiQuat b) {
++    return { a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y,
++             a.w * b.y - a.x * b.z + a.y * b.w + a.z * b.x,
++             a.w * b.z + a.x * b.y - a.y * b.x + a.z * b.w,
++             a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z };
++}
++
++V3 Rotate(FfiQuat q, V3 v) {
++    V3 u = { q.x, q.y, q.z };
++    V3 t = Cross(u, v) * 2.f;
++    return v + t * q.w + Cross(u, t);
++}
++
++// Rotation dont les colonnes sont les axes x, y, z (orthonormés).
++FfiQuat FromBasis(V3 x, V3 y, V3 z) {
++    float trace = x.x + y.y + z.z;
++    FfiQuat q;
++    if (trace > 0) {
++        float s = std::sqrt(trace + 1.f) * 2.f;
++        q = { (y.z - z.y) / s, (z.x - x.z) / s, (x.y - y.x) / s, 0.25f * s };
++    } else if (x.x > y.y && x.x > z.z) {
++        float s = std::sqrt(1.f + x.x - y.y - z.z) * 2.f;
++        q = { 0.25f * s, (y.x + x.y) / s, (z.x + x.z) / s, (y.z - z.y) / s };
++    } else if (y.y > z.z) {
++        float s = std::sqrt(1.f + y.y - x.x - z.z) * 2.f;
++        q = { (y.x + x.y) / s, 0.25f * s, (z.y + y.z) / s, (z.x - x.z) / s };
++    } else {
++        float s = std::sqrt(1.f + z.z - x.x - y.y) * 2.f;
++        q = { (z.x + x.z) / s, (z.y + y.z) / s, 0.25f * s, (x.y - y.x) / s };
++    }
++    return q;
++}
++
++FfiQuat FromEulerDeg(float rx, float ry, float rz) {
++    const float k = 3.14159265f / 360.f;
++    FfiQuat qx = { std::sin(rx * k), 0, 0, std::cos(rx * k) };
++    FfiQuat qy = { 0, std::sin(ry * k), 0, std::cos(ry * k) };
++    FfiQuat qz = { 0, 0, std::sin(rz * k), std::cos(rz * k) };
++    return Mul(Mul(qy, qx), qz);
++}
++
++// Direction « devant » à plat (SteamVR : -Z devant, +Y en haut).
++V3 Forward(FfiQuat q) {
++    V3 f = Rotate(q, { 0, 0, -1 });
++    f.y = 0;
++    return Normalize(f, { 0, 0, -1 });
++}
++
++struct Config {
++    bool loaded = false;
++    std::map<uint64_t, bool> joints;
++    std::map<uint64_t, std::array<float, 6>> offsets;
++    bool kneesFromReal = true;
++    std::string mode = "fbt";       // fbe, mix ou fbt
++    float userHeight = 0;           // taille réelle en mètres, 0 : déduite du casque
++    int calibrationRequest = 0;     // LunaQuest l'augmente pour demander une calibration du mode mix
++    std::filesystem::file_time_type stamp {};
++};
++
++std::mutex g_mutex;
++Config g_config;
++int g_reloadCounter = 0;
++
++struct RealTrackers {
++    int waist = -1, leftFoot = -1, rightFoot = -1;
++    std::vector<int> candidates; // vrais trackers sans rôle utile, pour la détection automatique
++    std::map<std::string, int> bySerial; // tous les vrais trackers, par numéro de série
++    int leftHand = -1, rightHand = -1;
++    std::chrono::steady_clock::time_point refreshed {};
++};
++RealTrackers g_real;
++// Positions des appareils SteamVR, relevées dans la boucle de SteamVR et lues par le fil d'ALVR.
++vr::TrackedDevicePose_t g_poses[vr::k_unMaxTrackedDeviceCount] = {};
++bool g_havePoses = false;
++
++float g_legLength = 0.8f;
++// Avant du corps : l'axe des hanches du casque qui pointe vers l'avant n'est pas documenté, on le
++// retrouve en comparant dans le temps les 4 axes horizontaux possibles à la direction du regard.
++float g_axisScore[4] = { 0, 0, 0, 0 };
++bool g_haveForward = false;
++V3 g_forward = { 0, 0, -1 };
++bool g_haveKnee[2] = { false, false };
++V3 g_lastKnee[2] = {};
++
++std::filesystem::path ConfigPath() {
++    const char* appdata = std::getenv("APPDATA");
++    if (!appdata) return {};
++    return std::filesystem::path(appdata) / "LunaQuest" / "body.json";
++}
++
++const std::map<std::string, uint64_t*> kJointNames = {
++    { "chest", &BODY_CHEST_ID },           { "waist", &BODY_HIPS_ID },
++    { "left_elbow", &BODY_LEFT_ELBOW_ID }, { "right_elbow", &BODY_RIGHT_ELBOW_ID },
++    { "left_knee", &BODY_LEFT_KNEE_ID },   { "right_knee", &BODY_RIGHT_KNEE_ID },
++    { "left_foot", &BODY_LEFT_FOOT_ID },   { "right_foot", &BODY_RIGHT_FOOT_ID },
++};
++
++bool LoadLocked() {
++    auto path = ConfigPath();
++    std::error_code ec;
++    if (path.empty() || !std::filesystem::exists(path, ec)) {
++        g_config = Config {};
++        return false;
++    }
++    auto stamp = std::filesystem::last_write_time(path, ec);
++    if (g_config.loaded && stamp == g_config.stamp) return true;
++
++    std::ifstream file(path);
++    std::stringstream text;
++    text << file.rdbuf();
++    picojson::value root;
++    std::string error = picojson::parse(root, text.str());
++    if (!error.empty() || !root.is<picojson::object>()) {
++        Warn("LunaQuest body.json illisible : %s", error.c_str());
++        return g_config.loaded;
++    }
++
++    Config c;
++    c.loaded = true;
++    c.stamp = stamp;
++    auto& obj = root.get<picojson::object>();
++    if (obj.count("knees_from_real_trackers") && obj.at("knees_from_real_trackers").is<bool>())
++        c.kneesFromReal = obj.at("knees_from_real_trackers").get<bool>();
++    if (obj.count("mode") && obj.at("mode").is<std::string>()) c.mode = obj.at("mode").get<std::string>();
++    if (obj.count("user_height_cm") && obj.at("user_height_cm").is<double>()) c.userHeight = (float)obj.at("user_height_cm").get<double>() / 100.f;
++    if (obj.count("calibration_request") && obj.at("calibration_request").is<double>()) c.calibrationRequest = (int)obj.at("calibration_request").get<double>();
++    if (obj.count("joints") && obj.at("joints").is<picojson::object>()) {
++        for (auto& kv : obj.at("joints").get<picojson::object>()) {
++            auto it = kJointNames.find(kv.first);
++            if (it != kJointNames.end() && kv.second.is<bool>()) c.joints[*it->second] = kv.second.get<bool>();
++        }
++    }
++    if (obj.count("offsets") && obj.at("offsets").is<picojson::object>()) {
++        for (auto& kv : obj.at("offsets").get<picojson::object>()) {
++            auto it = kJointNames.find(kv.first);
++            if (it == kJointNames.end() || !kv.second.is<picojson::array>()) continue;
++            auto& arr = kv.second.get<picojson::array>();
++            std::array<float, 6> o {};
++            for (size_t i = 0; i < 6 && i < arr.size(); i++)
++                if (arr[i].is<double>()) o[i] = (float)arr[i].get<double>();
++            c.offsets[*it->second] = o;
++        }
++    }
++    g_config = c;
++    Info("LunaQuest : réglages du corps chargés (%d trackers).", (int)c.joints.size());
++    return true;
++}
++
++// Retrouve les vrais trackers par le rôle choisi dans SteamVR (Gérer les trackers).
++void RefreshRealTrackers() {
++    auto now = std::chrono::steady_clock::now();
++    if (now - g_real.refreshed < std::chrono::seconds(2)) return;
++    g_real = RealTrackers {};
++    g_real.refreshed = now;
++    for (uint32_t i = 1; i < vr::k_unMaxTrackedDeviceCount; i++) {
++        auto container = vr::VRProperties()->TrackedDeviceToPropertyContainer(i);
++        if (container == vr::k_ulInvalidPropertyContainer) continue;
++        vr::ETrackedPropertyError err = vr::TrackedProp_Success;
++        int32_t cls = vr::VRProperties()->GetInt32Property(container, vr::Prop_DeviceClass_Int32, &err);
++        if (err != vr::TrackedProp_Success) continue;
++        if (cls == vr::TrackedDeviceClass_Controller) {
++            int32_t hint = vr::VRProperties()->GetInt32Property(container, vr::Prop_ControllerRoleHint_Int32, &err);
++            if (hint == vr::TrackedControllerRole_LeftHand) g_real.leftHand = (int)i;
++            else if (hint == vr::TrackedControllerRole_RightHand) g_real.rightHand = (int)i;
++            continue;
++        }
++        if (cls != vr::TrackedDeviceClass_GenericTracker) continue;
++        std::string system = vr::VRProperties()->GetStringProperty(container, vr::Prop_TrackingSystemName_String, &err);
++        if (system.rfind("ALVR", 0) == 0) continue; // nos propres trackers virtuels
++        std::string type = vr::VRProperties()->GetStringProperty(container, vr::Prop_RegisteredDeviceType_String, &err);
++        if (type.empty()) continue;
++        std::string serial = vr::VRProperties()->GetStringProperty(container, vr::Prop_SerialNumber_String, &err);
++        if (!serial.empty()) g_real.bySerial[serial] = (int)i;
++        char role[64] = {};
++        vr::EVRSettingsError serr = vr::VRSettingsError_None;
++        vr::VRSettings()->GetString("trackers", ("/devices/" + type).c_str(), role, sizeof(role), &serr);
++        std::string r = role;
++        if (r == "TrackerRole_Waist") g_real.waist = (int)i;
++        else if (r == "TrackerRole_LeftFoot") g_real.leftFoot = (int)i;
++        else if (r == "TrackerRole_RightFoot") g_real.rightFoot = (int)i;
++        else g_real.candidates.push_back((int)i);
++    }
++}
++
++bool PoseOf(const vr::TrackedDevicePose_t* poses, int index, V3& out) {
++    if (index < 0 || !poses[index].bPoseIsValid || !poses[index].bDeviceIsConnected) return false;
++    auto& m = poses[index].mDeviceToAbsoluteTracking.m;
++    out = { m[0][3], m[1][3], m[2][3] };
++    return true;
++}
++
++V3 Flat(V3 v, V3 fallback) {
++    v.y = 0;
++    return Normalize(v, fallback);
++}
++
++V3 BodyForward(const std::map<uint64_t, FfiDeviceMotion>& motions, const FfiDeviceMotion& head) {
++    V3 look = Forward(head.orientation);
++    V3 target = look;
++    auto hips = motions.find(BODY_HIPS_ID);
++    if (hips != motions.end()) {
++        const V3 axes[4] = { { 1, 0, 0 }, { -1, 0, 0 }, { 0, 0, 1 }, { 0, 0, -1 } };
++        V3 candidates[4];
++        int best = 0;
++        for (int i = 0; i < 4; i++) {
++            candidates[i] = Flat(Rotate(hips->second.orientation, axes[i]), look);
++            g_axisScore[i] = g_axisScore[i] * 0.998f + Dot(candidates[i], look) * 0.002f;
++            if (g_axisScore[i] > g_axisScore[best]) best = i;
++        }
++        target = candidates[best];
++    }
++    // Lissage fort : l'avant du corps change lentement, sinon les genoux tremblent.
++    g_forward = g_haveForward ? Normalize(g_forward * 0.92f + target * 0.08f, target) : target;
++    g_haveForward = true;
++    return g_forward;
++}
++
++// Sans rôle réglé dans SteamVR : le tracker le plus haut est aux hanches, les deux plus bas aux pieds,
++// gauche et droite départagés par leur position par rapport au corps.
++void AutoAssign(const vr::TrackedDevicePose_t* poses, V3 forward) {
++    std::vector<std::pair<float, int>> found;
++    for (int index : g_real.candidates) {
++        V3 p;
++        if (PoseOf(poses, index, p)) found.push_back({ p.y, index });
++    }
++    std::sort(found.begin(), found.end());
++    V3 right = Normalize(Cross(forward, { 0, 1, 0 }), { 1, 0, 0 });
++    if (g_real.waist < 0 && found.size() >= 3) g_real.waist = found.back().second;
++    if ((g_real.leftFoot < 0 || g_real.rightFoot < 0) && found.size() >= 2) {
++        V3 a, b;
++        PoseOf(poses, found[0].second, a);
++        PoseOf(poses, found[1].second, b);
++        bool aIsLeft = Dot(a - b, right) < 0;
++        if (g_real.leftFoot < 0) g_real.leftFoot = aIsLeft ? found[0].second : found[1].second;
++        if (g_real.rightFoot < 0) g_real.rightFoot = aIsLeft ? found[1].second : found[0].second;
++    }
++}
++
++void ApplyOffset(FfiDeviceMotion& m) {
++    auto it = g_config.offsets.find(m.deviceID);
++    if (it == g_config.offsets.end()) return;
++    auto& o = it->second;
++    V3 local = Rotate(m.orientation, { o[0], o[1], o[2] });
++    m.position[0] += local.x;
++    m.position[1] += local.y;
++    m.position[2] += local.z;
++    if (o[3] != 0 || o[4] != 0 || o[5] != 0) m.orientation = Mul(m.orientation, FromEulerDeg(o[3], o[4], o[5]));
++}
++
++// Genou par cinématique inverse à deux segments : hanche (vrai tracker de hanches) → cheville
++// (vrai tracker de pied), plié vers l'avant du corps estimé par le casque.
++bool SolveKnee(int side, V3 waist, V3 ankle, V3 forward, FfiDeviceMotion& out) {
++    V3 up = { 0, 1, 0 };
++    V3 right = Normalize(Cross(forward, up), { 1, 0, 0 });
++    V3 hip = waist + right * (side == 0 ? -0.09f : 0.09f) + V3 { 0, -0.08f, 0 };
++
++    V3 leg = ankle - hip;
++    float d = Length(leg);
++    // Longueur de jambe : la plus grande distance hanche-cheville vue (debout), qui ne fait que grandir,
++    // doucement ; +3 % pour que la jambe tendue reste à peine pliée (sinon le genou hésite).
++    if (d < 1.25f && d > g_legLength) g_legLength += (d - g_legLength) * 0.05f;
++    g_legLength = std::max(0.7f, g_legLength);
++    float thigh = g_legLength * 0.515f, shin = g_legLength * 0.515f;
++    float dc = std::min(std::max(d, 0.05f), thigh + shin - 0.002f);
++    V3 axis = Normalize(leg, { 0, -1, 0 });
++    float along = (thigh * thigh - shin * shin + dc * dc) / (2.f * dc);
++    float height = std::sqrt(std::max(0.f, thigh * thigh - along * along));
++    V3 bend = Normalize(forward - axis * Dot(forward, axis), forward);
++    V3 knee = hip + axis * along + bend * height;
++
++    // Lissage léger contre les tremblements.
++    if (g_haveKnee[side]) knee = g_lastKnee[side] + (knee - g_lastKnee[side]) * 0.35f;
++    g_lastKnee[side] = knee;
++    g_haveKnee[side] = true;
++
++    V3 y = Normalize(hip - knee, up);
++    V3 back = bend * -1.f;
++    V3 z = Normalize(back - y * Dot(back, y), { 0, 0, 1 });
++    V3 x = Cross(y, z);
++    out.orientation = FromBasis(x, y, z);
++    out.position[0] = knee.x;
++    out.position[1] = knee.y;
++    out.position[2] = knee.z;
++    for (int i = 0; i < 3; i++) out.linearVelocity[i] = out.angularVelocity[i] = 0;
++    return true;
++}
++
++// ===================================================================== FBE Mix
++// Estimation du corps à partir du casque, des manettes et des vrais trackers (hanches, pieds), sans le
++// suivi du corps du casque. Une calibration (debout, pieds joints, regard devant) apprend où chaque vrai
++// tracker est porté et les proportions du corps ; torse, coudes et genoux sont ensuite calculés par
++// cinématique inverse.
++
++FfiQuat Conj(FfiQuat q) { return { -q.x, -q.y, -q.z, q.w }; }
++
++FfiQuat RotOf(const vr::TrackedDevicePose_t& p) {
++    auto& m = p.mDeviceToAbsoluteTracking.m;
++    return FromBasis({ m[0][0], m[1][0], m[2][0] }, { m[0][1], m[1][1], m[2][1] }, { m[0][2], m[1][2], m[2][2] });
++}
++
++bool Valid(int index) {
++    return index >= 0 && g_havePoses && g_poses[index].bPoseIsValid && g_poses[index].bDeviceIsConnected
++        && g_poses[index].eTrackingResult == vr::TrackingResult_Running_OK;
++}
++
++V3 PosOf(int index) {
++    auto& m = g_poses[index].mDeviceToAbsoluteTracking.m;
++    return { m[0][3], m[1][3], m[2][3] };
++}
++
++// Repère « corps » tourné comme un regard à plat : x à droite, y en haut, z en arrière.
++FfiQuat YawFrame(V3 forward) {
++    V3 up = { 0, 1, 0 };
++    V3 back = forward * -1.f;
++    return FromBasis(Cross(up, back), up, back);
++}
++
++struct Bind {
++    std::string serial;
++    V3 offset {};     // du tracker vers l'articulation, dans le repère du tracker
++    FfiQuat rot { 0, 0, 0, 1 }; // du tracker vers le repère du corps
++    bool valid = false;
++};
++
++struct Calibration {
++    bool valid = false;
++    Bind hips, feet[2];
++    float height = 1.75f, thigh = 0.42f, shin = 0.42f;
++};
++Calibration g_calib;
++int g_calibDone = -1;           // dernière demande de calibration traitée
++std::chrono::steady_clock::time_point g_startTime = std::chrono::steady_clock::now();
++std::map<uint64_t, FfiDeviceMotion> g_mixLast; // pour le lissage
++
++std::filesystem::path CalibrationPath() {
++    auto p = ConfigPath();
++    return p.empty() ? p : p.parent_path() / "body_calibration.json";
++}
++
++picojson::value BindToJson(const Bind& b) {
++    picojson::object o;
++    o["serial"] = picojson::value(b.serial);
++    picojson::array a = { picojson::value((double)b.offset.x), picojson::value((double)b.offset.y), picojson::value((double)b.offset.z),
++                          picojson::value((double)b.rot.x), picojson::value((double)b.rot.y), picojson::value((double)b.rot.z), picojson::value((double)b.rot.w) };
++    o["pose"] = picojson::value(a);
++    return picojson::value(o);
++}
++
++Bind BindFromJson(const picojson::value& v) {
++    Bind b;
++    if (!v.is<picojson::object>()) return b;
++    auto& o = v.get<picojson::object>();
++    if (o.count("serial") && o.at("serial").is<std::string>()) b.serial = o.at("serial").get<std::string>();
++    if (o.count("pose") && o.at("pose").is<picojson::array>()) {
++        auto& a = o.at("pose").get<picojson::array>();
++        if (a.size() == 7) {
++            float f[7];
++            for (int i = 0; i < 7; i++) f[i] = a[i].is<double>() ? (float)a[i].get<double>() : 0.f;
++            b.offset = { f[0], f[1], f[2] };
++            b.rot = { f[3], f[4], f[5], f[6] };
++            b.valid = !b.serial.empty();
++        }
++    }
++    return b;
++}
++
++void SaveCalibration() {
++    picojson::object o;
++    o["hips"] = BindToJson(g_calib.hips);
++    o["left_foot"] = BindToJson(g_calib.feet[0]);
++    o["right_foot"] = BindToJson(g_calib.feet[1]);
++    o["height"] = picojson::value((double)g_calib.height);
++    o["thigh"] = picojson::value((double)g_calib.thigh);
++    o["shin"] = picojson::value((double)g_calib.shin);
++    o["request"] = picojson::value((double)g_calibDone);
++    o["time"] = picojson::value((double)std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
++    std::ofstream file(CalibrationPath());
++    file << picojson::value(o).serialize(true);
++}
++
++void LoadCalibration() {
++    std::error_code ec;
++    auto path = CalibrationPath();
++    if (path.empty() || !std::filesystem::exists(path, ec)) return;
++    std::ifstream file(path);
++    std::stringstream text;
++    text << file.rdbuf();
++    picojson::value root;
++    if (!picojson::parse(root, text.str()).empty() || !root.is<picojson::object>()) return;
++    auto& o = root.get<picojson::object>();
++    if (o.count("hips")) g_calib.hips = BindFromJson(o.at("hips"));
++    if (o.count("left_foot")) g_calib.feet[0] = BindFromJson(o.at("left_foot"));
++    if (o.count("right_foot")) g_calib.feet[1] = BindFromJson(o.at("right_foot"));
++    if (o.count("height") && o.at("height").is<double>()) g_calib.height = (float)o.at("height").get<double>();
++    if (o.count("thigh") && o.at("thigh").is<double>()) g_calib.thigh = (float)o.at("thigh").get<double>();
++    if (o.count("shin") && o.at("shin").is<double>()) g_calib.shin = (float)o.at("shin").get<double>();
++    if (o.count("request") && o.at("request").is<double>()) g_calibDone = (int)o.at("request").get<double>();
++    g_calib.valid = g_calib.hips.valid || g_calib.feet[0].valid || g_calib.feet[1].valid;
++}
++
++// Debout, pieds joints, regard devant : le tracker le plus haut est aux hanches, les deux plus bas aux pieds.
++bool Calibrate() {
++    if (!Valid(0)) return false;
++    V3 head = PosOf(0);
++    V3 forward = Forward(RotOf(g_poses[0]));
++    FfiQuat body = YawFrame(forward);
++    V3 right = Rotate(body, { 1, 0, 0 });
++
++    std::vector<std::pair<float, int>> trackers;
++    for (auto& kv : g_real.bySerial)
++        if (Valid(kv.second)) trackers.push_back({ PosOf(kv.second).y, kv.second });
++    std::sort(trackers.begin(), trackers.end());
++
++    Calibration c;
++    c.height = g_config.userHeight > 0.5f ? g_config.userHeight : head.y / 0.935f;
++    auto serialOf = [](int index) {
++        for (auto& kv : g_real.bySerial) if (kv.second == index) return kv.first;
++        return std::string();
++    };
++    auto bind = [&](int index, V3 target) {
++        Bind b;
++        FfiQuat r = RotOf(g_poses[index]);
++        b.serial = serialOf(index);
++        b.offset = Rotate(Conj(r), target - PosOf(index));
++        b.rot = Mul(Conj(r), body);
++        b.valid = !b.serial.empty();
++        return b;
++    };
++
++    float hipY = 0;
++    if (!trackers.empty() && trackers.back().first > 0.5f && trackers.back().first < head.y - 0.3f) {
++        int index = trackers.back().second;
++        hipY = PosOf(index).y;
++        c.hips = bind(index, { head.x, hipY, head.z }); // centre des hanches sous la tête
++        trackers.pop_back();
++    }
++    std::vector<int> feet;
++    for (auto& t : trackers) if (t.first < 0.35f && feet.size() < 2) feet.push_back(t.second);
++    if (feet.size() == 2) {
++        bool firstIsLeft = Dot(PosOf(feet[0]) - PosOf(feet[1]), right) < 0;
++        int left = firstIsLeft ? feet[0] : feet[1], right_ = firstIsLeft ? feet[1] : feet[0];
++        c.feet[0] = bind(left, PosOf(left));
++        c.feet[1] = bind(right_, PosOf(right_));
++        if (hipY > 0) {
++            float leg = (hipY - 0.07f) - (PosOf(left).y + PosOf(right_).y) * 0.5f;
++            c.thigh = c.shin = std::max(0.25f, leg * 0.5f);
++        }
++    } else {
++        c.thigh = c.shin = c.height * 0.245f;
++    }
++    c.valid = c.hips.valid || c.feet[0].valid || c.feet[1].valid;
++    if (!c.valid) return false;
++    g_calib = c;
++    g_mixLast.clear();
++    Info("LunaQuest : calibration FBE Mix faite (taille %.2f m, cuisse %.2f m).", c.height, c.thigh);
++    return true;
++}
++
++// Articulation portée par un vrai tracker calibré : position et repère du corps à cet endroit.
++bool BoundJoint(const Bind& b, V3& pos, FfiQuat& rot) {
++    if (!b.valid) return false;
++    auto it = g_real.bySerial.find(b.serial);
++    if (it == g_real.bySerial.end() || !Valid(it->second)) return false;
++    FfiQuat r = RotOf(g_poses[it->second]);
++    pos = PosOf(it->second) + Rotate(r, b.offset);
++    rot = Mul(r, b.rot);
++    return true;
++}
++
++// Deux segments de longueurs l1, l2 entre root et end ; le milieu plie vers pole.
++V3 TwoBone(V3 root, V3 end, float l1, float l2, V3 pole) {
++    V3 axis = end - root;
++    float d = Length(axis);
++    V3 dir = Normalize(axis, { 0, -1, 0 });
++    float dc = std::min(std::max(d, std::abs(l1 - l2) + 0.01f), l1 + l2 - 0.002f);
++    float along = (l1 * l1 - l2 * l2 + dc * dc) / (2.f * dc);
++    float height = std::sqrt(std::max(0.f, l1 * l1 - along * along));
++    V3 bend = Normalize(pole - dir * Dot(pole, dir), pole);
++    return root + dir * along + bend * height;
++}
++
++// Repère d'un segment : y vers le parent, z à l'opposé de la direction de pliage.
++FfiQuat SegmentFrame(V3 toParent, V3 bend) {
++    V3 y = Normalize(toParent, { 0, 1, 0 });
++    V3 back = bend * -1.f;
++    V3 z = Normalize(back - y * Dot(back, y), { 0, 0, 1 });
++    return FromBasis(Cross(y, z), y, z);
++}
++
++FfiDeviceMotion Motion(uint64_t id, V3 p, FfiQuat q) {
++    FfiDeviceMotion m = {};
++    m.deviceID = id;
++    m.position[0] = p.x; m.position[1] = p.y; m.position[2] = p.z;
++    m.orientation = q;
++    return m;
++}
++
++void SolveMixLocked(std::map<uint64_t, FfiDeviceMotion>& out) {
++    if (!Valid(0)) return;
++    // Calibration demandée par LunaQuest, ou automatique au premier lancement.
++    bool firstRun = !g_calib.valid && std::chrono::steady_clock::now() - g_startTime > std::chrono::seconds(8);
++    if (g_config.calibrationRequest != g_calibDone || firstRun) {
++        if (Calibrate() || !firstRun) {
++            g_calibDone = g_config.calibrationRequest;
++            SaveCalibration();
++        }
++    }
++
++    float H = g_calib.height;
++    V3 head = PosOf(0);
++    FfiQuat headRot = RotOf(g_poses[0]);
++    V3 headForward = Forward(headRot);
++
++    // Hanches : vrai tracker si suivi, sinon estimées sous la tête.
++    V3 hips;
++    FfiQuat hipsRot;
++    if (!BoundJoint(g_calib.hips, hips, hipsRot)) {
++        hips = head + V3 { 0, -0.405f * H, 0 } - headForward * 0.05f;
++        hipsRot = YawFrame(headForward);
++    }
++    V3 bodyForward = Forward(hipsRot);
++    FfiQuat body = YawFrame(bodyForward);
++    V3 right = Rotate(body, { 1, 0, 0 }), up = { 0, 1, 0 };
++
++    // Torse : sur la colonne entre le cou (sous la tête) et les hanches.
++    V3 neck = head - headForward * 0.08f + V3 { 0, -0.11f, 0 };
++    V3 spineUp = Normalize(neck - hips, up);
++    V3 chest = neck + (hips - neck) * 0.32f;
++    V3 chestForward = Normalize(bodyForward * 0.7f + headForward * 0.3f, bodyForward);
++    V3 chestBack = Normalize((chestForward * -1.f) - spineUp * Dot(chestForward * -1.f, spineUp), { 0, 0, 1 });
++    FfiQuat chestRot = FromBasis(Cross(spineUp, chestBack), spineUp, chestBack);
++    V3 chestRight = Rotate(chestRot, { 1, 0, 0 });
++    out[BODY_CHEST_ID] = Motion(BODY_CHEST_ID, chest, chestRot);
++
++    // Coudes : de l'épaule à la main (manette), coude vers le bas, l'arrière et l'extérieur.
++    float upperArm = 0.172f * H, foreArm = 0.157f * H + 0.04f;
++    int hands[2] = { g_real.leftHand, g_real.rightHand };
++    uint64_t elbowIds[2] = { BODY_LEFT_ELBOW_ID, BODY_RIGHT_ELBOW_ID };
++    for (int side = 0; side < 2; side++) {
++        if (!Valid(hands[side])) continue;
++        float s = side == 0 ? -1.f : 1.f;
++        V3 shoulder = neck + V3 { 0, -0.04f, 0 } + chestRight * (s * 0.105f * H);
++        FfiQuat handRot = RotOf(g_poses[hands[side]]);
++        V3 hand = PosOf(hands[side]) + Rotate(handRot, { 0, 0, 0.07f });
++        V3 pole = Normalize(up * -1.f + chestBack * 0.6f + chestRight * (s * 0.5f), up * -1.f);
++        V3 elbow = TwoBone(shoulder, hand, upperArm, foreArm, pole);
++        out[elbowIds[side]] = Motion(elbowIds[side], elbow, SegmentFrame(shoulder - elbow, pole));
++    }
++
++    // Genoux : de la hanche au pied (vrais trackers), pliés vers l'avant du pied et des hanches.
++    uint64_t kneeIds[2] = { BODY_LEFT_KNEE_ID, BODY_RIGHT_KNEE_ID };
++    for (int side = 0; side < 2; side++) {
++        float s = side == 0 ? -1.f : 1.f;
++        V3 foot;
++        FfiQuat footRot;
++        bool tracked = BoundJoint(g_calib.feet[side], foot, footRot);
++        if (!tracked) {
++            foot = { hips.x + right.x * s * 0.1f, 0.07f, hips.z + right.z * s * 0.1f };
++            footRot = body;
++        }
++        V3 hipJoint = hips + right * (s * 0.09f) + V3 { 0, -0.07f, 0 };
++        V3 pole = Normalize(Forward(footRot) * 0.6f + bodyForward * 0.4f, bodyForward);
++        V3 knee = TwoBone(hipJoint, foot, g_calib.thigh * 1.02f, g_calib.shin * 1.02f, pole);
++        out[kneeIds[side]] = Motion(kneeIds[side], knee, SegmentFrame(hipJoint - knee, pole));
++    }
++
++    // Lissage léger (SteamVR appelle RunFrame à chaque image).
++    for (auto& kv : out) {
++        auto last = g_mixLast.find(kv.first);
++        if (last != g_mixLast.end()) {
++            auto& m = kv.second;
++            auto& l = last->second;
++            for (int i = 0; i < 3; i++) m.position[i] = l.position[i] + (m.position[i] - l.position[i]) * 0.6f;
++        }
++        g_mixLast[kv.first] = kv.second;
++        ApplyOffset(kv.second);
++    }
++}
++
++} // namespace
++
++namespace LunaBody {
++
++bool Load() {
++    std::lock_guard<std::mutex> lock(g_mutex);
++    bool loaded = LoadLocked();
++    if (!g_calib.valid) LoadCalibration();
++    return loaded;
++}
++
++bool MixMode() {
++    std::lock_guard<std::mutex> lock(g_mutex);
++    return g_config.loaded && g_config.mode == "mix";
++}
++
++void SolveMix(std::map<uint64_t, FfiDeviceMotion>& out) {
++    std::lock_guard<std::mutex> lock(g_mutex);
++    if (!g_config.loaded || g_config.mode != "mix") return;
++    SolveMixLocked(out);
++}
++
++bool IsActive() {
++    std::lock_guard<std::mutex> lock(g_mutex);
++    return g_config.loaded;
++}
++
++bool JointEnabled(uint64_t id, bool alvrDefault) {
++    std::lock_guard<std::mutex> lock(g_mutex);
++    if (!g_config.loaded) return alvrDefault;
++    auto it = g_config.joints.find(id);
++    return it != g_config.joints.end() ? it->second : alvrDefault;
++}
++
++// Appelé par SteamVR dans sa propre boucle (RunFrame) : c'est le seul endroit où l'on interroge
++// SteamVR sur les autres appareils. Le faire depuis le fil d'ALVR, pendant que SteamVR ajoute des
++// appareils au démarrage, faisait planter vrserver.
++void RunFrame() {
++    std::lock_guard<std::mutex> lock(g_mutex);
++    // En mode mix, Process n'est pas appelé : c'est ici qu'on relit les réglages (décalages, calibration).
++    if (g_config.mode == "mix" && ++g_reloadCounter >= 150) {
++        g_reloadCounter = 0;
++        LoadLocked();
++    }
++    if (!g_config.loaded || !(g_config.kneesFromReal || g_config.mode == "mix")) return;
++    RefreshRealTrackers();
++    vr::VRServerDriverHost()->GetRawTrackedDevicePoses(0.f, g_poses, vr::k_unMaxTrackedDeviceCount);
++    g_havePoses = true;
++}
++
++void Process(std::map<uint64_t, FfiDeviceMotion>& motions, const FfiDeviceMotion& head) {
++    std::lock_guard<std::mutex> lock(g_mutex);
++    if (++g_reloadCounter >= 150) { // ~1 à 2 s : relit les décalages si LunaQuest les a changés
++        g_reloadCounter = 0;
++        LoadLocked();
++    }
++    if (!g_config.loaded) return;
++
++    if (g_config.kneesFromReal && g_havePoses) {
++        const vr::TrackedDevicePose_t* poses = g_poses;
++        V3 bodyForward = BodyForward(motions, head);
++        if (g_real.waist < 0 || g_real.leftFoot < 0 || g_real.rightFoot < 0) AutoAssign(poses, bodyForward);
++        V3 waist, feet[2];
++        bool haveWaist = PoseOf(poses, g_real.waist, waist);
++        bool haveFoot[2] = { PoseOf(poses, g_real.leftFoot, feet[0]), PoseOf(poses, g_real.rightFoot, feet[1]) };
++
++        V3 forward = bodyForward;
++
++        uint64_t kneeIds[2] = { BODY_LEFT_KNEE_ID, BODY_RIGHT_KNEE_ID };
++        for (int side = 0; side < 2; side++) {
++            if (!haveWaist || !haveFoot[side]) { g_haveKnee[side] = false; continue; }
++            FfiDeviceMotion knee = {};
++            knee.deviceID = kneeIds[side];
++            SolveKnee(side, waist, feet[side], forward, knee);
++            motions[kneeIds[side]] = knee;
++        }
++    }
++
++    for (auto& kv : motions) ApplyOffset(kv.second);
++}
++
++} // namespace LunaBody
+diff --git a/alvr/server_openvr/cpp/alvr_server/LunaBody.h b/alvr/server_openvr/cpp/alvr_server/LunaBody.h
+new file mode 100644
+index 0000000..2cfae17
+--- /dev/null
++++ b/alvr/server_openvr/cpp/alvr_server/LunaBody.h
+@@ -0,0 +1,29 @@
++#pragma once
++
++// LunaQuest : suivi du corps combiné.
++// - trackers virtuels au choix (torse, hanches, coudes, genoux, pieds) ;
++// - décalages position / rotation par tracker ;
++// - genoux calculés à partir des vrais trackers (hanches + pieds), pour que les jambes plient
++//   en accord avec les vrais pieds au lieu de suivre les jambes estimées par le casque.
++// Réglages lus dans %APPDATA%\LunaQuest\body.json (écrit par LunaQuest). Sans ce fichier,
++// ALVR garde son comportement d'origine.
++
++#include "bindings.h"
++#include <cstdint>
++#include <map>
++
++namespace LunaBody {
++// Charge (ou recharge) le fichier de réglages. Renvoie false s'il n'existe pas.
++bool Load();
++bool IsActive();
++// Le tracker virtuel doit-il être créé ? alvrDefault : choix d'ALVR quand LunaQuest n'a rien réglé.
++bool JointEnabled(uint64_t id, bool alvrDefault);
++// Mode FBE Mix : torse, coudes et genoux estimés à partir du casque, des manettes et des vrais trackers.
++bool MixMode();
++// À appeler depuis RunFrame après RunFrame() : calcule les trackers virtuels du mode mix.
++void SolveMix(std::map<uint64_t, FfiDeviceMotion>& out);
++// À appeler depuis la boucle de SteamVR (RunFrame) : relève les vrais trackers et leurs positions.
++void RunFrame();
++// Corrige les mouvements du corps (décalages, genoux calculés) avant leur envoi aux trackers.
++void Process(std::map<uint64_t, FfiDeviceMotion>& motions, const FfiDeviceMotion& head);
++}
+diff --git a/alvr/server_openvr/cpp/alvr_server/alvr_server.cpp b/alvr/server_openvr/cpp/alvr_server/alvr_server.cpp
+index 3e2bbb0..336e0f4 100644
+--- a/alvr/server_openvr/cpp/alvr_server/alvr_server.cpp
++++ b/alvr/server_openvr/cpp/alvr_server/alvr_server.cpp
+@@ -9,6 +9,7 @@
+ #include "Controller.h"
+ #include "FakeViveTracker.h"
+ #include "HMD.h"
++#include "LunaBody.h"
+ #include "Logger.h"
+ #include "Paths.h"
+ #include "PoseHistory.h"
+@@ -126,6 +127,19 @@ public:
+         return vr::ITrackedDeviceServerDriver_Version;
+     }
+     virtual void RunFrame() override {
++        if (this->devices_initialized) {
++            LunaBody::RunFrame();
++            if (LunaBody::MixMode()) {
++                std::map<uint64_t, FfiDeviceMotion> mix;
++                LunaBody::SolveMix(mix);
++                for (auto& kv : mix) {
++                    auto found = this->tracked_devices.find(kv.first);
++                    if (found != this->tracked_devices.end() && found->second)
++                        ((FakeViveTracker*)found->second)->OnPoseUpdated(0, &kv.second);
++                }
++            }
++        }
++
+         vr::VREvent_t event;
+         while (vr::VRServerDriverHost()->PollNextEvent(&event, sizeof(vr::VREvent_t))) {
+             if (event.eventType == vr::VREvent_Input_HapticVibration) {
+@@ -303,60 +317,25 @@ bool InitializeStreaming() {
+             }
+         }
+ 
+-        if (Settings::Instance().m_enableBodyTrackingFakeVive) {
+-            auto chestTracker = std::make_unique<FakeViveTracker>(BODY_CHEST_ID);
+-            if (chestTracker->register_device(true)) {
+-                g_driver_provider.tracked_devices.insert({ BODY_CHEST_ID, chestTracker.get() });
+-                g_driver_provider.generic_trackers.push_back(std::move(chestTracker));
+-            }
+-
+-            auto waistTracker = std::make_unique<FakeViveTracker>(BODY_HIPS_ID);
+-            if (waistTracker->register_device(true)) {
+-                g_driver_provider.tracked_devices.insert({ BODY_HIPS_ID, waistTracker.get() });
+-                g_driver_provider.generic_trackers.push_back(std::move(waistTracker));
+-            }
+-
+-            auto leftElbowTracker = std::make_unique<FakeViveTracker>(BODY_LEFT_ELBOW_ID);
+-            if (leftElbowTracker->register_device(true)) {
+-                g_driver_provider.tracked_devices.insert({ BODY_LEFT_ELBOW_ID,
+-                                                           leftElbowTracker.get() });
+-                g_driver_provider.generic_trackers.push_back(std::move(leftElbowTracker));
+-            }
+-
+-            auto rightElbowTracker = std::make_unique<FakeViveTracker>(BODY_RIGHT_ELBOW_ID);
+-            if (rightElbowTracker->register_device(true)) {
+-                g_driver_provider.tracked_devices.insert({ BODY_RIGHT_ELBOW_ID,
+-                                                           rightElbowTracker.get() });
+-                g_driver_provider.generic_trackers.push_back(std::move(rightElbowTracker));
+-            }
+-
+-            if (Settings::Instance().m_bodyTrackingHasLegs) {
+-                auto leftKneeTracker = std::make_unique<FakeViveTracker>(BODY_LEFT_KNEE_ID);
+-                if (leftKneeTracker->register_device(true)) {
+-                    g_driver_provider.tracked_devices.insert({ BODY_LEFT_KNEE_ID,
+-                                                               leftKneeTracker.get() });
+-                    g_driver_provider.generic_trackers.push_back(std::move(leftKneeTracker));
+-                }
+-
+-                auto leftFootTracker = std::make_unique<FakeViveTracker>(BODY_LEFT_FOOT_ID);
+-                if (leftFootTracker->register_device(true)) {
+-                    g_driver_provider.tracked_devices.insert({ BODY_LEFT_FOOT_ID,
+-                                                               leftFootTracker.get() });
+-                    g_driver_provider.generic_trackers.push_back(std::move(leftFootTracker));
+-                }
+-
+-                auto rightKneeTracker = std::make_unique<FakeViveTracker>(BODY_RIGHT_KNEE_ID);
+-                if (rightKneeTracker->register_device(true)) {
+-                    g_driver_provider.tracked_devices.insert({ BODY_RIGHT_KNEE_ID,
+-                                                               rightKneeTracker.get() });
+-                    g_driver_provider.generic_trackers.push_back(std::move(rightKneeTracker));
+-                }
+-
+-                auto rightFootTracker = std::make_unique<FakeViveTracker>(BODY_RIGHT_FOOT_ID);
+-                if (rightFootTracker->register_device(true)) {
+-                    g_driver_provider.tracked_devices.insert({ BODY_RIGHT_FOOT_ID,
+-                                                               rightFootTracker.get() });
+-                    g_driver_provider.generic_trackers.push_back(std::move(rightFootTracker));
++        // LunaQuest : en mode FBE Mix, les trackers virtuels sont calculés par LunaQuest sans le suivi
++        // du corps du casque ; ils doivent donc exister même si ce suivi est coupé dans ALVR.
++        bool lunaMix = LunaBody::Load() && LunaBody::MixMode();
++        if (Settings::Instance().m_enableBodyTrackingFakeVive || lunaMix) {
++            // LunaQuest : on ne crée que les trackers virtuels choisis dans LunaQuest (body.json).
++            // Sans réglages LunaQuest, comportement d'ALVR : genoux et pieds seulement avec les jambes.
++            bool legs = Settings::Instance().m_bodyTrackingHasLegs;
++            const std::pair<uint64_t, bool> bodyTrackers[] = {
++                { BODY_CHEST_ID, true },     { BODY_HIPS_ID, true },
++                { BODY_LEFT_ELBOW_ID, true }, { BODY_RIGHT_ELBOW_ID, true },
++                { BODY_LEFT_KNEE_ID, legs },  { BODY_LEFT_FOOT_ID, legs },
++                { BODY_RIGHT_KNEE_ID, legs }, { BODY_RIGHT_FOOT_ID, legs },
++            };
++            for (auto& entry : bodyTrackers) {
++                if (!LunaBody::JointEnabled(entry.first, entry.second)) continue;
++                auto tracker = std::make_unique<FakeViveTracker>(entry.first);
++                if (tracker->register_device(true)) {
++                    g_driver_provider.tracked_devices.insert({ entry.first, tracker.get() });
++                    g_driver_provider.generic_trackers.push_back(std::move(tracker));
+                 }
+             }
+         }
+@@ -422,15 +401,19 @@ void SetTracking(
+         );
+     }
+ 
+-    if (Settings::Instance().m_enableBodyTrackingFakeVive) {
++    // En mode FBE Mix, ce sont les calculs de LunaQuest (dans RunFrame) qui placent les trackers virtuels.
++    if (Settings::Instance().m_enableBodyTrackingFakeVive && !LunaBody::MixMode()) {
+         std::map<uint64_t, FfiDeviceMotion> motionsMap;
+         for (int i = 0; i < bodyTrackerMotionCount; i++) {
+             auto m = bodyTrackerMotions[i];
+             motionsMap.insert({ m.deviceID, m });
+         }
+ 
++        if (g_driver_provider.devices_initialized && LunaBody::IsActive()) LunaBody::Process(motionsMap, headMotion);
++
+         for (auto id : BODY_IDS) {
+-            auto* maybeTracker = (FakeViveTracker*)g_driver_provider.tracked_devices.at(id);
++            auto found = g_driver_provider.tracked_devices.find(id);
++            auto* maybeTracker = found != g_driver_provider.tracked_devices.end() ? (FakeViveTracker*)found->second : nullptr;
+             if (maybeTracker) {
+                 auto res = motionsMap.find(id);
+                 auto* maybeMotion = res != motionsMap.end() ? &res->second : nullptr;
+diff --git a/alvr/xtask/src/dependencies.rs b/alvr/xtask/src/dependencies.rs
+index e8dd840..5a20b70 100644
+--- a/alvr/xtask/src/dependencies.rs
++++ b/alvr/xtask/src/dependencies.rs
+@@ -385,10 +385,14 @@ pub fn build_android_deps(
+             .run()
+             .unwrap();
+     }
+-    cmd!(sh, "cargo install cargo-ndk cbindgen").run().unwrap();
++    // LunaQuest : versions 2024 verrouillées. Les plus récentes exigent un dlltool complet,
++    // absent de la chaîne Rust « GNU » minimale utilisée sous Windows.
++    cmd!(sh, "cargo install --locked cargo-ndk@3.5.4").run().unwrap();
++    cmd!(sh, "cargo install --locked cbindgen@0.27.0").run().unwrap();
++    // Copie locale de github.com/zarik5/cargo-apk avec un Cargo.lock aux dépendances compatibles.
+     cmd!(
+         sh,
+-        "cargo install --git https://github.com/zarik5/cargo-apk cargo-apk"
++        "cargo install --locked --path ../tools/cargo-apk/cargo-apk"
+     )
+     .run()
+     .unwrap();
