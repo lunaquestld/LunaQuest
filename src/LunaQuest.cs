@@ -1483,6 +1483,30 @@ namespace LunaQuest
         public readonly Dictionary<string, double[]> Offsets = new Dictionary<string, double[]>();
         public bool KneesFromRealTrackers = true;
         public string Mode = "fbt"; // fbe : FBE Unique, mix : FBE Mix, fbt : vrais trackers seuls
+        public int UserHeightCm;     // 0 : taille déduite de la hauteur du casque
+        public int CalibrationRequest;
+
+        public static string CalibrationPath
+        {
+            get { return Path.Combine(Path.GetDirectoryName(FilePath), "body_calibration.json"); }
+        }
+
+        // Dernière calibration faite par ALVR : numéro de la demande traitée et taille retenue.
+        public static bool ReadCalibration(out int request, out double height)
+        {
+            request = -1; height = 0;
+            try
+            {
+                if (!File.Exists(CalibrationPath)) return false;
+                var root = new JavaScriptSerializer().DeserializeObject(File.ReadAllText(CalibrationPath)) as Dictionary<string, object>;
+                object o;
+                if (root == null) return false;
+                if (root.TryGetValue("request", out o)) request = Convert.ToInt32(o, CultureInfo.InvariantCulture);
+                if (root.TryGetValue("height", out o)) height = Convert.ToDouble(o, CultureInfo.InvariantCulture);
+                return true;
+            }
+            catch { return false; }
+        }
 
         public static string FilePath
         {
@@ -1510,6 +1534,8 @@ namespace LunaQuest
                 object o;
                 if (root.TryGetValue("knees_from_real_trackers", out o) && o is bool) c.KneesFromRealTrackers = (bool)o;
                 if (root.TryGetValue("mode", out o) && o is string) c.Mode = (string)o;
+                if (root.TryGetValue("user_height_cm", out o)) c.UserHeightCm = Convert.ToInt32(o, CultureInfo.InvariantCulture);
+                if (root.TryGetValue("calibration_request", out o)) c.CalibrationRequest = Convert.ToInt32(o, CultureInfo.InvariantCulture);
                 var joints = root.TryGetValue("joints", out o) ? o as Dictionary<string, object> : null;
                 if (joints != null)
                     foreach (var j in Joints)
@@ -1536,7 +1562,7 @@ namespace LunaQuest
                 joints[j] = Enabled[j];
                 offsets[j] = Offsets[j];
             }
-            var root = new Dictionary<string, object> { { "mode", Mode }, { "knees_from_real_trackers", KneesFromRealTrackers }, { "joints", joints }, { "offsets", offsets } };
+            var root = new Dictionary<string, object> { { "mode", Mode }, { "user_height_cm", UserHeightCm }, { "calibration_request", CalibrationRequest }, { "knees_from_real_trackers", KneesFromRealTrackers }, { "joints", joints }, { "offsets", offsets } };
             Directory.CreateDirectory(Path.GetDirectoryName(FilePath));
             File.WriteAllText(FilePath, new JavaScriptSerializer().Serialize(root), new UTF8Encoding(false));
         }
@@ -1962,13 +1988,18 @@ namespace LunaQuest
         static readonly string[] BodyModeTexts =
         {
             "Tout le corps estimé par les caméras du casque, sans vrais trackers : choisis les trackers virtuels à créer.",
-            "Expérimental, en pause : tes vrais trackers aux hanches et aux pieds, complétés par le casque (torse, coudes, genoux).",
+            "Tes vrais trackers aux hanches et aux pieds, le reste (torse, coudes, genoux) estimé à partir du casque, des manettes et des trackers. Sans le suivi du casque : les manettes restent visibles.",
             "Seulement tes vrais trackers Vive, suivis par tes bases. Le suivi du corps par le casque est coupé."
         };
 
         Segmented segBodyMode;
         Label lblBodyModeActive, lblBodyModeText, lblRealTrackers, lblBodyStatus;
         ToggleSwitch tglKneesIk;
+        Label lblHeight, lblCalib;
+        NumericUpDown numHeight;
+        MoonButton btnCalibrate;
+        Timer calibTimer;
+        int calibStep;
         readonly ToggleSwitch[] tglJoints = new ToggleSwitch[BodyConfig.Joints.Length];
         ComboBox cmbOffsetJoint;
         readonly NumericUpDown[] numOffsets = new NumericUpDown[6];
@@ -1999,8 +2030,20 @@ namespace LunaQuest
                 tglJoints[i] = AddTo(3, new ToggleSwitch(BodyConfig.JointLabels[i]) { Location = new Point(124 + col * 260, 296 + row * 36), Size = new Size(250, 28) });
                 tglJoints[i].CheckedChanged += delegate { if (!loadingBody) MarkBodyDirty(); };
             }
-            tglKneesIk = AddTo(3, new ToggleSwitch("Genoux calculés depuis mes vrais trackers") { Location = new Point(124, 452), Size = new Size(520, 28) });
-            tglKneesIk.CheckedChanged += delegate { if (!loadingBody) MarkBodyDirty(); };
+            tglKneesIk = AddTo(3, new ToggleSwitch("Genoux calculés depuis mes vrais trackers") { Location = new Point(124, 452), Size = new Size(520, 28), Visible = false });
+            // FBE Mix : taille et calibration (debout, pieds joints, regard devant).
+            lblHeight = AddLabel(3, "Taille (cm, 0 = auto)", Theme.Body, Theme.Soft, 124, 452);
+            numHeight = AddTo(3, new NumericUpDown
+            {
+                Minimum = 0, Maximum = 230, BorderStyle = BorderStyle.None, BackColor = Theme.Field, ForeColor = Theme.Text,
+                Font = new Font("Segoe UI", 10f), Location = new Point(286, 452), Size = new Size(70, 24), TextAlign = HorizontalAlignment.Center
+            });
+            fields.Add(numHeight);
+            btnCalibrate = AddButton(3, "Calibrer", false, 404, 446, 240, 36);
+            btnCalibrate.Click += delegate { StartCalibration(); };
+            lblCalib = AddLabel(3, "", Theme.Small, Theme.Soft, 124, 488, 520);
+            calibTimer = new Timer { Interval = 1000 };
+            calibTimer.Tick += delegate { CalibrationTick(); };
             lblRealTrackers = AddLabel(3, "", Theme.Small, Theme.Soft, 124, 296, 520);
             lblRealTrackers.AutoSize = false;
             lblRealTrackers.Size = new Size(520, 190);
@@ -2060,7 +2103,8 @@ namespace LunaQuest
             lblBodyModeText.Text = BodyModeTexts[segBodyMode.SelectedIndex];
             bool fbe = mode == "fbe", mix = mode == "mix", fbt = mode == "fbt";
             foreach (var t in tglJoints) t.Visible = fbe || mix;
-            tglKneesIk.Visible = mix;
+            foreach (Control c in new Control[] { lblHeight, numHeight, btnCalibrate, lblCalib }) c.Visible = mix;
+            tglKneesIk.Visible = false; // ancien réglage du mix, remplacé par la calibration
             lblRealTrackers.Visible = fbt;
             if (userChange)
             {
@@ -2105,11 +2149,14 @@ namespace LunaQuest
                     tracking = AlvrSession.Load(AlvrInstall.SessionPath(config.AlvrFolder)).BodyTracking;
             }
             catch { }
-            // Sans suivi du corps dans ALVR, on est forcément en FBT.
-            string mode = tracking ? body.Mode : "fbt";
-            if (tracking && mode == "fbt") mode = "fbe";
+            // FBE Unique passe par le suivi du corps d'ALVR ; FBE Mix et FBT non.
+            string mode = Array.IndexOf(BodyModes, body.Mode) >= 0 ? body.Mode : "fbt";
+            if (mode == "fbe" && !tracking) mode = "fbt";
+            if (mode != "fbe" && tracking) mode = "fbe";
             segBodyMode.SelectedIndex = Array.IndexOf(BodyModes, mode);
             tglKneesIk.Checked = body.KneesFromRealTrackers;
+            numHeight.Value = Math.Max(0, Math.Min(230, body.UserHeightCm));
+            ShowCalibrationStatus();
             for (int i = 0; i < BodyConfig.Joints.Length; i++) tglJoints[i].Checked = body.Enabled[BodyConfig.Joints[i]];
             bodyTrackingSaved = tracking;
             bodyModeSaved = mode;
@@ -2159,13 +2206,14 @@ namespace LunaQuest
         {
             string mode = SelectedBodyMode;
             body.Mode = mode;
-            body.KneesFromRealTrackers = mode == "mix" && tglKneesIk.Checked;
+            body.KneesFromRealTrackers = false;
+            body.UserHeightCm = (int)numHeight.Value;
             for (int i = 0; i < BodyConfig.Joints.Length; i++) body.Enabled[BodyConfig.Joints[i]] = mode != "fbt" && tglJoints[i].Checked;
             try { body.Save(); }
             catch (Exception e) { lblBodyStatus.Text = "Impossible d'enregistrer : " + e.Message; lblBodyStatus.ForeColor = Theme.Red; return; }
 
             // Changer de mode ou de trackers virtuels demande un redémarrage de SteamVR.
-            bool tracking = mode != "fbt";
+            bool tracking = mode == "fbe";
             if (tracking == bodyTrackingSaved && body.JointsKey() == bodyJointsSaved && mode == bodyModeSaved)
             {
                 lblBodyStatus.Text = "Déjà actif.";
@@ -2198,6 +2246,73 @@ namespace LunaQuest
                 lblBodyStatus.Text = vrRunning ? "Activé, SteamVR redémarre." : "Activé au prochain lancement de SteamVR.";
                 lblBodyStatus.ForeColor = Theme.Green;
             });
+        }
+
+        void ShowCalibrationStatus()
+        {
+            int request; double height;
+            if (BodyConfig.ReadCalibration(out request, out height) && height > 0)
+            {
+                lblCalib.Text = "Calibré (taille retenue : " + Math.Round(height * 100) + " cm).";
+                lblCalib.ForeColor = Theme.Green;
+            }
+            else
+            {
+                lblCalib.Text = "Pas encore calibré : debout, pieds joints, regarde devant toi, puis Calibrer.";
+                lblCalib.ForeColor = Theme.Soft;
+            }
+        }
+
+        // Compte à rebours de 3 s pour se mettre en place, puis demande de calibration à ALVR.
+        void StartCalibration()
+        {
+            if (bodyModeSaved != "mix")
+            {
+                lblCalib.Text = "Active d'abord le mode FBE Mix (bouton « Activer ce mode »).";
+                lblCalib.ForeColor = Theme.Orange;
+                return;
+            }
+            if (!IsRunning("vrserver"))
+            {
+                lblCalib.Text = "Connecte-toi d'abord : SteamVR et le casque doivent être lancés.";
+                lblCalib.ForeColor = Theme.Orange;
+                return;
+            }
+            calibStep = 3;
+            btnCalibrate.Enabled = false;
+            lblCalib.Text = "Debout, pieds joints, regarde devant toi… 3";
+            lblCalib.ForeColor = Theme.Orange;
+            calibTimer.Start();
+        }
+
+        void CalibrationTick()
+        {
+            calibStep--;
+            if (calibStep > 0) { lblCalib.Text = "Debout, pieds joints, regarde devant toi… " + calibStep; return; }
+            if (calibStep == 0)
+            {
+                body.UserHeightCm = (int)numHeight.Value;
+                body.CalibrationRequest++;
+                try { body.Save(); } catch (Exception e) { lblCalib.Text = "Impossible d'enregistrer : " + e.Message; calibTimer.Stop(); btnCalibrate.Enabled = true; return; }
+                lblCalib.Text = "Ne bouge pas, calibration…";
+                return;
+            }
+            int request; double height;
+            if (BodyConfig.ReadCalibration(out request, out height) && request == body.CalibrationRequest)
+            {
+                calibTimer.Stop();
+                btnCalibrate.Enabled = true;
+                lblCalib.Text = "Calibré ! Taille retenue : " + Math.Round(height * 100) + " cm.";
+                lblCalib.ForeColor = Theme.Green;
+                Log("Calibration FBE Mix faite.");
+            }
+            else if (calibStep < -8)
+            {
+                calibTimer.Stop();
+                btnCalibrate.Enabled = true;
+                lblCalib.Text = "Pas de réponse d'ALVR : vérifie que le casque est connecté et tes trackers allumés.";
+                lblCalib.ForeColor = Theme.Red;
+            }
         }
 
         // Lien SteamVR : écran PC si activé, relevé des appareils tant que la page Corps est ouverte.
