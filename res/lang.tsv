@@ -1,0 +1,330 @@
+# Traductions de LunaQuest : français (clé)	anglais	chinois simplifié	japonais
+# Une ligne par texte, séparé par des tabulations. Les morceaux de phrases gardent leurs espaces.
+Éteint	Off	已关闭	オフ
+Suivi OK	Tracking OK	追踪正常	トラッキングOK
+Perte de suivi	Tracking lost	追踪丢失	トラッキング喪失
+Glisse pour tourner · double-clic pour recentrer	Drag to rotate · double-click to reset	拖动旋转 · 双击复位	ドラッグで回転・ダブルクリックでリセット
+▬ casque  ● manette  ■ tracker  ◆ virtuel	▬ headset  ● controller  ■ tracker  ◆ virtual	▬ 头显  ● 手柄  ■ 追踪器  ◆ 虚拟	▬ ヘッドセット  ● コントローラー  ■ トラッカー  ◆ 仮想
+En attente de SteamVR…	Waiting for SteamVR…	正在等待 SteamVR…	SteamVR を待っています…
+L'aperçu s'affiche quand le casque est connecté.	The preview appears when the headset is connected.	头显连接后显示预览。	ヘッドセットを接続するとプレビューが表示されます。
+APPAREILS	DEVICES	设备	デバイス
+ADB introuvable	ADB not found	找不到 ADB	ADB が見つかりません
+délai dépassé	timed out	超时	タイムアウト
+Réglage ALVR introuvable : 	ALVR setting not found: 	找不到 ALVR 设置：	ALVR の設定が見つかりません：
+SteamVR n'a jamais été lancé sur ce PC (openvrpaths.vrpath absent).	SteamVR has never been started on this PC (openvrpaths.vrpath missing).	这台电脑从未启动过 SteamVR（缺少 openvrpaths.vrpath）。	この PC では SteamVR が一度も起動されていません（openvrpaths.vrpath がありません）。
+Torse	Chest	胸部	胸
+Hanches	Hips	髋部	腰
+Coude gauche	Left elbow	左肘	左ひじ
+Coude droit	Right elbow	右肘	右ひじ
+Genou gauche	Left knee	左膝	左ひざ
+Genou droit	Right knee	右膝	右ひざ
+Pied gauche	Left foot	左脚	左足
+Pied droit	Right foot	右脚	右足
+ALVR fourni avec LunaQuest utilisé, avec tes réglages de 	Using the ALVR bundled with LunaQuest, with your settings from 	正在使用 LunaQuest 自带的 ALVR，并沿用以下位置的设置：	LunaQuest に同梱の ALVR を使用します（設定の引き継ぎ元：
+Réglages ALVR non repris : 	ALVR settings not imported: 	未能导入 ALVR 设置：	ALVR の設定を引き継げませんでした：
+ADB trouvé : 	ADB found: 	已找到 ADB：	ADB が見つかりました：
+ADB introuvable : clique sur « Installer ADB ».	ADB not found: click “Install ADB”.	找不到 ADB：请点击“安装 ADB”。	ADB が見つかりません：「ADB をインストール」をクリックしてください。
+ALVR trouvé : 	ALVR found: 	已找到 ALVR：	ALVR が見つかりました：
+ALVR introuvable : clique sur « Dossier ALVR… ».	ALVR not found: click “ALVR folder…”.	找不到 ALVR：请点击“ALVR 文件夹…”。	ALVR が見つかりません：「ALVR フォルダー…」をクリックしてください。
+Connexion	Connection	连接	接続
+Réglages ALVR	ALVR settings	ALVR 设置	ALVR 設定
+Corps et trackers	Body and trackers	身体与追踪器	ボディとトラッカー
+Paramètres	Settings	偏好设置	環境設定
+Guide	Guide	指南	ガイド
+État	Status	状态	ステータス
+Actions	Actions	操作	操作
+Journal	Log	日志	ログ
+Casque	Headset	头显	ヘッドセット
+ALVR (casque)	ALVR (headset)	ALVR（头显）	ALVR（ヘッドセット）
+Tunnel USB	USB tunnel	USB 隧道	USB トンネル
+ALVR (PC)	ALVR (PC)	ALVR（电脑）	ALVR（PC）
+Connecter	Connect	连接	接続
+Filmer	Record	录制	録画
+Arrêter	Stop	停止	停止
+Installer ADB	Install ADB	安装 ADB	ADB をインストール
+Installer l'appli casque	Install headset app	安装头显应用	ヘッドセットアプリをインストール
+Dossier ALVR…	ALVR folder…	ALVR 文件夹…	ALVR フォルダー…
+Relancer SteamVR	Restart SteamVR	重启 SteamVR	SteamVR を再起動
+Connexion automatique au branchement	Connect automatically when plugged in	插入时自动连接	接続時に自動でつなぐ
+Garder le casque éveillé (évite les jeux figés)	Keep the headset awake (prevents frozen games)	保持头显唤醒（防止游戏卡住）	ヘッドセットをスリープさせない（ゲームのフリーズ防止）
+Écran du PC dans le casque (2× menu gauche)	PC screen in the headset (2× left menu)	在头显中显示电脑屏幕（按两次左菜单键）	ヘッドセットに PC 画面（左メニュー 2 回）
+Écran PC désactivé.	PC screen turned off.	电脑屏幕已关闭。	PC 画面をオフにしました。
+Lancer avec Windows (icône près de l'horloge)	Start with Windows (icon near the clock)	随 Windows 启动（时钟旁的图标）	Windows と同時に起動（時計の横にアイコン）
+LunaQuest se lancera avec Windows, en discret près de l'horloge.	LunaQuest will start with Windows, quietly near the clock.	LunaQuest 将随 Windows 启动，安静地待在时钟旁。	LunaQuest は Windows と同時に、時計の横で控えめに起動します。
+LunaQuest ne se lancera plus avec Windows.	LunaQuest will no longer start with Windows.	LunaQuest 不再随 Windows 启动。	LunaQuest は Windows と同時に起動しなくなります。
+Impossible de changer le lancement avec Windows : 	Couldn't change start with Windows: 	无法更改随 Windows 启动：	Windows 起動設定を変更できません：
+Image	Image	画面	映像
+Son, manettes et image	Sound, controllers and image	声音、手柄与画面	サウンド・コントローラー・映像
+Casque filaire	Wired headset	有线头显	有線ヘッドセット
+Mes préréglages	My presets	我的预设	マイプリセット
+Images par seconde (Hz)	Frames per second (Hz)	每秒帧数（Hz）	フレームレート（Hz）
+Débit vidéo	Video bitrate	视频码率	ビデオビットレート
+Codec	Codec	编码格式	コーデック
+Résolution par œil (largeur en pixels)	Resolution per eye (width in pixels)	单眼分辨率（宽度，像素）	片目あたりの解像度（幅・ピクセル）
+Son du jeu dans le casque	Game sound in the headset	在头显中播放游戏声音	ゲーム音をヘッドセットで再生
+Micro du casque	Headset microphone	头显麦克风	ヘッドセットのマイク
+Mains squelettiques (suivi des mains)	Skeletal hands (hand tracking)	骨骼手（手部追踪）	スケルタルハンド（ハンドトラッキング）
+À laisser activé : sans lui, une manette peut manquer.	Leave it on: without it, a controller may be missing.	请保持开启：否则可能缺少一个手柄。	オンのままに：オフだとコントローラーが認識されないことがあります。
+Fovéation (bords de l'image moins nets)	Foveation (less sharp image edges)	注视点渲染（画面边缘较模糊）	フォービエーション（映像の端がぼやける）
+Plus léger pour le câble, mais l'image paraît baveuse.	Lighter for the cable, but the image looks smeary.	减轻线缆负担，但画面会显得模糊。	ケーブルの負担は減りますが、映像がにじんで見えます。
+Mémoire de zone (trackers)	Play area memory (trackers)	区域记忆（追踪器）	エリア記憶（トラッカー）
+Garde la calibration des trackers entre les sessions.	Keeps the tracker calibration between sessions.	在会话之间保留追踪器校准。	セッション間でトラッカーのキャリブレーションを保持します。
+Nom du casque (ex. 1234.client.alvr)	Headset name (e.g. 1234.client.alvr)	头显名称（例如 1234.client.alvr）	ヘッドセット名（例：1234.client.alvr）
+Charger	Load	载入	読み込み
+Sauvegarder	Save	保存	保存
+Supprimer	Delete	删除	削除
+Ouvrir ALVR (avancé)	Open ALVR (advanced)	打开 ALVR（高级）	ALVR を開く（詳細）
+Enregistrer	Save	保存	保存
+Langue	Language	语言	言語
+Thème	Theme	主题	テーマ
+Démarrage	Startup	启动	起動
+Noir	Black	黑色	ブラック
+Blanc	White	白色	ホワイト
+Bleu	Blue	蓝色	ブルー
+Rouge	Red	红色	レッド
+Rose	Pink	粉色	ピンク
+Violet	Purple	紫色	パープル
+Vert	Green	绿色	グリーン
+Jaune	Yellow	黄色	イエロー
+La langue et le thème s'appliquent au redémarrage de LunaQuest.	Language and theme apply when LunaQuest restarts.	语言和主题将在 LunaQuest 重启后生效。	言語とテーマは LunaQuest の再起動後に反映されます。
+Animation au démarrage (coup de sabre)	Startup animation (saber slash)	启动动画（光剑斩击）	起動アニメーション（セイバーの一閃）
+Voir l'animation	Play the animation	播放动画	アニメーションを見る
+Revoir le tutoriel	Replay the tutorial	重看教程	チュートリアルをもう一度
+Enregistré. Redémarre LunaQuest pour appliquer.	Saved. Restart LunaQuest to apply.	已保存。重启 LunaQuest 以生效。	保存しました。反映するには LunaQuest を再起動してください。
+LunaQuest doit redémarrer pour appliquer ce changement.	LunaQuest needs to restart to apply this change.	LunaQuest 需要重启才能应用此更改。	この変更を反映するには LunaQuest の再起動が必要です。
+Redémarrer maintenant ?	Restart now?	现在重启吗？	今すぐ再起動しますか？
+Bienvenue dans LunaQuest	Welcome to LunaQuest	欢迎使用 LunaQuest	LunaQuest へようこそ
+Joue à tes jeux PC VR sur ton Quest par câble USB. Voici un tour rapide de l'appli : il avance tout seul, ou clique pour passer à la suite.	Play your PC VR games on your Quest over a USB cable. Here is a quick tour of the app: it moves on by itself, or click to go to the next step.	通过 USB 线在 Quest 上畅玩 PC VR 游戏。下面快速介绍一下本应用：它会自动前进，你也可以点击进入下一步。	USB ケーブルで Quest から PC VR ゲームを遊べます。アプリを簡単にご案内します：自動で進みますが、クリックで次へ進むこともできます。
+Le menu	The menu	菜单	メニュー
+Une icône par partie de l'appli. Passe la souris dessus pour voir son nom.	One icon per part of the app. Hover over it to see its name.	每个图标对应应用的一个部分。将鼠标悬停在上面即可看到名称。	アプリの各画面にアイコンがあります。マウスを重ねると名前が表示されます。
+État en direct	Live status	实时状态	リアルタイムのステータス
+ADB, le casque, ALVR, le tunnel USB et SteamVR : tu vois d'un coup d'œil ce qui est prêt. Les perfs du jeu s'affichent en bas.	ADB, the headset, ALVR, the USB tunnel and SteamVR: see at a glance what is ready. Game performance shows at the bottom.	ADB、头显、ALVR、USB 隧道和 SteamVR：一眼就能看出哪些已就绪。游戏性能显示在下方。	ADB、ヘッドセット、ALVR、USB トンネル、SteamVR の準備状況がひと目でわかります。ゲームのパフォーマンスは下に表示されます。
+Connecter et filmer	Connect and record	连接与录制	接続と録画
+Un clic ouvre le tunnel USB, SteamVR et l'appli du casque. Le bouton Filmer enregistre ta session en vidéo.	One click opens the USB tunnel, SteamVR and the headset app. The Record button saves your session as a video.	一键打开 USB 隧道、SteamVR 和头显应用。“录制”按钮可将你的游戏过程录成视频。	ワンクリックで USB トンネル、SteamVR、ヘッドセットアプリを起動します。「録画」ボタンでプレイを動画として保存できます。
+Options	Options	选项	オプション
+Connexion automatique, casque toujours éveillé, écran du PC dans le casque et lancement avec Windows.	Automatic connection, headset always awake, PC screen in the headset and start with Windows.	自动连接、头显保持唤醒、在头显中显示电脑屏幕以及随 Windows 启动。	自動接続、ヘッドセットのスリープ防止、ヘッドセット内の PC 画面、Windows と同時に起動。
+Tout ce que fait LunaQuest s'affiche ici, avec les éventuels problèmes et comment les régler.	Everything LunaQuest does shows up here, with any problems and how to fix them.	LunaQuest 的所有操作都会显示在这里，包括可能出现的问题及解决方法。	LunaQuest の動作はすべてここに表示されます。問題があれば、その解決方法も表示されます。
+Images par seconde, débit, codec et résolution, sans ouvrir ALVR.	Frame rate, bitrate, codec and resolution, without opening ALVR.	帧率、码率、编码格式和分辨率，无需打开 ALVR。	フレームレート、ビットレート、コーデック、解像度を ALVR を開かずに設定できます。
+Enregistre tes réglages pour chaque jeu et recharge-les en un clic.	Save your settings for each game and reload them in one click.	为每个游戏保存设置，一键重新载入。	ゲームごとに設定を保存し、ワンクリックで呼び出せます。
+FBE Unique pour estimer tout le corps avec le casque, ou FBT avec tes vrais trackers Vive.	FBE Only to estimate your whole body with the headset, or FBT with your real Vive trackers.	“仅 FBE”通过头显估算全身，“FBT”则使用你真实的 Vive 追踪器。	「FBE のみ」はヘッドセットで全身を推定、「FBT」は実際の Vive トラッカーを使います。
+Aperçu en direct	Live preview	实时预览	リアルタイムプレビュー
+Tes appareils en 3D, leur suivi et leur batterie. En bas : allumer ou éteindre tes base stations.	Your devices in 3D, their tracking and battery. At the bottom: turn your base stations on or off.	以 3D 显示你的设备、追踪状态和电量。下方可以开启或关闭基站。	デバイスを 3D で表示し、トラッキング状態とバッテリーを確認できます。下ではベースステーションのオン・オフができます。
+Choisis la langue et le thème de LunaQuest.	Choose LunaQuest's language and theme.	选择 LunaQuest 的语言和主题。	LunaQuest の言語とテーマを選べます。
+Le guide pas à pas est toujours ici, en bas à gauche. Dans le casque, enfonce les deux joysticks pour voir les perfs. Bon jeu !	The step-by-step guide is always here, at the bottom left. In the headset, press both joysticks to see performance. Have fun!	分步指南一直在左下角。在头显中同时按下两个摇杆即可查看性能。玩得开心！	ステップごとのガイドはいつでも左下にあります。ヘッドセットで両方のスティックを押し込むとパフォーマンスが表示されます。楽しんでください！
+Premiers pas	Getting started	入门	はじめに
+Ouvrir le tutoriel complet	Open the full tutorial	打开完整教程	詳しいチュートリアルを開く
+Le fichier Tutoriel.html n'est pas à côté de LunaQuest.exe.	The Tutoriel.html file is not next to LunaQuest.exe.	Tutoriel.html 文件不在 LunaQuest.exe 旁边。	Tutoriel.html が LunaQuest.exe と同じ場所にありません。
+FBE Unique	FBE Only	仅 FBE	FBE のみ
+Tout le corps estimé par les caméras du casque, sans vrais trackers : choisis les trackers virtuels à créer.	Whole body estimated by the headset cameras, without real trackers: choose which virtual trackers to create.	由头显摄像头估算全身，无需真实追踪器：请选择要创建的虚拟追踪器。	ヘッドセットのカメラで全身を推定します（実トラッカー不要）。作成する仮想トラッカーを選んでください。
+Seulement tes vrais trackers Vive, suivis par tes bases. Le suivi du corps par le casque est coupé.	Only your real Vive trackers, tracked by your base stations. Body tracking by the headset is off.	仅使用由基站追踪的真实 Vive 追踪器。头显的身体追踪已关闭。	ベースステーションで追跡する実際の Vive トラッカーのみを使います。ヘッドセットによるボディトラッキングはオフです。
+Réglages du mode	Mode settings	模式设置	モード設定
+Décalages des trackers virtuels	Virtual tracker offsets	虚拟追踪器偏移	仮想トラッカーのオフセット
+Côté (cm)	Side (cm)	侧向（cm）	横（cm）
+Hauteur (cm)	Height (cm)	高度（cm）	高さ（cm）
+Avant (cm)	Forward (cm)	前后（cm）	前後（cm）
+Rot. X (°)	Rot. X (°)	旋转 X（°）	回転 X（°）
+Rot. Y (°)	Rot. Y (°)	旋转 Y（°）	回転 Y（°）
+Rot. Z (°)	Rot. Z (°)	旋转 Z（°）	回転 Z（°）
+Remettre à zéro	Reset	归零	リセット
+Activer ce mode	Enable this mode	启用此模式	このモードを有効にする
+Bases automatiques en FBT (connexion / fin)	Automatic base stations in FBT (connect / end)	FBT 模式下自动控制基站（连接 / 结束）	FBT でベースステーションを自動操作（接続／終了）
+Allumer les bases	Turn bases on	开启基站	ベースをオン
+Éteindre les bases	Turn bases off	关闭基站	ベースをオフ
+Base stations 2.0, par le Bluetooth du PC.	Base stations 2.0, through the PC's Bluetooth.	2.0 基站，通过电脑蓝牙控制。	ベースステーション 2.0（PC の Bluetooth 経由）。
+Clique sur « Activer ce mode » pour l'appliquer.	Click “Enable this mode” to apply it.	点击“启用此模式”以应用。	「このモードを有効にする」をクリックして適用してください。
+Mode actif : 	Active mode: 	当前模式：	現在のモード：
+Modes FBE : ALVR version LunaQuest requis.	FBE modes: the LunaQuest version of ALVR is required.	FBE 模式：需要 LunaQuest 版 ALVR。	FBE モード：LunaQuest 版の ALVR が必要です。
+Vrais trackers Vive (rôles dans SteamVR → Gérer les trackers) :	Real Vive trackers (roles in SteamVR → Manage trackers):	真实 Vive 追踪器（SteamVR → 管理追踪器 中的角色）：	実際の Vive トラッカー（SteamVR →「トラッカーを管理」での役割）：
+Aucun rôle réglé. Les jeux comme VRChat s'en passent : ils reconnaissent les trackers à la calibration.	No role set. Games like VRChat don't need one: they recognize trackers during calibration.	未设置角色。VRChat 等游戏不需要：它们会在校准时识别追踪器。	役割は未設定です。VRChat などのゲームでは不要です（キャリブレーション時にトラッカーを認識します）。
+L'aperçu à droite montre en direct leur suivi et leur batterie.	The preview on the right shows their tracking and battery live.	右侧预览实时显示其追踪状态和电量。	右のプレビューでトラッキング状態とバッテリーをリアルタイムで確認できます。
+Décalage appliqué.	Offset applied.	已应用偏移。	オフセットを適用しました。
+Impossible d'enregistrer : 	Couldn't save: 	无法保存：	保存できません：
+Déjà actif.	Already active.	已在使用中。	すでに有効です。
+SteamVR doit redémarrer pour changer de mode.	SteamVR needs to restart to change mode.	切换模式需要重启 SteamVR。	モードを変更するには SteamVR の再起動が必要です。
+SteamVR fermé pour changer de mode de suivi du corps.	SteamVR closed to change the body tracking mode.	已关闭 SteamVR 以切换身体追踪模式。	ボディトラッキングのモードを変更するため SteamVR を終了しました。
+Mode 	Mode 	模式 	モード
+ activé.	 enabled.	 已启用。	 を有効にしました。
+Redémarrage de SteamVR…	Restarting SteamVR…	正在重启 SteamVR…	SteamVR を再起動しています…
+Activé, SteamVR redémarre.	Enabled, SteamVR is restarting.	已启用，SteamVR 正在重启。	有効にしました。SteamVR を再起動しています。
+Activé au prochain lancement de SteamVR.	Enabled the next time SteamVR starts.	将在下次启动 SteamVR 时生效。	次回 SteamVR 起動時に有効になります。
+Recherche et allumage des base stations…	Searching for and turning on the base stations…	正在搜索并开启基站…	ベースステーションを検索してオンにしています…
+Recherche et mise en veille des base stations…	Searching for the base stations and putting them to sleep…	正在搜索基站并使其休眠…	ベースステーションを検索してスリープにしています…
+Base stations : 	Base stations: 	基站：	ベースステーション：
+Aucune base station trouvée.	No base station found.	未找到基站。	ベースステーションが見つかりません。
+ base stations 	 base stations 	 个基站	 台のベースステーションを
+ base station 	 base station 	 个基站	 台のベースステーションを
+allumées.	turned on.	已开启。	オンにしました。
+allumée.	turned on.	已开启。	オンにしました。
+en veille.	asleep.	已休眠。	スリープにしました。
+Ouvrir LunaQuest	Open LunaQuest	打开 LunaQuest	LunaQuest を開く
+Connecter / Déconnecter	Connect / Disconnect	连接 / 断开	接続／切断
+Quitter	Quit	退出	終了
+Perfs : en attente du flux d'ALVR.	Performance: waiting for the ALVR stream.	性能：正在等待 ALVR 视频流。	パフォーマンス：ALVR の映像を待っています。
+Perfs : 	Performance: 	性能：	パフォーマンス：
+ im/s · latence 	 fps · latency 	 帧/秒 · 延迟 	 fps・遅延
+ Mbit/s · 	 Mbit/s · 	 Mbit/s · 	 Mbit/s・
+aucune perte	no loss	无丢包	ロスなし
+ pertes/s	 lost/s	 丢包/秒	 ロス/秒
+Dans le casque : enfonce les deux joysticks en même temps.	In the headset: press both joysticks at the same time.	在头显中：同时按下两个摇杆。	ヘッドセットで：両方のスティックを同時に押し込みます。
+ : batterie faible (	: low battery (	：电量不足（	：バッテリー残量わずか（
+Nouvelle version 	New version 	新版本 	新しいバージョン
+ disponible ›	 available ›	 可用 ›	 があります ›
+LunaQuest 	LunaQuest 	LunaQuest 	LunaQuest
+ est disponible : clique en haut à droite pour la télécharger.	 is available: click at the top right to download it.	 已发布：点击右上角下载。	 が公開されています：右上をクリックしてダウンロードしてください。
+ est disponible.	 is available.	 已发布。	 が公開されています。
+Connecte-toi d'abord pour filmer.	Connect first to record.	请先连接再录制。	録画するには先に接続してください。
+Enregistrement impossible : 	Can't record: 	无法录制：	録画できません：
+Enregistrement en cours… (environ 	Recording… (about 	正在录制…（约 	録画中…（約
+ Go par minute)	 GB per minute)	 GB/分钟）	 GB／分）
+La fovéation est activée : les bords de la vidéo seront déformés.	Foveation is on: the video edges will be distorted.	注视点渲染已开启：视频边缘会变形。	フォービエーションがオンです：動画の端がゆがみます。
+Vidéo enregistrée : 	Video saved: 	视频已保存：	動画を保存しました：
+ (lisible avec VLC).	 (plays in VLC).	（可用 VLC 播放）。	（VLC で再生できます）。
+Enregistrement arrêté.	Recording stopped.	录制已停止。	録画を停止しました。
+Allumage des base stations…	Turning on the base stations…	正在开启基站…	ベースステーションをオンにしています…
+Mise en veille des base stations…	Putting the base stations to sleep…	正在使基站休眠…	ベースステーションをスリープにしています…
+Active le mode développeur	Enable developer mode	启用开发者模式	開発者モードを有効にする
+Appli Meta Horizon sur ton téléphone › Appareils › ton casque › Mode développeur.	Meta Horizon app on your phone › Devices › your headset › Developer mode.	手机上的 Meta Horizon 应用 › 设备 › 你的头显 › 开发者模式。	スマートフォンの Meta Horizon アプリ › デバイス › ヘッドセット › 開発者モード。
+Installe SteamVR	Install SteamVR	安装 SteamVR	SteamVR をインストール
+Sur Steam, installe SteamVR (gratuit) et lance-le une fois. La partie PC d'ALVR est déjà incluse dans LunaQuest : rien d'autre à télécharger.	On Steam, install SteamVR (free) and start it once. The PC part of ALVR is already included in LunaQuest: nothing else to download.	在 Steam 上安装 SteamVR（免费）并启动一次。ALVR 的电脑端已包含在 LunaQuest 中：无需另外下载。	Steam で SteamVR（無料）をインストールし、一度起動してください。ALVR の PC 側は LunaQuest に含まれているので、ほかにダウンロードするものはありません。
+Prépare le casque	Prepare the headset	准备头显	ヘッドセットの準備
+Onglet Connexion : Installer ADB, branche le casque avec le câble USB, puis accepte le débogage USB qui s'affiche dans le casque.	Connection tab: Install ADB, plug in the headset with the USB cable, then accept the USB debugging prompt in the headset.	在“连接”页：安装 ADB，用 USB 线连接头显，然后在头显中允许 USB 调试。	「接続」タブ：ADB をインストールし、USB ケーブルでヘッドセットをつないで、ヘッドセットに表示される USB デバッグを許可します。
+Installe l'appli du casque	Install the headset app	安装头显应用	ヘッドセットアプリをインストール
+Clique sur Installer l'appli casque : LunaQuest Client, fourni avec LunaQuest, s'installe et s'enregistre tout seul. Rien à recopier.	Click Install headset app: LunaQuest Client, included with LunaQuest, installs and registers itself. Nothing to copy.	点击“安装头显应用”：LunaQuest 自带的 LunaQuest Client 会自动安装并注册，无需手动填写。	「ヘッドセットアプリをインストール」をクリック：LunaQuest に同梱の LunaQuest Client が自動でインストール・登録されます。入力は不要です。
+Joue !	Play!	开玩！	プレイ！
+Clique sur Connecter : LunaQuest ouvre le tunnel USB, SteamVR et l'appli du casque. Ensuite, il suffit de brancher le casque.	Click Connect: LunaQuest opens the USB tunnel, SteamVR and the headset app. After that, just plug in the headset.	点击“连接”：LunaQuest 会打开 USB 隧道、SteamVR 和头显应用。之后只需插上头显即可。	「接続」をクリック：LunaQuest が USB トンネル、SteamVR、ヘッドセットアプリを起動します。次からはヘッドセットをつなぐだけです。
+En cas de souci	If something goes wrong	遇到问题时	困ったときは
+Jeu figé : garde le casque éveillé. Saccades : baisse le débit. Pas de son : active Son du jeu. Une manette absente : active les mains squelettiques.	Frozen game: keep the headset awake. Stuttering: lower the bitrate. No sound: turn on Game sound. A controller missing: turn on skeletal hands.	游戏卡住：保持头显唤醒。画面卡顿：降低码率。没有声音：开启游戏声音。缺少手柄：开启骨骼手。	ゲームが固まる：スリープ防止をオン。カクつく：ビットレートを下げる。音が出ない：ゲーム音をオン。コントローラーが出ない：スケルタルハンドをオン。
+PC VR · META QUEST · CÂBLE USB	PC VR · META QUEST · USB CABLE	PC VR · META QUEST · USB 线	PC VR・META QUEST・USB ケーブル
+Erreur : 	Error: 	错误：	エラー：
+Patiente…	Please wait…	请稍候…	お待ちください…
+Déconnecter	Disconnect	断开	切断
+Prêt	Ready	就绪	準備完了
+Non installé	Not installed	未安装	未インストール
+Non branché	Not plugged in	未连接	未接続
+Autorise le débogage USB	Allow USB debugging	请允许 USB 调试	USB デバッグを許可してください
+État : 	Status: 	状态：	状態：
+Non installé (Installer l'appli casque)	Not installed (Install headset app)	未安装（安装头显应用）	未インストール（ヘッドセットアプリをインストール）
+Installé	Installed	已安装	インストール済み
+Inactif	Inactive	未启用	停止中
+Actif	Active	已启用	稼働中
+Actif · USB 2.0 (image floue)	Active · USB 2.0 (blurry image)	已启用 · USB 2.0（画面模糊）	稼働中・USB 2.0（映像がぼやけます）
+Actif · USB 3	Active · USB 3	已启用 · USB 3	稼働中・USB 3
+Introuvable (Dossier ALVR…)	Not found (ALVR folder…)	找不到（ALVR 文件夹…）	見つかりません（ALVR フォルダー…）
+Lance ALVR une fois (Réglages)	Start ALVR once (Settings)	请启动一次 ALVR（设置）	ALVR を一度起動してください（設定）
+Ajoute ton casque (Réglages)	Add your headset (Settings)	请添加你的头显（设置）	ヘッドセットを追加してください（設定）
+Prêt (driver ajouté à la connexion)	Ready (driver added when connecting)	就绪（连接时添加驱动）	準備完了（接続時にドライバーを追加）
+Lancé	Running	运行中	起動中
+Fermé	Closed	已关闭	終了
+Appli quittée dans le casque : déconnexion.	App closed in the headset: disconnecting.	头显中的应用已退出：正在断开。	ヘッドセットでアプリが終了しました：切断します。
+Batterie casque 	Headset battery 	头显电量 	ヘッドセットのバッテリー
+Casque détecté, connexion automatique…	Headset detected, connecting automatically…	检测到头显，正在自动连接…	ヘッドセットを検出しました。自動で接続しています…
+Installe d'abord ADB.	Install ADB first.	请先安装 ADB。	先に ADB をインストールしてください。
+Aucun casque détecté. Branche-le et vérifie que le mode développeur est activé.	No headset detected. Plug it in and check that developer mode is on.	未检测到头显。请插上头显并确认已开启开发者模式。	ヘッドセットが見つかりません。接続して、開発者モードがオンか確認してください。
+Accepte « Autoriser le débogage USB » dans le casque.	Accept “Allow USB debugging” in the headset.	请在头显中接受“允许 USB 调试”。	ヘッドセットで「USB デバッグを許可」を承認してください。
+ALVR introuvable sur le PC : indique son dossier avec « Dossier ALVR… ».	ALVR not found on the PC: point to its folder with “ALVR folder…”.	在电脑上找不到 ALVR：请通过“ALVR 文件夹…”指定其位置。	PC に ALVR が見つかりません：「ALVR フォルダー…」で場所を指定してください。
+Lance ALVR une fois (Réglages ALVR › Ouvrir ALVR) pour créer sa configuration.	Start ALVR once (ALVR settings › Open ALVR) to create its configuration.	请启动一次 ALVR（ALVR 设置 › 打开 ALVR）以创建配置。	ALVR を一度起動して（ALVR 設定 › ALVR を開く）設定ファイルを作成してください。
+Échec du tunnel USB (port 	USB tunnel failed (port 	USB 隧道失败（端口 	USB トンネルに失敗しました（ポート
+Tunnel USB ouvert.	USB tunnel open.	USB 隧道已打开。	USB トンネルを開きました。
+Driver ALVR ajouté à SteamVR.	ALVR driver added to SteamVR.	已将 ALVR 驱动添加到 SteamVR。	ALVR ドライバーを SteamVR に追加しました。
+Impossible d'ajouter ALVR à SteamVR : 	Couldn't add ALVR to SteamVR: 	无法将 ALVR 添加到 SteamVR：	ALVR を SteamVR に追加できません：
+ALVR avait été bloqué par SteamVR après un plantage : réactivé.	ALVR had been blocked by SteamVR after a crash: re-enabled.	ALVR 在崩溃后被 SteamVR 屏蔽：已重新启用。	クラッシュ後に SteamVR が ALVR をブロックしていました：再び有効にしました。
+Impossible de réactiver ALVR dans SteamVR : 	Couldn't re-enable ALVR in SteamVR: 	无法在 SteamVR 中重新启用 ALVR：	SteamVR で ALVR を再び有効にできません：
+ALVR passé en TCP (obligatoire en USB).	ALVR switched to TCP (required over USB).	ALVR 已切换为 TCP（USB 连接必需）。	ALVR を TCP に切り替えました（USB では必須）。
+Casque « 	Headset “	头显“	ヘッドセット「
+ » enregistré pour le câble.	” registered for the cable.	”已登记为有线连接。	」をケーブル接続用に登録しました。
+Casque actif pour le câble : 	Active headset for the cable: 	有线连接的当前头显：	ケーブル接続で使うヘッドセット：
+Config ALVR illisible : 	Unreadable ALVR config: 	无法读取 ALVR 配置：	ALVR の設定を読み込めません：
+Attention : aucun casque enregistré pour le câble. Va dans Réglages ALVR › Casque filaire.	Warning: no headset registered for the cable. Go to ALVR settings › Wired headset.	注意：没有为有线连接登记头显。请前往 ALVR 设置 › 有线头显。	注意：ケーブル接続用のヘッドセットが登録されていません。「ALVR 設定 › 有線ヘッドセット」を開いてください。
+Lancement de SteamVR…	Starting SteamVR…	正在启动 SteamVR…	SteamVR を起動しています…
+Impossible de lancer SteamVR : 	Couldn't start SteamVR: 	无法启动 SteamVR：	SteamVR を起動できません：
+L'appli du casque n'est pas installée : clique sur « Installer l'appli casque ».	The headset app is not installed: click “Install headset app”.	头显应用未安装：请点击“安装头显应用”。	ヘッドセットアプリがインストールされていません：「ヘッドセットアプリをインストール」をクリックしてください。
+ALVR lancé dans le casque. Bon jeu !	ALVR started in the headset. Have fun!	已在头显中启动 ALVR。玩得开心！	ヘッドセットで ALVR を起動しました。楽しんでください！
+Lance ALVR à la main dans le casque (	Start ALVR manually in the headset (	请在头显中手动启动 ALVR（	ヘッドセットで ALVR を手動で起動してください（
+Déconnexion…	Disconnecting…	正在断开…	切断しています…
+Jeu VR fermé.	VR game closed.	VR 游戏已关闭。	VR ゲームを終了しました。
+ jeux VR fermés.	 VR games closed.	 个 VR 游戏已关闭。	 本の VR ゲームを終了しました。
+SteamVR fermé.	SteamVR closed.	SteamVR 已关闭。	SteamVR を終了しました。
+Casque déconnecté. Clique sur Connecter pour rejouer.	Headset disconnected. Click Connect to play again.	头显已断开。点击“连接”即可再次游玩。	ヘッドセットを切断しました。もう一度遊ぶには「接続」をクリックしてください。
+SteamVR relancé.	SteamVR restarted.	SteamVR 已重启。	SteamVR を再起動しました。
+Test du câble impossible : 	Cable test failed: 	无法测试线缆：	ケーブルをテストできません：
+Impossible de régler la veille du casque : 	Couldn't set the headset sleep mode: 	无法设置头显休眠：	ヘッドセットのスリープを設定できません：
+Casque maintenu éveillé.	Headset kept awake.	头显将保持唤醒。	ヘッドセットのスリープを防止しました。
+Mise en veille normale du casque rétablie.	Normal headset sleep restored.	已恢复头显的正常休眠。	ヘッドセットの通常のスリープに戻しました。
+Téléchargement d'ADB depuis Google…	Downloading ADB from Google…	正在从 Google 下载 ADB…	Google から ADB をダウンロードしています…
+ADB installé.	ADB installed.	ADB 已安装。	ADB をインストールしました。
+ADB téléchargé mais introuvable après extraction.	ADB downloaded but not found after extraction.	ADB 已下载，但解压后找不到。	ADB をダウンロードしましたが、展開後に見つかりません。
+Échec de l'installation d'ADB : 	ADB installation failed: 	ADB 安装失败：	ADB のインストールに失敗しました：
+Branche et autorise le casque avant d'installer l'appli du casque.	Plug in and authorize the headset before installing the headset app.	请先连接并授权头显，再安装头显应用。	ヘッドセットアプリをインストールする前に、ヘッドセットをつないで許可してください。
+Installation de 	Installing 	正在安装 	インストール中：
+ sur le casque…	 on the headset…	 到头显…	（ヘッドセットへ）…
+Appli du casque installée : elle est dans Bibliothèque › Sources inconnues.	Headset app installed: it is in Library › Unknown sources.	头显应用已安装：位于 资源库 › 未知来源。	ヘッドセットアプリをインストールしました：「ライブラリ › 提供元不明」にあります。
+Échec de l'installation : 	Installation failed: 	安装失败：	インストールに失敗しました：
+Ce dossier ne contient pas ALVR (driver.vrdrivermanifest manquant).	This folder doesn't contain ALVR (driver.vrdrivermanifest missing).	此文件夹中没有 ALVR（缺少 driver.vrdrivermanifest）。	このフォルダーには ALVR がありません（driver.vrdrivermanifest がありません）。
+Dossier ALVR : 	ALVR folder: 	ALVR 文件夹：	ALVR フォルダー：
+VB-CABLE détecté : le micro peut fonctionner.	VB-CABLE detected: the microphone can work.	已检测到 VB-CABLE：麦克风可以使用。	VB-CABLE を検出しました：マイクが使えます。
+VB-CABLE absent : ALVR refusera la connexion !	VB-CABLE missing: ALVR will refuse to connect!	缺少 VB-CABLE：ALVR 将拒绝连接！	VB-CABLE がありません：ALVR が接続を拒否します！
+Nécessite VB-CABLE (vb-audio.com).	Requires VB-CABLE (vb-audio.com).	需要 VB-CABLE（vb-audio.com）。	VB-CABLE が必要です（vb-audio.com）。
+VB-CABLE n'est pas installé : avec le micro activé, ALVR refusera de se connecter.	VB-CABLE is not installed: with the microphone on, ALVR will refuse to connect.	未安装 VB-CABLE：开启麦克风时，ALVR 将拒绝连接。	VB-CABLE がインストールされていません：マイクをオンにすると ALVR が接続を拒否します。
+Enregistrer quand même ?	Save anyway?	仍要保存吗？	このまま保存しますか？
+Modifications non enregistrées.	Unsaved changes.	有未保存的更改。	未保存の変更があります。
+ALVR introuvable : indique son dossier dans l'onglet Connexion.	ALVR not found: point to its folder in the Connection tab.	找不到 ALVR：请在“连接”页指定其文件夹。	ALVR が見つかりません：「接続」タブでフォルダーを指定してください。
+Lance ALVR une fois (bouton ci-contre) pour créer sa configuration.	Start ALVR once (button nearby) to create its configuration.	请启动一次 ALVR（旁边的按钮）以创建配置。	ALVR を一度起動して（横のボタン）設定ファイルを作成してください。
+Enregistré : 	Registered: 	已登记：	登録済み：
+Aucun casque enregistré pour le câble.	No headset registered for the cable.	没有为有线连接登记头显。	ケーブル接続用のヘッドセットが登録されていません。
+Appliqué au prochain lancement de SteamVR.	Applied the next time SteamVR starts.	将在下次启动 SteamVR 时生效。	次回 SteamVR 起動時に反映されます。
+Tape un nom de préréglage avant de sauvegarder.	Type a preset name before saving.	保存前请输入预设名称。	保存する前にプリセット名を入力してください。
+Préréglage « 	Preset “	预设“	プリセット「
+ » sauvegardé.	” saved.	”已保存。	」を保存しました。
+Choisis un préréglage dans la liste.	Choose a preset from the list.	请从列表中选择一个预设。	リストからプリセットを選んでください。
+ » chargé : clique sur Enregistrer pour l'appliquer.	” loaded: click Save to apply it.	”已载入：点击“保存”以应用。	」を読み込みました：適用するには「保存」をクリックしてください。
+ » supprimé.	” deleted.	”已删除。	」を削除しました。
+SteamVR doit redémarrer pour appliquer les réglages.	SteamVR needs to restart to apply the settings.	应用设置需要重启 SteamVR。	設定を反映するには SteamVR の再起動が必要です。
+SteamVR fermé pour appliquer les réglages.	SteamVR closed to apply the settings.	已关闭 SteamVR 以应用设置。	設定を反映するため SteamVR を終了しました。
+Image de 	Image 	画面宽 	映像の幅
+ px de large : trop pour le H264 (	 px wide: too much for H264 (	 像素：超出 H264 上限（	 px：H264 の上限を超えています（
+ px max), codec passé en HEVC.	 px max), codec switched to HEVC.	 像素），已切换为 HEVC。	 px まで）。コーデックを HEVC に変更しました。
+Résolution au-delà de l'écran du casque : filtre de réduction « super sampling » de Meta activé.	Resolution above the headset screen: Meta's “super sampling” downscaling filter enabled.	分辨率高于头显屏幕：已启用 Meta 的“超级采样”缩放滤镜。	解像度がヘッドセットの画面を超えています：Meta の「スーパーサンプリング」縮小フィルターを有効にしました。
+Réglages ALVR enregistrés.	ALVR settings saved.	ALVR 设置已保存。	ALVR の設定を保存しました。
+SteamVR réglé à 100 % pour rendre exactement 	SteamVR set to 100% to render exactly 	SteamVR 已设为 100%，以精确渲染 	SteamVR を 100% に設定しました（描画：
+ px par œil.	 px per eye.	 像素/眼。	 px／片目）。
+Impossible de régler la résolution de SteamVR : 	Couldn't set the SteamVR resolution: 	无法设置 SteamVR 分辨率：	SteamVR の解像度を設定できません：
+Enregistré, SteamVR redémarre.	Saved, SteamVR is restarting.	已保存，SteamVR 正在重启。	保存しました。SteamVR を再起動しています。
+Enregistré. Appliqué au prochain lancement.	Saved. Applied at the next start.	已保存。下次启动时生效。	保存しました。次回の起動時に反映されます。
+ALVR Dashboard ouvert. Ferme-le avant d'enregistrer des réglages ici.	ALVR Dashboard is open. Close it before saving settings here.	ALVR Dashboard 已打开。在此保存设置前请先关闭它。	ALVR Dashboard が開いています。ここで設定を保存する前に閉じてください。
+Joystick gauche (perfs)	Left joystick (performance)	左摇杆（性能）	左スティック（パフォーマンス）
+Joystick droit (perfs)	Right joystick (performance)	右摇杆（性能）	右スティック（パフォーマンス）
+Écran PC : en attente de SteamVR…	PC screen: waiting for SteamVR…	电脑屏幕：正在等待 SteamVR…	PC 画面：SteamVR を待っています…
+Écran PC prêt : double appui sur le bouton menu gauche pour l'afficher.	PC screen ready: double-press the left menu button to show it.	电脑屏幕已就绪：双击左侧菜单键即可显示。	PC 画面の準備完了：左のメニューボタンを 2 回押すと表示されます。
+Écran PC : erreur 	PC screen: error 	电脑屏幕：错误 	PC 画面：エラー
+Écran PC : création impossible (	PC screen: couldn't create it (	电脑屏幕：无法创建（	PC 画面：作成できません（
+Écran PC	PC screen	电脑屏幕	PC 画面
+Perfs dans le casque : raccourci des joysticks indisponible.	Performance in the headset: joystick shortcut unavailable.	头显内性能显示：摇杆快捷键不可用。	ヘッドセット内のパフォーマンス：スティックのショートカットが使えません。
+LUNAQUEST · PERFS	LUNAQUEST · PERFORMANCE	LUNAQUEST · 性能	LUNAQUEST・パフォーマンス
+En attente du flux d'ALVR…	Waiting for the ALVR stream…	正在等待 ALVR 视频流…	ALVR の映像を待っています…
+Images/s	Frames/s	帧/秒	フレーム/秒
+Latence	Latency	延迟	遅延
+Débit	Bitrate	码率	ビットレート
+Pertes	Lost	丢包	ロス
+réseau 	network 	网络 	ネットワーク
+ · encodage 	 · encoding 	 · 编码 	・エンコード
+ · décodage 	 · decoding 	 · 解码 	・デコード
+Les deux joysticks enfoncés : masquer	Both joysticks pressed: hide	同时按下两个摇杆：隐藏	両方のスティックを押し込む：非表示
+Manette	Controller	手柄	コントローラー
+Manette gauche	Left controller	左手柄	左コントローラー
+Manette droite	Right controller	右手柄	右コントローラー
+Base 	Base 	基站 	ベース
+ (virtuel)	 (virtual)	（虚拟）	（仮想）
+Tracker 	Tracker 	追踪器 	トラッカー
+Bluetooth indisponible : vérifie qu'il est activé sur le PC.	Bluetooth unavailable: check that it is on in the PC.	蓝牙不可用：请确认电脑已开启蓝牙。	Bluetooth が使えません：PC で有効になっているか確認してください。
+Aucune base station trouvée en Bluetooth (branchées sur le secteur et à portée ?).	No base station found over Bluetooth (plugged in and within range?).	通过蓝牙未找到基站（是否已接通电源并在范围内？）。	Bluetooth でベースステーションが見つかりません（電源につながっていて、範囲内ですか？）。
+ : allumée.	: turned on.	：已开启。	：オンにしました。
+ : en veille.	: asleep.	：已休眠。	：スリープにしました。
+pas de réponse (délai dépassé).	no response (timed out).	无响应（超时）。	応答なし（タイムアウト）。
+pas de réponse.	no response.	无响应。	応答なし。
+commande d'alimentation absente (base station 1.0 ?).	power command missing (base station 1.0?).	缺少电源指令（是 1.0 基站吗？）。	電源コマンドがありません（ベースステーション 1.0？）。
+commande refusée.	command refused.	指令被拒绝。	コマンドが拒否されました。
+réponse 	response 	响应 	応答
+injoignable.	unreachable.	无法连接。	接続できません。
+Passer	Skip	跳过	スキップ
+Suivant	Next	下一步	次へ
+C'est parti !	Let's go!	开始吧！	はじめよう！

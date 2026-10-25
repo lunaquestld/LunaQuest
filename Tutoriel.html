@@ -116,10 +116,23 @@
     <p style="margin-top:0">Onglet <b>Corps et trackers</b> : choisis un mode, puis clique sur <b>Activer ce mode</b>. Il s'applique au prochain lancement de SteamVR. L'aperçu 3D montre en direct le casque, les manettes et les trackers, leur suivi et leur batterie.</p>
     <table>
       <tr><td>FBE Unique</td><td>Tout le corps estimé par les caméras du casque, sans vrais trackers. Choisis les trackers virtuels à créer (torse, hanches, coudes, genoux, pieds).</td></tr>
-      <tr><td>FBE Mix <b>(bêta)</b></td><td>Tes vrais trackers aux hanches et aux pieds ; le torse, les coudes et les genoux sont estimés à partir du casque, des manettes et des trackers. Indique ta taille, tiens-toi debout bien droit et clique sur <b>Calibrer</b>.</td></tr>
       <tr><td>FBT</td><td>Seulement tes vrais trackers (Vive, Tundra…), suivis par tes bases.</td></tr>
     </table>
-    <div class="note">FBE Mix est en bêta : il marche déjà, mais pas encore parfaitement. Il sera amélioré dans les prochaines versions.</div>
+    <p>Sous l'aperçu : <b>Allumer les bases</b> et <b>Éteindre les bases</b> (base stations 2.0, par le Bluetooth du PC, même sans être connecté). Coche <b>Bases automatiques en FBT</b> pour qu'elles s'allument à la connexion et se mettent en veille à la fin.</p>
+  </div>
+
+  <h2>En jeu</h2>
+  <div class="card">
+    <table>
+      <tr><td>Perfs dans le casque</td><td>Enfonce les <b>deux joysticks en même temps</b> : images par seconde, latence, débit et pertes s'affichent en bas à gauche. Recommence pour les masquer.</td></tr>
+      <tr><td>Filmer</td><td>Le bouton <b>Filmer</b> (onglet Connexion) enregistre le flux du casque. La vidéo arrive dans <code>Vidéos\LunaQuest</code> ; ouvre-la avec <b>VLC</b>.</td></tr>
+      <tr><td>Batterie faible</td><td>Sous 15 %, le casque, une manette ou un tracker déclenche une alerte dans le casque et sur le PC.</td></tr>
+    </table>
+  </div>
+
+  <h2>Paramètres</h2>
+  <div class="card">
+    <p style="margin-top:0">L'icône d'engrenage, en bas à gauche : la <b>langue</b> (français, anglais, chinois, japonais), le <b>thème</b> (noir, blanc, bleu, rouge, rose, violet, vert, jaune), l'animation de démarrage et le tutoriel de découverte. Sur la page Connexion, <b>Lancer avec Windows</b> démarre LunaQuest en discret, avec une icône près de l'horloge.</p>
   </div>
 
   <h2>Réglages conseillés</h2>
@@ -141,7 +154,7 @@
       <tr><td>Pas de son</td><td>Active <b>Son du jeu dans le casque</b> dans Réglages ALVR.</td></tr>
       <tr><td>Une manette n'est pas détectée</td><td>Active <b>Mains squelettiques</b> dans Réglages ALVR (sans lui, la manette gauche peut ne jamais apparaître dans SteamVR), puis vérifie les piles.</td></tr>
       <tr><td>« Casque : autorise le débogage USB »</td><td>Mets le casque et accepte la fenêtre de débogage USB.</td></tr>
-      <tr><td>Le corps bouge mal en FBE Mix</td><td>Refais la calibration debout, bien droit, les bras le long du corps. Si ça ne suffit pas, passe en FBT ou en FBE Unique.</td></tr>
+      <tr><td>Les trackers se décalent</td><td>Vérifie que tes deux base stations ne sont pas sur le même canal (bouton à l'arrière de l'une d'elles), puis refais la calibration Space Calibrator.</td></tr>
       <tr><td>« ALVR (PC) : introuvable »</td><td>Réinstalle LunaQuest, ou clique sur <b>Dossier ALVR…</b> et choisis <code>ALVR Dashboard.exe</code> dans le dossier <code>ALVR</code> de LunaQuest.</td></tr>
     </table>
   </div>

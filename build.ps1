@@ -72,17 +72,27 @@ foreach ($p in $pngs) { $w.Write($p) }
 $w.Close()
 
 # ---- Version publique (affichée dans l'installateur et dans « Applications installées »).
-$version = "0.3.0"
+$version = "0.4.0"
 $versionCs = "$bin\Version.cs"
 Set-Content -Encoding utf8 $versionCs "[assembly: System.Reflection.AssemblyVersion(""$version.0"")]`r`n[assembly: System.Reflection.AssemblyFileVersion(""$version.0"")]"
 
 # ---- Compilation.
 # x64 obligatoire : l'écran PC dans le casque charge l'openvr_api.dll 64 bits de SteamVR.
-& "$fw\csc.exe" /nologo /target:winexe /optimize+ /platform:x64 /win32icon:"$ico" /out:"$bin\LunaQuest.exe" `
+# Bluetooth (base stations) : API Windows (WinRT), décrites par les fichiers WinMetadata de Windows 10/11.
+$winmd = "$env:WINDIR\System32\WinMetadata"
+# Traductions (anglais, chinois, japonais) embarquées dans l'exe ; chemin relatif : csc refuse les espaces dans /resource.
+Copy-Item "$res\lang.tsv" "$bin\lang.tsv" -Force
+Push-Location $bin
+& "$fw\csc.exe" /nologo /target:winexe /optimize+ /platform:x64 /win32icon:"$ico" /out:"$bin\LunaQuest.exe" /resource:lang.tsv `
     /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Management.dll /r:System.Web.Extensions.dll `
     /r:"$fw\System.IO.Compression.dll" /r:"$fw\System.IO.Compression.FileSystem.dll" `
-    "$PSScriptRoot\src\LunaQuest.cs" "$PSScriptRoot\src\DesktopViewer.cs" "$PSScriptRoot\src\openvr_api.cs" "$versionCs"
-if ($LASTEXITCODE -ne 0) { throw "La compilation a échoué." }
+    /r:"$fw\System.Runtime.dll" /r:"$fw\System.Runtime.WindowsRuntime.dll" /r:"$fw\System.Runtime.InteropServices.WindowsRuntime.dll" `
+    /r:"$winmd\Windows.Foundation.winmd" /r:"$winmd\Windows.Devices.winmd" /r:"$winmd\Windows.Storage.winmd" `
+    "$PSScriptRoot\src\LunaQuest.cs" "$PSScriptRoot\src\DesktopViewer.cs" "$PSScriptRoot\src\BaseStations.cs" "$PSScriptRoot\src\AlvrLink.cs" `
+    "$PSScriptRoot\src\Lang.cs" "$PSScriptRoot\src\Intro.cs" "$PSScriptRoot\src\openvr_api.cs" "$versionCs"
+$appExit = $LASTEXITCODE
+Pop-Location
+if ($appExit -ne 0) { throw "La compilation a échoué." }
 Copy-Item "$PSScriptRoot\Tutoriel.html" "$bin\Tutoriel.html" -Force -ErrorAction SilentlyContinue
 
 # ---- Fichiers installés : l'exe, le tutoriel, l'appli du casque et les licences (pas d'ADB ni de réglages perso).

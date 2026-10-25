@@ -26,46 +26,125 @@ namespace LunaQuest
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            // Thème et langue choisis dans Paramètres, appliqués avant de construire la fenêtre.
+            var config = new Config(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "LunaQuest.ini"));
+            Theme.Apply(config.Theme);
+            Lang.Load(config.Language);
+            Theme.ApplyFonts(Lang.Code);
             Application.Run(new MainForm());
         }
     }
 
-    // ================================================================ Thème (mêmes couleurs que le site : nuit, rouge érable, bleu électrique)
+    // ================================================================ Thème (par défaut, les couleurs du site : nuit, rouge érable, bleu électrique)
 
     static class Theme
     {
-        public static readonly Color NightTop = Color.FromArgb(2, 3, 9);
-        public static readonly Color NightBottom = Color.FromArgb(7, 9, 26);
-        public static readonly Color Sidebar = Color.FromArgb(4, 5, 14);
-        public static readonly Color Field = Color.FromArgb(5, 7, 20);
-        public static readonly Color CardFill = Color.FromArgb(190, 9, 12, 32);
-        public static readonly Color CardBorder = Color.FromArgb(46, 130, 160, 255);
-        public static readonly Color Text = Color.FromArgb(244, 243, 255);
-        public static readonly Color Soft = Color.FromArgb(168, 180, 220);
-        public static readonly Color Dim = Color.FromArgb(110, 122, 166);
-        public static readonly Color Maple = Color.FromArgb(255, 31, 46);
-        public static readonly Color MapleSoft = Color.FromArgb(255, 123, 134);
-        public static readonly Color Electric = Color.FromArgb(45, 91, 255);
-        public static readonly Color ElectricSoft = Color.FromArgb(143, 178, 255);
-        public static readonly Color MoonLight = Color.FromArgb(207, 224, 255);
-        public static readonly Color Accent = Electric;
-        public static readonly Color AccentLight = ElectricSoft;
-        public static readonly Color AccentDark = Color.FromArgb(30, 62, 190);
-        public static readonly Color Green = Color.FromArgb(94, 227, 176);
-        public static readonly Color Orange = Color.FromArgb(255, 196, 108);
-        public static readonly Color Red = MapleSoft;
+        // Thèmes au choix (Paramètres) : nom enregistré, puis nom affiché.
+        public static readonly string[] Names = { "noir", "blanc", "bleu", "rouge", "rose", "violet", "vert", "jaune" };
+        public static readonly string[] Labels = { "Noir", "Blanc", "Bleu", "Rouge", "Rose", "Violet", "Vert", "Jaune" };
+        public static string Current = "noir";
+        public static bool IsLight;
 
-        public static readonly Font Display = new Font("Impact", 34f);
-        public static readonly Font Tag = new Font("Segoe Print", 13f, FontStyle.Bold);
-        public static readonly Font Eyebrow = new Font("Consolas", 8.5f, FontStyle.Bold);
-        public static readonly Font Body = new Font("Segoe UI", 10f);
-        public static readonly Font BodyBold = new Font("Segoe UI Semibold", 10.5f);
-        public static readonly Font Small = new Font("Segoe UI", 9f);
-        public static readonly Font CardTitle = new Font("Consolas", 8.5f, FontStyle.Bold);
-        public static readonly Font Button = new Font("Consolas", 9f, FontStyle.Bold);
-        public static readonly Font ButtonBig = new Font("Consolas", 13f, FontStyle.Bold);
-        public static readonly Font StepTitle = new Font("Segoe UI Semibold", 11.5f);
-        public static readonly Font Mono = new Font("Consolas", 9f);
+        // « Maple » : couleur principale (boutons, titres), « Electric » : couleur secondaire (contours, dégradés).
+        public static Color NightTop, NightBottom, Sidebar, Field, CardFill, CardBorder, Text, Soft, Dim;
+        public static Color Maple, MapleSoft, MapleDark, Electric, ElectricSoft, MoonLight, Accent, AccentLight, AccentDark;
+        public static Color Green, Orange, Red, OnAccent, SelectedText;
+
+        public static Font Display, Tag, Eyebrow, Body, BodyBold, Small, CardTitle, Button, ButtonBig, StepTitle, Mono;
+
+        static Theme()
+        {
+            Apply("noir");
+            ApplyFonts("fr");
+        }
+
+        static Color Mix(Color a, Color b, float t)
+        {
+            return Color.FromArgb((int)(a.R + (b.R - a.R) * t), (int)(a.G + (b.G - a.G) * t), (int)(a.B + (b.B - a.B) * t));
+        }
+
+        public static void Apply(string name)
+        {
+            Current = Array.IndexOf(Names, name) >= 0 ? name : "noir";
+            IsLight = Current == "blanc";
+            Green = Color.FromArgb(94, 227, 176);
+            Orange = Color.FromArgb(255, 196, 108);
+            OnAccent = Color.FromArgb(244, 243, 255);
+            switch (Current)
+            {
+                case "blanc":
+                    NightTop = Color.FromArgb(246, 247, 252); NightBottom = Color.FromArgb(226, 231, 246);
+                    Sidebar = Color.FromArgb(234, 237, 248); Field = Color.White;
+                    CardFill = Color.FromArgb(230, 255, 255, 255); CardBorder = Color.FromArgb(70, 45, 91, 255);
+                    Text = Color.FromArgb(20, 22, 44); Soft = Color.FromArgb(68, 76, 108); Dim = Color.FromArgb(118, 126, 150);
+                    Maple = Color.FromArgb(232, 22, 42); MapleSoft = Color.FromArgb(208, 32, 54); MapleDark = Color.FromArgb(176, 12, 28);
+                    Electric = Color.FromArgb(45, 91, 255); ElectricSoft = Color.FromArgb(48, 86, 214);
+                    MoonLight = Color.FromArgb(45, 91, 255); SelectedText = Color.White; AccentDark = Color.FromArgb(30, 62, 190);
+                    Green = Color.FromArgb(18, 150, 100); Orange = Color.FromArgb(200, 118, 8);
+                    break;
+                case "bleu": Dark(Color.FromArgb(1, 5, 16), Color.FromArgb(5, 14, 40), Color.FromArgb(0, 176, 255), Color.FromArgb(45, 91, 255)); break;
+                case "rouge": Dark(Color.FromArgb(10, 2, 4), Color.FromArgb(28, 6, 10), Color.FromArgb(255, 31, 46), Color.FromArgb(255, 122, 40)); break;
+                case "rose": Dark(Color.FromArgb(12, 3, 10), Color.FromArgb(32, 8, 26), Color.FromArgb(255, 64, 156), Color.FromArgb(200, 110, 255)); break;
+                case "violet": Dark(Color.FromArgb(7, 3, 16), Color.FromArgb(20, 8, 42), Color.FromArgb(176, 88, 255), Color.FromArgb(96, 76, 255)); break;
+                case "vert": Dark(Color.FromArgb(2, 9, 6), Color.FromArgb(6, 24, 16), Color.FromArgb(40, 214, 120), Color.FromArgb(0, 176, 196)); break;
+                case "jaune":
+                    Dark(Color.FromArgb(10, 8, 2), Color.FromArgb(26, 20, 5), Color.FromArgb(255, 196, 0), Color.FromArgb(255, 132, 0));
+                    OnAccent = Color.FromArgb(24, 18, 2); // texte foncé sur les boutons jaunes
+                    break;
+                default: // noir : les couleurs du site
+                    NightTop = Color.FromArgb(2, 3, 9); NightBottom = Color.FromArgb(7, 9, 26);
+                    Sidebar = Color.FromArgb(4, 5, 14); Field = Color.FromArgb(5, 7, 20);
+                    CardFill = Color.FromArgb(190, 9, 12, 32); CardBorder = Color.FromArgb(46, 130, 160, 255);
+                    Text = Color.FromArgb(244, 243, 255); Soft = Color.FromArgb(168, 180, 220); Dim = Color.FromArgb(110, 122, 166);
+                    Maple = Color.FromArgb(255, 31, 46); MapleSoft = Color.FromArgb(255, 123, 134); MapleDark = Color.FromArgb(205, 20, 34);
+                    Electric = Color.FromArgb(45, 91, 255); ElectricSoft = Color.FromArgb(143, 178, 255);
+                    MoonLight = Color.FromArgb(207, 224, 255); SelectedText = NightTop; AccentDark = Color.FromArgb(30, 62, 190);
+                    break;
+            }
+            Accent = Electric;
+            AccentLight = ElectricSoft;
+            Red = MapleSoft;
+        }
+
+        // Couleurs d'un thème sans l'appliquer (aperçus de la page Paramètres).
+        public static Color[] Preview(string name)
+        {
+            string current = Current;
+            Apply(name);
+            var colors = new[] { NightTop, NightBottom, Maple, Electric, Text, CardFill };
+            Apply(current);
+            return colors;
+        }
+
+        // Thème sombre coloré : fond nuit teinté, couleur principale et secondaire.
+        static void Dark(Color top, Color bottom, Color main, Color second)
+        {
+            var white = Color.FromArgb(244, 243, 255);
+            NightTop = top; NightBottom = bottom;
+            Sidebar = Mix(top, bottom, 0.4f); Field = Mix(top, bottom, 0.55f);
+            CardFill = Color.FromArgb(190, Mix(bottom, second, 0.04f)); CardBorder = Color.FromArgb(54, Mix(second, white, 0.4f));
+            Text = white; Soft = Mix(Color.FromArgb(180, 186, 210), Mix(second, white, 0.5f), 0.35f); Dim = Mix(Color.FromArgb(112, 118, 146), second, 0.18f);
+            Maple = main; MapleSoft = Mix(main, white, 0.42f); MapleDark = Mix(main, Color.Black, 0.22f);
+            Electric = second; ElectricSoft = Mix(second, white, 0.5f);
+            MoonLight = Mix(Mix(second, white, 0.5f), white, 0.55f); SelectedText = top; AccentDark = Mix(second, Color.Black, 0.35f);
+        }
+
+        // Polices : celles du site, ou des polices qui ont les caractères chinois / japonais.
+        public static void ApplyFonts(string lang)
+        {
+            string ui = lang == "zh" ? "Microsoft YaHei UI" : lang == "ja" ? "Yu Gothic UI" : null;
+            Display = new Font("Impact", 34f);
+            Tag = new Font("Segoe Print", 13f, FontStyle.Bold);
+            Eyebrow = new Font(ui ?? "Consolas", 8.5f, FontStyle.Bold);
+            Body = new Font(ui ?? "Segoe UI", 10f);
+            BodyBold = new Font(ui ?? "Segoe UI Semibold", 10.5f, ui != null ? FontStyle.Bold : FontStyle.Regular);
+            Small = new Font(ui ?? "Segoe UI", 9f);
+            CardTitle = new Font(ui ?? "Consolas", 8.5f, FontStyle.Bold);
+            Button = new Font(ui ?? "Consolas", 9f, FontStyle.Bold);
+            ButtonBig = new Font(ui ?? "Consolas", 13f, FontStyle.Bold);
+            StepTitle = new Font(ui ?? "Segoe UI Semibold", 11.5f, ui != null ? FontStyle.Bold : FontStyle.Regular);
+            Mono = new Font(ui ?? "Consolas", 9f);
+        }
 
         // Feuille d'érable du site (repère -1..1, pointe vers le haut).
         public static readonly PointF[] Leaf =
@@ -155,8 +234,8 @@ namespace LunaQuest
                 using (var b = new LinearGradientBrush(full, Theme.NightTop, Theme.NightBottom, 80f)) g.FillRectangle(b, full);
 
                 // Lueurs de gyrophare très douces, comme sur le site.
-                Theme.Glow(g, new RectangleF(-260, size.Height - 360, 760, 560), Color.FromArgb(34, 255, 31, 46));
-                Theme.Glow(g, new RectangleF(size.Width - 620, -240, 760, 520), Color.FromArgb(38, 45, 91, 255));
+                Theme.Glow(g, new RectangleF(-260, size.Height - 360, 760, 560), Theme.Alpha(Theme.Maple, 34));
+                Theme.Glow(g, new RectangleF(size.Width - 620, -240, 760, 520), Theme.Alpha(Theme.Electric, 38));
 
                 // Étoiles (graine fixe : le ciel est toujours le même).
                 var rnd = new Random(7);
@@ -167,7 +246,7 @@ namespace LunaQuest
                     float s = (float)(0.5 + Math.Pow(rnd.NextDouble(), 3) * 2.0);
                     int a = 60 + rnd.Next(170);
                     double k = rnd.NextDouble();
-                    Color c = k < .1 ? Color.FromArgb(a, 255, 123, 134) : k < .35 ? Color.FromArgb(a, 143, 178, 255) : Color.FromArgb(a, 244, 243, 255);
+                    Color c = k < .1 ? Theme.Alpha(Theme.MapleSoft, a) : k < .35 ? Theme.Alpha(Theme.ElectricSoft, a) : Theme.Alpha(Theme.Text, a);
                     using (var br = new SolidBrush(c)) g.FillEllipse(br, x - s / 2, y - s / 2, s, s);
                 }
 
@@ -178,14 +257,14 @@ namespace LunaQuest
                 using (var b = new SolidBrush(Color.FromArgb(235, Theme.Sidebar))) g.FillRectangle(b, side);
                 using (var b = new LinearGradientBrush(new Rectangle(sidebarWidth - 1, 0, 2, size.Height), Theme.Maple, Theme.Electric, 90f))
                     g.FillRectangle(b, sidebarWidth - 1, 0, 1, size.Height);
-                Theme.Glow(g, new RectangleF(sidebarWidth / 2f - 34, 8, 68, 68), Color.FromArgb(70, 255, 31, 46));
+                Theme.Glow(g, new RectangleF(sidebarWidth / 2f - 34, 8, 68, 68), Theme.Alpha(Theme.Maple, 70));
             }
             return bmp;
         }
 
         public static void Moon(Graphics g, PointF c, float r)
         {
-            Theme.Glow(g, new RectangleF(c.X - r * 2.6f, c.Y - r * 2.6f, r * 5.2f, r * 5.2f), Color.FromArgb(70, 207, 224, 255));
+            Theme.Glow(g, new RectangleF(c.X - r * 2.6f, c.Y - r * 2.6f, r * 5.2f, r * 5.2f), Theme.Alpha(Theme.MoonLight, 70));
             var body = new RectangleF(c.X - r, c.Y - r, 2 * r, 2 * r);
             using (var p = new GraphicsPath())
             {
@@ -247,6 +326,15 @@ namespace LunaQuest
         protected override void OnMouseUp(MouseEventArgs e) { Pressed = false; Invalidate(); base.OnMouseUp(e); }
         protected override void OnEnabledChanged(EventArgs e) { Invalidate(); base.OnEnabledChanged(e); }
         protected override void OnTextChanged(EventArgs e) { Invalidate(); base.OnTextChanged(e); }
+
+        // Textes traduits dans la langue choisie (le français sert de clé).
+        public override string Text { get { return base.Text; } set { base.Text = Lang.T(value); } }
+    }
+
+    // Étiquette traduite automatiquement dans la langue choisie.
+    class TLabel : Label
+    {
+        public override string Text { get { return base.Text; } set { base.Text = Lang.T(value); } }
     }
 
     // Bouton carré : rouge érable pour l'action principale, bleu translucide pour les autres (comme les boutons du site).
@@ -273,20 +361,21 @@ namespace LunaQuest
             Color text = Theme.Text;
             if (primary && !danger)
             {
-                Color fill = !Enabled ? Color.FromArgb(70, Theme.Maple) : Pressed ? Color.FromArgb(205, 20, 34) : Hover ? Theme.Text : Theme.Maple;
-                if (Hover && Enabled && !Pressed) text = Theme.NightTop;
-                if (Enabled && !Hover) Theme.Glow(g, new RectangleF(-20, -16, Width + 40, Height + 32), Color.FromArgb(40, 255, 31, 46));
+                Color fill = !Enabled ? Color.FromArgb(70, Theme.Maple) : Pressed ? Theme.MapleDark : Hover ? Theme.Text : Theme.Maple;
+                text = Hover && Enabled && !Pressed ? Theme.NightTop : Theme.OnAccent;
+                if (Enabled && !Hover) Theme.Glow(g, new RectangleF(-20, -16, Width + 40, Height + 32), Theme.Alpha(Theme.Maple, 40));
                 using (var b = new SolidBrush(fill)) g.FillRectangle(b, r);
             }
             else if (primary)
             {
                 int fill = !Enabled ? 20 : Pressed ? 120 : Hover ? 80 : 40;
-                using (var b = new SolidBrush(Color.FromArgb(fill, 255, 31, 46))) g.FillRectangle(b, r);
+                using (var b = new SolidBrush(Theme.Alpha(Theme.Maple, fill))) g.FillRectangle(b, r);
                 using (var pen = new Pen(Color.FromArgb(Enabled ? 220 : 80, Theme.MapleSoft), 1.5f)) g.DrawRectangle(pen, r.X + 0.5f, r.Y + 0.5f, r.Width - 1, r.Height - 1);
             }
             else
             {
-                Color fill = !Enabled ? Color.FromArgb(18, 45, 91, 255) : Pressed ? Theme.AccentDark : Hover ? Theme.Electric : Color.FromArgb(56, 45, 91, 255);
+                Color fill = !Enabled ? Theme.Alpha(Theme.Electric, 18) : Pressed ? Theme.AccentDark : Hover ? Theme.Electric : Theme.Alpha(Theme.Electric, 56);
+                if (Enabled && (Hover || Pressed)) text = Theme.OnAccent;
                 using (var b = new SolidBrush(fill)) g.FillRectangle(b, r);
                 using (var pen = new Pen(Color.FromArgb(Enabled ? 105 : 40, Theme.ElectricSoft), 1f)) g.DrawRectangle(pen, r.X, r.Y, r.Width, r.Height);
             }
@@ -326,8 +415,8 @@ namespace LunaQuest
             if (on)
                 using (var b = new LinearGradientBrush(track, Theme.Alpha(Theme.Maple, a), Theme.Alpha(Theme.Electric, a), 0f)) g.FillRectangle(b, track);
             else
-                using (var b = new SolidBrush(Color.FromArgb(Hover ? 70 : 42, 143, 178, 255))) g.FillRectangle(b, track);
-            using (var pen = new Pen(Color.FromArgb(on ? 120 : 80, 170, 195, 255), 1f)) g.DrawRectangle(pen, track.X, track.Y, track.Width, track.Height);
+                using (var b = new SolidBrush(Theme.Alpha(Theme.ElectricSoft, Hover ? 70 : 42))) g.FillRectangle(b, track);
+            using (var pen = new Pen(Theme.Alpha(Theme.ElectricSoft, on ? 120 : 80), 1f)) g.DrawRectangle(pen, track.X, track.Y, track.Width, track.Height);
             float kx = on ? track.Right - 19 : track.X + 3;
             using (var b = new SolidBrush(Theme.Alpha(Theme.Text, a))) g.FillRectangle(b, kx, track.Y + 3, 16, 16);
             using (var sf = new StringFormat { LineAlignment = StringAlignment.Center })
@@ -342,7 +431,13 @@ namespace LunaQuest
         int selected = -1, hoverIndex = -1;
         public event EventHandler SelectionChanged;
 
-        public Segmented(params string[] items) { Items = items; Height = 38; Font = Theme.Button; }
+        public Segmented(params string[] items)
+        {
+            Items = new string[items.Length];
+            for (int i = 0; i < items.Length; i++) Items[i] = Lang.T(items[i]);
+            Height = 38;
+            Font = Theme.Button;
+        }
 
         public int SelectedIndex
         {
@@ -379,9 +474,9 @@ namespace LunaQuest
                 {
                     var seg = new RectangleF(i * (w + gap), 0, w, Height - 1);
                     Color fill = i == selected ? Theme.Alpha(Theme.MoonLight, a)
-                        : Color.FromArgb(i == hoverIndex && Enabled ? 80 : 32, 45, 91, 255);
+                        : Theme.Alpha(Theme.Electric, i == hoverIndex && Enabled ? 80 : 32);
                     using (var b = new SolidBrush(fill)) g.FillRectangle(b, seg);
-                    using (var tb = new SolidBrush(i == selected ? Theme.NightTop : Theme.Alpha(i == hoverIndex ? Theme.Text : Theme.Soft, a)))
+                    using (var tb = new SolidBrush(i == selected ? Theme.SelectedText : Theme.Alpha(i == hoverIndex ? Theme.Text : Theme.Soft, a)))
                         g.DrawString(Items[i], Font, tb, seg, sf);
                 }
             }
@@ -429,14 +524,54 @@ namespace LunaQuest
             int a = Enabled ? 255 : 110;
             float cy = Height / 2f;
             var track = new RectangleF(Thumb / 2f, cy - 4, Width - Thumb, 8);
-            using (var b = new SolidBrush(Color.FromArgb(32, 143, 178, 255))) g.FillRectangle(b, track);
+            using (var b = new SolidBrush(Theme.Alpha(Theme.ElectricSoft, 32))) g.FillRectangle(b, track);
             float t = max > min ? (float)(val - min) / (max - min) : 0;
             float x = track.X + t * track.Width;
             if (x - track.X > 1)
                 using (var b = new LinearGradientBrush(track, Theme.Alpha(Theme.Maple, a), Theme.Alpha(Theme.Electric, a), 0f))
                     g.FillRectangle(b, track.X, track.Y, x - track.X, track.Height);
-            if (Hover || dragging) Theme.Glow(g, new RectangleF(x - 16, cy - 16, 32, 32), Color.FromArgb(90, 255, 31, 46));
+            if (Hover || dragging) Theme.Glow(g, new RectangleF(x - 16, cy - 16, 32, 32), Theme.Alpha(Theme.Maple, 90));
             using (var b = new SolidBrush(Theme.Alpha(Theme.Text, a))) g.FillRectangle(b, x - 7, cy - 9, 14, 18);
+        }
+    }
+
+    // Aperçu d'un thème (page Paramètres) : fond, couleurs principale et secondaire, nom.
+    class ThemeSwatch : SpaceControl
+    {
+        public readonly string ThemeName;
+        readonly Color[] colors;
+        readonly string label;
+        bool selected;
+
+        public ThemeSwatch(string name, string label)
+        {
+            ThemeName = name;
+            this.label = Lang.T(label);
+            colors = Theme.Preview(name);
+            Size = new Size(220, 96);
+        }
+
+        public bool Selected { get { return selected; } set { if (selected == value) return; selected = value; Invalidate(); } }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics;
+            Theme.Smooth(g);
+            var r = new Rectangle(2, 2, Width - 5, Height - 5);
+            using (var b = new LinearGradientBrush(r, colors[0], colors[1], 80f)) g.FillRectangle(b, r);
+            // Mini fenêtre : une carte, un bouton principal et un trait dégradé.
+            var card = new Rectangle(r.X + 12, r.Y + 34, 120, 44);
+            using (var b = new SolidBrush(colors[5])) g.FillRectangle(b, card);
+            using (var b = new SolidBrush(colors[2])) g.FillRectangle(b, card.X + 10, card.Y + 12, 56, 18);
+            using (var b = new LinearGradientBrush(new Rectangle(card.X + 10, card.Y + 36, 61, 3), colors[2], colors[3], 0f)) g.FillRectangle(b, card.X + 10, card.Y + 36, 60, 3);
+            Theme.Glow(g, new RectangleF(r.Right - 74, r.Y + 18, 64, 64), Color.FromArgb(120, colors[3]));
+            using (var b = new SolidBrush(colors[3])) g.FillEllipse(b, r.Right - 52, r.Y + 40, 20, 20);
+            using (var tb = new SolidBrush(colors[4])) g.DrawString(label, Theme.BodyBold, tb, r.X + 10, r.Y + 7);
+            Color edge = selected ? Theme.Maple : Hover ? Theme.ElectricSoft : Theme.Alpha(Theme.ElectricSoft, 70);
+            using (var pen = new Pen(edge, selected ? 3f : 1.2f)) g.DrawRectangle(pen, r);
+            if (selected)
+                using (var pen = new Pen(Theme.Maple, 3f) { StartCap = LineCap.Round, EndCap = LineCap.Round })
+                    g.DrawLines(pen, new[] { new PointF(r.Right - 30, r.Y + 14), new PointF(r.Right - 23, r.Y + 21), new PointF(r.Right - 11, r.Y + 8) });
         }
     }
 
@@ -481,10 +616,10 @@ namespace LunaQuest
             }
             else if (Hover)
             {
-                using (var b = new SolidBrush(Color.FromArgb(70, 45, 91, 255))) g.FillRectangle(b, r);
+                using (var b = new SolidBrush(Theme.Alpha(Theme.Electric, 70))) g.FillRectangle(b, r);
                 using (var pen = new Pen(Color.FromArgb(110, Theme.ElectricSoft), 1f)) g.DrawRectangle(pen, r.X, r.Y, r.Width, r.Height);
             }
-            Color stroke = selected || Hover ? Theme.Text : Theme.Soft;
+            Color stroke = selected ? Theme.OnAccent : Hover ? Theme.Text : Theme.Soft;
             var state = g.Save();
             float s = 26f / 24f;
             g.TranslateTransform((Width - 26) / 2f, (Height - 26) / 2f);
@@ -524,6 +659,16 @@ namespace LunaQuest
                     g.DrawLine(pen, 6, 10.5f, 18, 10.5f);
                     g.DrawLine(pen, 12, 15, 8, 21);
                     g.DrawLine(pen, 12, 15, 16, 21);
+                    break;
+                case "gear": // Paramètres : un engrenage
+                    g.DrawEllipse(pen, 8.5f, 8.5f, 7, 7);
+                    for (int k = 0; k < 8; k++)
+                    {
+                        double a = k * Math.PI / 4;
+                        float c = (float)Math.Cos(a), sn = (float)Math.Sin(a);
+                        g.DrawLine(pen, 12 + c * 6.2f, 12 + sn * 6.2f, 12 + c * 9f, 12 + sn * 9f);
+                    }
+                    g.DrawEllipse(pen, 5.8f, 5.8f, 12.4f, 12.4f);
                     break;
                 case "book": // Guide : un livre ouvert
                     g.DrawLine(pen, 12, 7, 12, 20);
@@ -613,7 +758,7 @@ namespace LunaQuest
             Theme.Smooth(g);
             var scene = new Rectangle(0, 0, Width, SceneHeight);
             using (var b = new LinearGradientBrush(scene, Color.FromArgb(6, 9, 26), Color.FromArgb(2, 3, 10), 90f)) g.FillRectangle(b, scene);
-            Theme.Glow(g, new RectangleF(Width / 2f - 170, SceneHeight - 150, 340, 190), Color.FromArgb(40, 45, 91, 255));
+            Theme.Glow(g, new RectangleF(Width / 2f - 170, SceneHeight - 150, 340, 190), Theme.Alpha(Theme.Electric, 40));
 
             var devices = DesktopViewer.Devices;
             VrDevice hmd = null;
@@ -622,7 +767,7 @@ namespace LunaQuest
             {
                 using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
                 using (var b = new SolidBrush(Theme.Soft))
-                    g.DrawString("En attente de SteamVR…\nL'aperçu s'affiche quand le casque est connecté.", Theme.Small, b, scene, sf);
+                    g.DrawString(Lang.T("En attente de SteamVR…\nL'aperçu s'affiche quand le casque est connecté."), Theme.Small, b, scene, sf);
                 PaintList(g, devices);
                 return;
             }
@@ -649,7 +794,7 @@ namespace LunaQuest
             {
                 float t = i * 0.25f;
                 int alpha = 70 - Math.Abs(i) * 9;
-                using (var pen = new Pen(Color.FromArgb(Math.Max(10, alpha), 90, 120, 230), 1f))
+                using (var pen = new Pen(Theme.Alpha(Theme.ElectricSoft, Math.Max(10, alpha)), 1f))
                 {
                     DrawLine3(g, pen, project, new P3(head.X + t, 0, head.Z - 1.5f), new P3(head.X + t, 0, head.Z + 1.5f));
                     DrawLine3(g, pen, project, new P3(head.X - 1.5f, 0, head.Z + t), new P3(head.X + 1.5f, 0, head.Z + t));
@@ -662,7 +807,7 @@ namespace LunaQuest
                 var q = project(new P3(head.X + 0.35f * (float)Math.Cos(a * Math.PI / 18), 0, head.Z + 0.35f * (float)Math.Sin(a * Math.PI / 18)));
                 if (q.HasValue) ring.Add(q.Value);
             }
-            if (ring.Count > 2) using (var pen = new Pen(Color.FromArgb(120, 255, 31, 46), 1.5f)) g.DrawLines(pen, ring.ToArray());
+            if (ring.Count > 2) using (var pen = new Pen(Theme.Alpha(Theme.Maple, 120), 1.5f)) g.DrawLines(pen, ring.ToArray());
 
             // Squelette : chaque partie du corps, réelle, virtuelle ou estimée.
             var joints = BuildSkeleton(devices, head);
@@ -676,7 +821,7 @@ namespace LunaQuest
                 var pa = project(a.Pos); var pb = project(b.Pos);
                 if (!pa.HasValue || !pb.HasValue) continue;
                 bool estimated = a.Estimated || b.Estimated;
-                using (var glow = new Pen(Color.FromArgb(estimated ? 25 : 55, 255, 60, 90), 7f) { StartCap = LineCap.Round, EndCap = LineCap.Round })
+                using (var glow = new Pen(Theme.Alpha(Theme.Maple, estimated ? 25 : 55), 7f) { StartCap = LineCap.Round, EndCap = LineCap.Round })
                     g.DrawLine(glow, pa.Value, pb.Value);
                 using (var line = new LinearGradientBrush(pa.Value, new PointF(pb.Value.X + 0.1f, pb.Value.Y + 0.1f),
                     Color.FromArgb(estimated ? 90 : 230, Theme.MapleSoft), Color.FromArgb(estimated ? 90 : 230, Theme.ElectricSoft)))
@@ -717,8 +862,8 @@ namespace LunaQuest
                 }
 
             using (var b = new SolidBrush(Color.FromArgb(150, Theme.Dim)))
-                g.DrawString("Glisse pour tourner · double-clic pour recentrer", Theme.Small, b, 8, SceneHeight - 20);
-            using (var b = new SolidBrush(Theme.Dim)) g.DrawString("▬ casque  ● manette  ■ tracker  ◆ virtuel", Theme.Small, b, 8, 6);
+                g.DrawString(Lang.T("Glisse pour tourner · double-clic pour recentrer"), Theme.Small, b, 8, SceneHeight - 20);
+            using (var b = new SolidBrush(Theme.Dim)) g.DrawString(Lang.T("▬ casque  ● manette  ■ tracker  ◆ virtuel"), Theme.Small, b, 8, 6);
             PaintList(g, devices);
         }
 
@@ -791,7 +936,7 @@ namespace LunaQuest
         void PaintList(Graphics g, VrDevice[] devices)
         {
             float y = SceneHeight + 12;
-            Theme.DrawSpaced(g, "APPAREILS", Theme.CardTitle, Theme.MapleSoft, 2, y, 2f);
+            Theme.DrawSpaced(g, Lang.T("APPAREILS"), Theme.CardTitle, Theme.MapleSoft, 2, y, 2f);
             y += 24;
             if (devices == null) return;
             foreach (var d in devices)
@@ -799,11 +944,11 @@ namespace LunaQuest
                 if (d.Class == Valve.VR.ETrackedDeviceClass.TrackingReference || d.Class == Valve.VR.ETrackedDeviceClass.Invalid) continue;
                 if (y > Height - 22) break;
                 var c = StatusColor(d);
-                using (var b = new SolidBrush(Color.FromArgb(18, 143, 178, 255))) g.FillRectangle(b, 0, y - 2, Width, 22);
+                using (var b = new SolidBrush(Theme.Alpha(Theme.ElectricSoft, 18))) g.FillRectangle(b, 0, y - 2, Width, 22);
                 using (var b = new SolidBrush(c)) g.FillRectangle(b, 0, y - 2, 3, 22);
-                using (var b = new SolidBrush(Theme.Text)) g.DrawString(d.Label, Theme.Small, b, 10, y + 1);
+                using (var b = new SolidBrush(Theme.Text)) g.DrawString(Lang.T(d.Label), Theme.Small, b, 10, y + 1);
                 // Pastille d'état.
-                string status = StatusText(d);
+                string status = Lang.T(StatusText(d));
                 var chip = new RectangleF(180, y + 1, 86, 16);
                 using (var b = new SolidBrush(Color.FromArgb(40, c))) g.FillRectangle(b, chip);
                 using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
@@ -863,6 +1008,10 @@ namespace LunaQuest
         public bool AutoConnect = true;
         public bool KeepAwake = true;
         public bool DesktopViewer = true;
+        public bool BasesAuto;      // base stations allumées à la connexion et en veille à la déconnexion (FBT)
+        public string Theme = "noir", Language = "fr";
+        public bool Intro = true;   // animation du sabre au démarrage
+        public bool TutorialSeen;   // tuto de découverte déjà vu
 
         public Config(string path)
         {
@@ -877,6 +1026,11 @@ namespace LunaQuest
                 if (key == "autoconnect") AutoConnect = val == "1";
                 if (key == "keepawake") KeepAwake = val == "1";
                 if (key == "desktop") DesktopViewer = val == "1";
+                if (key == "basesauto") BasesAuto = val == "1";
+                if (key == "theme") Theme = val;
+                if (key == "lang") Language = val;
+                if (key == "intro") Intro = val == "1";
+                if (key == "tuto") TutorialSeen = val == "1";
             }
         }
 
@@ -888,10 +1042,47 @@ namespace LunaQuest
                     "alvr=" + AlvrFolder,
                     "autoconnect=" + (AutoConnect ? "1" : "0"),
                     "keepawake=" + (KeepAwake ? "1" : "0"),
-                    "desktop=" + (DesktopViewer ? "1" : "0")
+                    "desktop=" + (DesktopViewer ? "1" : "0"),
+                    "basesauto=" + (BasesAuto ? "1" : "0"),
+                    "theme=" + Theme,
+                    "lang=" + Language,
+                    "intro=" + (Intro ? "1" : "0"),
+                    "tuto=" + (TutorialSeen ? "1" : "0")
                 });
             }
             catch { }
+        }
+    }
+
+    // ================================================================ Lancement avec Windows
+
+    // LunaQuest au démarrage de Windows, en discret (icône près de l'horloge) : clé « Run » de l'utilisateur.
+    static class Startup
+    {
+        const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
+        const string Name = "LunaQuest";
+
+        static string Command { get { return "\"" + Application.ExecutablePath + "\" --tray"; } }
+
+        public static bool Enabled
+        {
+            get
+            {
+                try
+                {
+                    using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(RunKey))
+                        return key != null && string.Equals(key.GetValue(Name) as string, Command, StringComparison.OrdinalIgnoreCase);
+                }
+                catch { return false; }
+            }
+            set
+            {
+                using (var key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(RunKey))
+                {
+                    if (value) key.SetValue(Name, Command);
+                    else if (key.GetValue(Name) != null) key.DeleteValue(Name, false);
+                }
+            }
         }
     }
 
@@ -1144,6 +1335,12 @@ namespace LunaQuest
             set { Set(S + "video.foveated_encoding.enabled", value); }
         }
 
+        // Port de l'interface web locale d'ALVR (statistiques, enregistrement).
+        public int WebServerPort
+        {
+            get { int port = (int)GetNumber(S + "connection.web_server_port", 8082); return port > 0 ? port : 8082; }
+        }
+
         // Au-delà de l'écran du casque, l'image est réduite par le compositeur de Meta. Son filtre « super
         // sampling » fait la moyenne de plusieurs pixels au lieu d'en sauter : plus de détail, moins de scintillement.
         // La netteté artificielle (sharpening) reste toujours coupée.
@@ -1283,6 +1480,18 @@ namespace LunaQuest
             return !string.IsNullOrEmpty(folder) && File.Exists(Path.Combine(folder, "driver.vrdrivermanifest"));
         }
 
+        // Dossier d'un pilote ALVR (et pas d'un autre pilote SteamVR comme Space Calibrator ou Virtual Desktop).
+        static bool IsAlvrFolder(string folder)
+        {
+            try
+            {
+                var m = new JavaScriptSerializer().DeserializeObject(File.ReadAllText(Path.Combine(folder, "driver.vrdrivermanifest"))) as Dictionary<string, object>;
+                object name;
+                return m != null && m.TryGetValue("name", out name) && "alvr_server".Equals(name as string, StringComparison.OrdinalIgnoreCase);
+            }
+            catch { return false; }
+        }
+
         public static string SessionPath(string folder) { return Path.Combine(folder, "session.json"); }
 
         public static string DashboardPath(string folder) { return Path.Combine(folder, "ALVR Dashboard.exe"); }
@@ -1352,10 +1561,11 @@ namespace LunaQuest
             if (d == null) throw new FileNotFoundException("SteamVR n'a jamais été lancé sur ce PC (openvrpaths.vrpath absent).");
             var drivers = new List<object>();
             object list;
-            // Un seul ALVR à la fois dans SteamVR : on retire les autres dossiers ALVR (ex. la version officielle).
+            // Un seul ALVR à la fois dans SteamVR : on retire les autres dossiers ALVR (ex. la version officielle),
+            // en gardant tous les autres pilotes.
             if (d.TryGetValue("external_drivers", out list) && list is object[])
                 foreach (var item in (object[])list)
-                    if (!(item is string) || !IsValidFolder((string)item)) drivers.Add(item);
+                    if (!(item is string) || !IsAlvrFolder((string)item)) drivers.Add(item);
             drivers.Add(folder);
             d["external_drivers"] = drivers.ToArray();
             File.Copy(VrPathFile, VrPathFile + ".lunaquest.bak", true);
@@ -1486,31 +1696,7 @@ namespace LunaQuest
         public readonly Dictionary<string, bool> Enabled = new Dictionary<string, bool>();
         public readonly Dictionary<string, double[]> Offsets = new Dictionary<string, double[]>();
         public bool KneesFromRealTrackers = true;
-        public string Mode = "fbt"; // fbe : FBE Unique, mix : FBE Mix, fbt : vrais trackers seuls
-        public int UserHeightCm;     // 0 : taille déduite de la hauteur du casque
-        public int CalibrationRequest;
-
-        public static string CalibrationPath
-        {
-            get { return Path.Combine(Path.GetDirectoryName(FilePath), "body_calibration.json"); }
-        }
-
-        // Dernière calibration faite par ALVR : numéro de la demande traitée et taille retenue.
-        public static bool ReadCalibration(out int request, out double height)
-        {
-            request = -1; height = 0;
-            try
-            {
-                if (!File.Exists(CalibrationPath)) return false;
-                var root = new JavaScriptSerializer().DeserializeObject(File.ReadAllText(CalibrationPath)) as Dictionary<string, object>;
-                object o;
-                if (root == null) return false;
-                if (root.TryGetValue("request", out o)) request = Convert.ToInt32(o, CultureInfo.InvariantCulture);
-                if (root.TryGetValue("height", out o)) height = Convert.ToDouble(o, CultureInfo.InvariantCulture);
-                return true;
-            }
-            catch { return false; }
-        }
+        public string Mode = "fbt"; // fbe : FBE Unique, fbt : vrais trackers seuls
 
         public static string FilePath
         {
@@ -1538,8 +1724,6 @@ namespace LunaQuest
                 object o;
                 if (root.TryGetValue("knees_from_real_trackers", out o) && o is bool) c.KneesFromRealTrackers = (bool)o;
                 if (root.TryGetValue("mode", out o) && o is string) c.Mode = (string)o;
-                if (root.TryGetValue("user_height_cm", out o)) c.UserHeightCm = Convert.ToInt32(o, CultureInfo.InvariantCulture);
-                if (root.TryGetValue("calibration_request", out o)) c.CalibrationRequest = Convert.ToInt32(o, CultureInfo.InvariantCulture);
                 var joints = root.TryGetValue("joints", out o) ? o as Dictionary<string, object> : null;
                 if (joints != null)
                     foreach (var j in Joints)
@@ -1566,7 +1750,7 @@ namespace LunaQuest
                 joints[j] = Enabled[j];
                 offsets[j] = Offsets[j];
             }
-            var root = new Dictionary<string, object> { { "mode", Mode }, { "user_height_cm", UserHeightCm }, { "calibration_request", CalibrationRequest }, { "knees_from_real_trackers", KneesFromRealTrackers }, { "joints", joints }, { "offsets", offsets } };
+            var root = new Dictionary<string, object> { { "mode", Mode }, { "knees_from_real_trackers", KneesFromRealTrackers }, { "joints", joints }, { "offsets", offsets } };
             Directory.CreateDirectory(Path.GetDirectoryName(FilePath));
             File.WriteAllText(FilePath, new JavaScriptSerializer().Serialize(root), new UTF8Encoding(false));
         }
@@ -1674,12 +1858,12 @@ namespace LunaQuest
         class Card
         {
             public Rectangle Bounds; public string Title;
-            public Card(int x, int y, int w, int h, string title) { Bounds = new Rectangle(x, y, w, h); Title = title; }
+            public Card(int x, int y, int w, int h, string title) { Bounds = new Rectangle(x, y, w, h); Title = Lang.T(title); }
         }
 
-        // Pages : 0 Connexion, 1 Réglages ALVR, 2 Guide, 3 Corps.
-        readonly List<Control>[] pages = { new List<Control>(), new List<Control>(), new List<Control>(), new List<Control>() };
-        readonly List<Card>[] cards = { new List<Card>(), new List<Card>(), new List<Card>(), new List<Card>() };
+        // Pages : 0 Connexion, 1 Réglages ALVR, 2 Guide, 3 Corps, 4 Paramètres.
+        readonly List<Control>[] pages = { new List<Control>(), new List<Control>(), new List<Control>(), new List<Control>(), new List<Control>() };
+        readonly List<Card>[] cards = { new List<Card>(), new List<Card>(), new List<Card>(), new List<Card>(), new List<Card>() };
         readonly List<Control> fields = new List<Control>();
         int page;
         Bitmap space;
@@ -1697,8 +1881,17 @@ namespace LunaQuest
         MoonButton btnConnect, btnAdb, btnApk, btnFolder, btnRestartVr;
         bool connectedState; // casque branché, tunnel USB ouvert et SteamVR lancé : le gros bouton devient « Déconnecter »
         bool clientWasRunning; // appli ALVR / LunaQuest Client ouverte dans le casque au dernier relevé
-        ToggleSwitch tglAuto, tglAwake, tglDesktop;
+        ToggleSwitch tglAuto, tglAwake, tglDesktop, tglStartup;
         DesktopViewer desktopViewer;
+        // Perfs, enregistrement, icône près de l'horloge, alertes de batterie, mises à jour.
+        Label lblPerf, lblUpdate;
+        MoonButton btnRecord;
+        bool recording;
+        NotifyIcon tray;
+        bool startHidden = Array.IndexOf(Environment.GetCommandLineArgs(), "--tray") > 0;
+        Timer statsTimer;
+        int statsTicks;
+        readonly HashSet<string> lowBatteryWarned = new HashSet<string>();
         TextBox log;
 
         // Réglages ALVR
@@ -1745,6 +1938,7 @@ namespace LunaQuest
             BuildSettingsPage();
             BuildGuidePage();
             BuildBodyPage();
+            BuildPreferencesPage();
             ShowPage(0);
 
             // Depuis la 0.3.0, LunaQuest fournit son propre ALVR (nécessaire pour les modes FBE) : on passe
@@ -1790,6 +1984,14 @@ namespace LunaQuest
 
             UpdateVrLink();
 
+            try { AlvrLink.Port = AlvrSession.Load(AlvrInstall.SessionPath(config.AlvrFolder)).WebServerPort; } catch { }
+            AlvrLink.Start();
+            statsTimer = new Timer { Interval = 1000 };
+            statsTimer.Tick += delegate { StatsTick(); };
+            statsTimer.Start();
+            BuildTray();
+            Task.Run(() => CheckForUpdate());
+
             fxTimer = new Timer { Interval = 40 };
             fxTimer.Tick += delegate { Animate(); };
             fxTimer.Start();
@@ -1797,6 +1999,8 @@ namespace LunaQuest
             // On rend au casque sa mise en veille normale en quittant.
             FormClosing += delegate
             {
+                if (recording) AlvrLink.Request("StopRecording");
+                if (tray != null) tray.Visible = false;
                 desktopViewer.Stop();
                 if (config.KeepAwake && last.Ready) SetKeepAwake(last.Serial, false);
             };
@@ -1808,7 +2012,7 @@ namespace LunaQuest
             try
             {
                 // Barre de titre sombre assortie (Windows 10/11).
-                int on = 1;
+                int on = Theme.IsLight ? 0 : 1;
                 DwmSetWindowAttribute(Handle, 20, ref on, 4);
                 int caption = ColorTranslator.ToWin32(Theme.NightTop);
                 DwmSetWindowAttribute(Handle, 35, ref caption, 4);
@@ -1822,7 +2026,7 @@ namespace LunaQuest
 
         Label AddLabel(int pageIndex, string text, Font font, Color color, int x, int y, int width = 0)
         {
-            var l = new Label { Text = text, Font = font, ForeColor = color, BackColor = Color.Transparent, Location = new Point(x, y) };
+            var l = new TLabel { Text = text, Font = font, ForeColor = color, BackColor = Color.Transparent, Location = new Point(x, y) };
             if (width > 0) { l.AutoSize = false; l.Size = new Size(width, font.Height + 4); }
             else l.AutoSize = true;
             AddTo(pageIndex, l);
@@ -1846,9 +2050,10 @@ namespace LunaQuest
         {
             navTip = new NavTip();
             Controls.Add(navTip);
-            var items = new[] { new NavButton("plug", "Connexion"), new NavButton("sliders", "Réglages ALVR"), new NavButton("body", "Corps et trackers"), new NavButton("book", "Guide") };
-            int[] tops = { 96, 156, 216, ClientSize.Height - 52 - 22 };
-            navPages = new[] { 0, 1, 3, 2 };
+            var items = new[] { new NavButton("plug", "Connexion"), new NavButton("sliders", "Réglages ALVR"), new NavButton("body", "Corps et trackers"),
+                                new NavButton("gear", "Paramètres"), new NavButton("book", "Guide") };
+            int[] tops = { 96, 156, 216, ClientSize.Height - 52 - 22 - 60, ClientSize.Height - 52 - 22 };
+            navPages = new[] { 0, 1, 3, 4, 2 };
             nav = items;
             for (int i = 0; i < items.Length; i++)
             {
@@ -1864,9 +2069,9 @@ namespace LunaQuest
 
         void BuildConnectionPage()
         {
-            cards[0].Add(new Card(104, 116, 470, 336, "État"));
-            cards[0].Add(new Card(590, 116, 482, 336, "Actions"));
-            cards[0].Add(new Card(104, 468, 968, 264, "Journal"));
+            cards[0].Add(new Card(104, 116, 470, 368, "État"));
+            cards[0].Add(new Card(590, 116, 482, 368, "Actions"));
+            cards[0].Add(new Card(104, 500, 968, 232, "Journal"));
 
             battery = AddLabel(0, "", Theme.Small, Theme.Soft, 404, 128, 150);
             battery.TextAlign = ContentAlignment.MiddleRight;
@@ -1879,8 +2084,14 @@ namespace LunaQuest
                 AddLabel(0, names[i], Theme.Body, Theme.Soft, 150, y);
                 values[i] = AddLabel(0, "…", Theme.BodyBold, Theme.Text, 280, y - 1, 280);
             }
+            // Perfs en direct, envoyées par ALVR pendant le jeu.
+            lblPerf = AddLabel(0, "", Theme.Small, Theme.Dim, 124, 424, 430);
+            lblPerf.Height = Theme.Small.Height * 2 + 6;
 
-            btnConnect = AddButton(0, "Connecter", true, 610, 158, 442, 60);
+            btnConnect = AddButton(0, "Connecter", true, 610, 158, 318, 60);
+            // Enregistrement vidéo du flux envoyé au casque (fonction d'ALVR).
+            btnRecord = AddButton(0, "Filmer", false, 940, 158, 112, 60);
+            btnRecord.Click += delegate { ToggleRecording(); };
             btnConnect.Click += delegate { if (connectedState) RunBusy(FullDisconnect); else RunBusy(Connect); };
 
             btnAdb = AddButton(0, "Installer ADB", false, 610, 234, 215, 42);
@@ -1909,12 +2120,18 @@ namespace LunaQuest
                 UpdateVrLink();
                 if (!tglDesktop.Checked) Log("Écran PC désactivé.");
             };
+            tglStartup = AddTo(0, new ToggleSwitch("Lancer avec Windows (icône près de l'horloge)") { Location = new Point(612, 440), Size = new Size(440, 28), Checked = Startup.Enabled });
+            tglStartup.CheckedChanged += delegate
+            {
+                try { Startup.Enabled = tglStartup.Checked; Log(tglStartup.Checked ? "LunaQuest se lancera avec Windows, en discret près de l'horloge." : "LunaQuest ne se lancera plus avec Windows."); }
+                catch (Exception e) { Log("Impossible de changer le lancement avec Windows : " + e.Message); }
+            };
 
             log = AddTo(0, new TextBox
             {
                 Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.None, BorderStyle = BorderStyle.None,
                 BackColor = Theme.Field, ForeColor = Theme.Soft, Font = Theme.Mono,
-                Location = new Point(126, 510), Size = new Size(924, 202)
+                Location = new Point(126, 542), Size = new Size(924, 170)
             });
             fields.Add(log);
         }
@@ -1994,6 +2211,155 @@ namespace LunaQuest
             txtHostname.TextChanged += dirty;
         }
 
+        // ---------------------------------------------------------------- Page Paramètres : langue, thème, démarrage
+
+        Segmented segLanguage;
+        readonly List<ThemeSwatch> swatches = new List<ThemeSwatch>();
+        Label lblPrefStatus;
+
+        void BuildPreferencesPage()
+        {
+            cards[4].Add(new Card(104, 116, 968, 124, "Langue"));
+            cards[4].Add(new Card(104, 256, 968, 272, "Thème"));
+            cards[4].Add(new Card(104, 544, 968, 188, "Démarrage"));
+
+            segLanguage = AddTo(4, new Segmented(Lang.Names) { Location = new Point(124, 166), Size = new Size(560, 40) });
+            segLanguage.SelectedIndex = Math.Max(0, Array.IndexOf(Lang.Codes, Lang.Code));
+            segLanguage.SelectionChanged += delegate
+            {
+                string code = Lang.Codes[segLanguage.SelectedIndex];
+                if (code == config.Language) return;
+                config.Language = code;
+                config.Save();
+                AskRestart();
+            };
+            var langHint = AddLabel(4, "La langue et le thème s'appliquent au redémarrage de LunaQuest.", Theme.Small, Theme.Dim, 706, 166, 346);
+            langHint.Height = Theme.Small.Height * 2 + 8;
+
+            for (int i = 0; i < Theme.Names.Length; i++)
+            {
+                var sw = AddTo(4, new ThemeSwatch(Theme.Names[i], Theme.Labels[i]) { Location = new Point(124 + (i % 4) * 234, 300 + (i / 4) * 110) });
+                sw.Selected = Theme.Names[i] == Theme.Current;
+                sw.Click += delegate
+                {
+                    if (sw.ThemeName == config.Theme) return;
+                    foreach (var other in swatches) other.Selected = other == sw;
+                    config.Theme = sw.ThemeName;
+                    config.Save();
+                    AskRestart();
+                };
+                swatches.Add(sw);
+            }
+
+            var tglIntro = AddTo(4, new ToggleSwitch("Animation au démarrage (coup de sabre)") { Location = new Point(124, 590), Size = new Size(520, 28), Checked = config.Intro });
+            tglIntro.CheckedChanged += delegate { config.Intro = tglIntro.Checked; config.Save(); };
+            var replayIntro = AddButton(4, "Voir l'animation", false, 124, 636, 240, 42);
+            replayIntro.Click += delegate { PlayIntro(false); };
+            var replayTour = AddButton(4, "Revoir le tutoriel", false, 376, 636, 240, 42);
+            replayTour.Click += delegate { StartTour(); };
+            lblPrefStatus = AddLabel(4, "", Theme.Small, Theme.Soft, 124, 694, 920);
+        }
+
+        // Langue et thème sont lus au démarrage : on propose de relancer LunaQuest tout de suite.
+        void AskRestart()
+        {
+            lblPrefStatus.Text = "Enregistré. Redémarre LunaQuest pour appliquer.";
+            if (MessageBox.Show(this, Lang.T("LunaQuest doit redémarrer pour appliquer ce changement.\n\nRedémarrer maintenant ?"), "LunaQuest",
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
+            if (tray != null) tray.Visible = false;
+            Application.Restart();
+        }
+
+        // ---------------------------------------------------------------- Animation de démarrage et tutoriel
+
+        IntroOverlay intro;
+        TutorialOverlay tour;
+
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+            if (startHidden) return;
+            if (config.Intro) PlayIntro(!config.TutorialSeen);
+            else if (!config.TutorialSeen) StartTour();
+        }
+
+        // Image de la zone de la fenêtre (sans la barre de titre), sans les calques d'animation.
+        public Bitmap SnapshotClient()
+        {
+            bool introShown = intro != null && intro.Visible, tourShown = tour != null && tour.Visible;
+            if (introShown) intro.Visible = false;
+            if (tourShown) tour.Visible = false;
+            var origin = PointToScreen(Point.Empty);
+            var client = new Rectangle(origin.X - Left, origin.Y - Top, ClientSize.Width, ClientSize.Height);
+            var shot = new Bitmap(ClientSize.Width, ClientSize.Height);
+            using (var whole = new Bitmap(Width, Height))
+            {
+                DrawToBitmap(whole, new Rectangle(0, 0, Width, Height));
+                using (var g = Graphics.FromImage(shot)) g.DrawImage(whole, new Rectangle(Point.Empty, ClientSize), client, GraphicsUnit.Pixel);
+            }
+            if (introShown) intro.Visible = true;
+            if (tourShown) tour.Visible = true;
+            return shot;
+        }
+
+        void PlayIntro(bool thenTour)
+        {
+            if (intro != null || tour != null) return;
+            ShowPage(0);
+            intro = new IntroOverlay(this) { Bounds = ClientRectangle };
+            Controls.Add(intro);
+            intro.BringToFront();
+            intro.Finished += delegate
+            {
+                Controls.Remove(intro);
+                intro.Dispose();
+                intro = null;
+                if (thenTour) StartTour();
+            };
+            intro.Start();
+        }
+
+        public void StartTour()
+        {
+            if (tour != null || intro != null) return;
+            tour = new TutorialOverlay(this, TourSteps()) { Bounds = ClientRectangle };
+            Controls.Add(tour);
+            tour.BringToFront();
+            tour.Finished += delegate
+            {
+                Controls.Remove(tour);
+                tour.Dispose();
+                tour = null;
+                ShowPage(0);
+                config.TutorialSeen = true;
+                config.Save();
+            };
+            tour.Start();
+        }
+
+        public void ShowPageForTour(int index) { if (page != index) ShowPage(index); }
+
+        // Étapes du tutoriel : page affichée, zone mise en avant (vide : au centre), titre et explication.
+        List<TourStep> TourSteps()
+        {
+            int bottom = ClientSize.Height - 52 - 22;
+            return new List<TourStep>
+            {
+                new TourStep(0, Rectangle.Empty, "Bienvenue dans LunaQuest", "Joue à tes jeux PC VR sur ton Quest par câble USB. Voici un tour rapide de l'appli : il avance tout seul, ou clique pour passer à la suite."),
+                new TourStep(0, new Rectangle(12, 90, 56, 190), "Le menu", "Une icône par partie de l'appli. Passe la souris dessus pour voir son nom."),
+                new TourStep(0, new Rectangle(104, 116, 470, 368), "État en direct", "ADB, le casque, ALVR, le tunnel USB et SteamVR : tu vois d'un coup d'œil ce qui est prêt. Les perfs du jeu s'affichent en bas."),
+                new TourStep(0, new Rectangle(604, 150, 456, 76), "Connecter et filmer", "Un clic ouvre le tunnel USB, SteamVR et l'appli du casque. Le bouton Filmer enregistre ta session en vidéo."),
+                new TourStep(0, new Rectangle(604, 338, 456, 136), "Options", "Connexion automatique, casque toujours éveillé, écran du PC dans le casque et lancement avec Windows."),
+                new TourStep(0, new Rectangle(104, 500, 968, 232), "Journal", "Tout ce que fait LunaQuest s'affiche ici, avec les éventuels problèmes et comment les régler."),
+                new TourStep(1, new Rectangle(104, 116, 470, 352), "Réglages ALVR", "Images par seconde, débit, codec et résolution, sans ouvrir ALVR."),
+                new TourStep(1, new Rectangle(590, 484, 482, 112), "Mes préréglages", "Enregistre tes réglages pour chaque jeu et recharge-les en un clic."),
+                new TourStep(3, new Rectangle(104, 116, 560, 396), "Corps et trackers", "FBE Unique pour estimer tout le corps avec le casque, ou FBT avec tes vrais trackers Vive."),
+                new TourStep(3, new Rectangle(680, 116, 392, 616), "Aperçu en direct", "Tes appareils en 3D, leur suivi et leur batterie. En bas : allumer ou éteindre tes base stations."),
+                new TourStep(4, new Rectangle(104, 116, 968, 412), "Paramètres", "Choisis la langue et le thème de LunaQuest."),
+                new TourStep(2, new Rectangle(12, bottom - 4, 56, 60), "Guide", "Le guide pas à pas est toujours ici, en bas à gauche. Dans le casque, enfonce les deux joysticks pour voir les perfs. Bon jeu !")
+            };
+        }
+
         void BuildGuidePage()
         {
             cards[2].Add(new Card(104, 116, 968, 616, "Premiers pas"));
@@ -2002,31 +2368,26 @@ namespace LunaQuest
             {
                 string tuto = Path.Combine(appDir, "Tutoriel.html");
                 if (File.Exists(tuto)) Process.Start(tuto);
-                else MessageBox.Show(this, "Le fichier Tutoriel.html n'est pas à côté de LunaQuest.exe.", "LunaQuest");
+                else MessageBox.Show(this, Lang.T("Le fichier Tutoriel.html n'est pas à côté de LunaQuest.exe."), "LunaQuest");
             };
         }
 
         // ---------------------------------------------------------------- Page Corps et trackers
 
-        // Trois façons de suivre le corps : FBE Unique (tout estimé par le casque), FBE Mix (vrais trackers
-        // complétés par le casque, expérimental) et FBT (seulement les vrais trackers).
-        static readonly string[] BodyModes = { "fbe", "mix", "fbt" };
-        static readonly string[] BodyModeNames = { "FBE Unique", "FBE Mix (bêta)", "FBT" };
+        // Deux façons de suivre le corps : FBE Unique (tout estimé par le casque) et FBT (seulement les vrais trackers).
+        static readonly string[] BodyModes = { "fbe", "fbt" };
+        static readonly string[] BodyModeNames = { "FBE Unique", "FBT" };
         static readonly string[] BodyModeTexts =
         {
             "Tout le corps estimé par les caméras du casque, sans vrais trackers : choisis les trackers virtuels à créer.",
-            "BÊTA : marche déjà bien, mais pas encore parfait. Tes vrais trackers aux hanches et aux pieds, le reste (torse, coudes, genoux) estimé à partir du casque, des manettes et des trackers. Sans le suivi du casque : les manettes restent visibles.",
             "Seulement tes vrais trackers Vive, suivis par tes bases. Le suivi du corps par le casque est coupé."
         };
 
         Segmented segBodyMode;
         Label lblBodyModeActive, lblBodyModeText, lblRealTrackers, lblBodyStatus;
-        ToggleSwitch tglKneesIk;
-        Label lblHeight, lblCalib;
-        NumericUpDown numHeight;
-        MoonButton btnCalibrate;
-        Timer calibTimer;
-        int calibStep;
+        // Base stations : allumage et veille par Bluetooth.
+        Label lblBase;
+        MoonButton btnBaseOn, btnBaseOff;
         readonly ToggleSwitch[] tglJoints = new ToggleSwitch[BodyConfig.Joints.Length];
         ComboBox cmbOffsetJoint;
         readonly NumericUpDown[] numOffsets = new NumericUpDown[6];
@@ -2057,20 +2418,6 @@ namespace LunaQuest
                 tglJoints[i] = AddTo(3, new ToggleSwitch(BodyConfig.JointLabels[i]) { Location = new Point(124 + col * 260, 302 + row * 36), Size = new Size(250, 28) });
                 tglJoints[i].CheckedChanged += delegate { if (!loadingBody) MarkBodyDirty(); };
             }
-            tglKneesIk = AddTo(3, new ToggleSwitch("Genoux calculés depuis mes vrais trackers") { Location = new Point(124, 452), Size = new Size(520, 28), Visible = false });
-            // FBE Mix : taille et calibration (debout, pieds joints, regard devant).
-            lblHeight = AddLabel(3, "Taille (cm, 0 = auto)", Theme.Body, Theme.Soft, 124, 452);
-            numHeight = AddTo(3, new NumericUpDown
-            {
-                Minimum = 0, Maximum = 230, BorderStyle = BorderStyle.None, BackColor = Theme.Field, ForeColor = Theme.Text,
-                Font = new Font("Segoe UI", 10f), Location = new Point(286, 452), Size = new Size(70, 24), TextAlign = HorizontalAlignment.Center
-            });
-            fields.Add(numHeight);
-            btnCalibrate = AddButton(3, "Calibrer", false, 404, 446, 240, 36);
-            btnCalibrate.Click += delegate { StartCalibration(); };
-            lblCalib = AddLabel(3, "", Theme.Small, Theme.Soft, 124, 488, 520);
-            calibTimer = new Timer { Interval = 1000 };
-            calibTimer.Tick += delegate { CalibrationTick(); };
             lblRealTrackers = AddLabel(3, "", Theme.Small, Theme.Soft, 124, 296, 520);
             lblRealTrackers.AutoSize = false;
             lblRealTrackers.Size = new Size(520, 190);
@@ -2090,7 +2437,7 @@ namespace LunaQuest
                     TextRenderer.DrawText(e.Graphics, cmbOffsetJoint.Items[e.Index].ToString(), cmbOffsetJoint.Font, e.Bounds, Theme.Text,
                         TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
             };
-            cmbOffsetJoint.Items.AddRange(BodyConfig.JointLabels);
+            foreach (var label in BodyConfig.JointLabels) cmbOffsetJoint.Items.Add(Lang.T(label));
             cmbOffsetJoint.SelectedIndex = 0;
             cmbOffsetJoint.SelectedIndexChanged += delegate { ShowOffsets(); };
             fields.Add(cmbOffsetJoint);
@@ -2116,7 +2463,15 @@ namespace LunaQuest
             btnBodySave = AddButton(3, "Activer ce mode", true, 464, 682, 200, 44);
             btnBodySave.Click += delegate { SaveBody(); };
 
-            trackerPreview = AddTo(3, new TrackerPreview { Location = new Point(696, 152), Size = new Size(360, 566) });
+            trackerPreview = AddTo(3, new TrackerPreview { Location = new Point(696, 152), Size = new Size(360, 480) });
+            var tglBasesAuto = AddTo(3, new ToggleSwitch("Bases automatiques en FBT (connexion / fin)") { Location = new Point(698, 638), Size = new Size(356, 28), Checked = config.BasesAuto });
+            tglBasesAuto.CheckedChanged += delegate { config.BasesAuto = tglBasesAuto.Checked; config.Save(); };
+            // Base stations : veille ou allumage par Bluetooth, sans être connecté.
+            btnBaseOn = AddButton(3, "Allumer les bases", false, 696, 672, 176, 34);
+            btnBaseOff = AddButton(3, "Éteindre les bases", false, 880, 672, 176, 34);
+            btnBaseOn.Click += delegate { SetBasePower(true); };
+            btnBaseOff.Click += delegate { SetBasePower(false); };
+            lblBase = AddLabel(3, "Base stations 2.0, par le Bluetooth du PC.", Theme.Small, Theme.Dim, 696, 710, 360);
             previewTimer = new Timer { Interval = 16 };
             previewTimer.Tick += delegate { trackerPreview.Tick(); };
         }
@@ -2128,17 +2483,13 @@ namespace LunaQuest
         {
             string mode = SelectedBodyMode;
             lblBodyModeText.Text = BodyModeTexts[segBodyMode.SelectedIndex];
-            lblBodyModeText.ForeColor = SelectedBodyMode == "mix" ? Theme.Orange : Theme.Soft;
-            bool fbe = mode == "fbe", mix = mode == "mix", fbt = mode == "fbt";
-            foreach (var t in tglJoints) t.Visible = fbe || mix;
-            foreach (Control c in new Control[] { lblHeight, numHeight, btnCalibrate, lblCalib }) c.Visible = mix;
-            tglKneesIk.Visible = false; // ancien réglage du mix, remplacé par la calibration
+            bool fbe = mode == "fbe", fbt = mode == "fbt";
+            foreach (var t in tglJoints) t.Visible = fbe;
             lblRealTrackers.Visible = fbt;
             if (userChange)
             {
                 loadingBody = true;
                 if (fbe) SetJoints(BodyConfig.Joints);
-                else if (mix) SetJoints("chest", "left_elbow", "right_elbow", "left_knee", "right_knee");
                 loadingBody = false;
                 MarkBodyDirty();
             }
@@ -2170,6 +2521,13 @@ namespace LunaQuest
         {
             loadingBody = true;
             body = BodyConfig.Load();
+            // Ancien mode FBE Mix (retiré) : on repasse en FBT pour qu'ALVR ne le relance pas.
+            if (body.Mode == "mix")
+            {
+                body.Mode = "fbt";
+                foreach (var j in BodyConfig.Joints) body.Enabled[j] = false;
+                try { body.Save(); } catch { }
+            }
             bool tracking = false;
             try
             {
@@ -2177,14 +2535,11 @@ namespace LunaQuest
                     tracking = AlvrSession.Load(AlvrInstall.SessionPath(config.AlvrFolder)).BodyTracking;
             }
             catch { }
-            // FBE Unique passe par le suivi du corps d'ALVR ; FBE Mix et FBT non.
+            // FBE Unique passe par le suivi du corps d'ALVR ; FBT non.
             string mode = Array.IndexOf(BodyModes, body.Mode) >= 0 ? body.Mode : "fbt";
             if (mode == "fbe" && !tracking) mode = "fbt";
             if (mode != "fbe" && tracking) mode = "fbe";
             segBodyMode.SelectedIndex = Array.IndexOf(BodyModes, mode);
-            tglKneesIk.Checked = body.KneesFromRealTrackers;
-            numHeight.Value = Math.Max(0, Math.Min(230, body.UserHeightCm));
-            ShowCalibrationStatus();
             for (int i = 0; i < BodyConfig.Joints.Length; i++) tglJoints[i].Checked = body.Enabled[BodyConfig.Joints[i]];
             bodyTrackingSaved = tracking;
             bodyModeSaved = mode;
@@ -2235,7 +2590,6 @@ namespace LunaQuest
             string mode = SelectedBodyMode;
             body.Mode = mode;
             body.KneesFromRealTrackers = false;
-            body.UserHeightCm = (int)numHeight.Value;
             for (int i = 0; i < BodyConfig.Joints.Length; i++) body.Enabled[BodyConfig.Joints[i]] = mode != "fbt" && tglJoints[i].Checked;
             try { body.Save(); }
             catch (Exception e) { lblBodyStatus.Text = "Impossible d'enregistrer : " + e.Message; lblBodyStatus.ForeColor = Theme.Red; return; }
@@ -2252,7 +2606,7 @@ namespace LunaQuest
             bool vrRunning = IsRunning("vrserver");
             bool dashRunning = IsRunning("ALVR Dashboard");
             if ((vrRunning || dashRunning) &&
-                MessageBox.Show(this, "SteamVR doit redémarrer pour changer de mode.\n\nRedémarrer maintenant ?",
+                MessageBox.Show(this, Lang.T("SteamVR doit redémarrer pour changer de mode.\n\nRedémarrer maintenant ?"),
                     "LunaQuest", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                 return;
             string path = AlvrInstall.SessionPath(config.AlvrFolder);
@@ -2276,80 +2630,223 @@ namespace LunaQuest
             });
         }
 
-        void ShowCalibrationStatus()
+        // Base stations : la recherche Bluetooth et les commandes prennent quelques secondes.
+        void SetBasePower(bool on)
         {
-            int request; double height;
-            if (BodyConfig.ReadCalibration(out request, out height) && height > 0)
+            btnBaseOn.Enabled = btnBaseOff.Enabled = false;
+            lblBase.Text = on ? "Recherche et allumage des base stations…" : "Recherche et mise en veille des base stations…";
+            lblBase.ForeColor = Theme.Orange;
+            Task.Run(() =>
             {
-                lblCalib.Text = "Calibré (taille retenue : " + Math.Round(height * 100) + " cm).";
-                lblCalib.ForeColor = Theme.Green;
-            }
-            else
-            {
-                lblCalib.Text = "Pas encore calibré : debout, pieds joints, regarde devant toi, puis Calibrer.";
-                lblCalib.ForeColor = Theme.Soft;
-            }
-        }
-
-        // Compte à rebours de 3 s pour se mettre en place, puis demande de calibration à ALVR.
-        void StartCalibration()
-        {
-            if (bodyModeSaved != "mix")
-            {
-                lblCalib.Text = "Active d'abord le mode FBE Mix (bouton « Activer ce mode »).";
-                lblCalib.ForeColor = Theme.Orange;
-                return;
-            }
-            if (!IsRunning("vrserver"))
-            {
-                lblCalib.Text = "Connecte-toi d'abord : SteamVR et le casque doivent être lancés.";
-                lblCalib.ForeColor = Theme.Orange;
-                return;
-            }
-            calibStep = 3;
-            btnCalibrate.Enabled = false;
-            lblCalib.Text = "Debout, pieds joints, regarde devant toi… 3";
-            lblCalib.ForeColor = Theme.Orange;
-            calibTimer.Start();
-        }
-
-        void CalibrationTick()
-        {
-            calibStep--;
-            if (calibStep > 0) { lblCalib.Text = "Debout, pieds joints, regarde devant toi… " + calibStep; return; }
-            if (calibStep == 0)
-            {
-                body.UserHeightCm = (int)numHeight.Value;
-                body.CalibrationRequest++;
-                try { body.Save(); } catch (Exception e) { lblCalib.Text = "Impossible d'enregistrer : " + e.Message; calibTimer.Stop(); btnCalibrate.Enabled = true; return; }
-                lblCalib.Text = "Ne bouge pas, calibration…";
-                return;
-            }
-            int request; double height;
-            if (BodyConfig.ReadCalibration(out request, out height) && request == body.CalibrationRequest)
-            {
-                calibTimer.Stop();
-                btnCalibrate.Enabled = true;
-                lblCalib.Text = "Calibré ! Taille retenue : " + Math.Round(height * 100) + " cm.";
-                lblCalib.ForeColor = Theme.Green;
-                Log("Calibration FBE Mix faite.");
-            }
-            else if (calibStep < -8)
-            {
-                calibTimer.Stop();
-                btnCalibrate.Enabled = true;
-                lblCalib.Text = "Pas de réponse d'ALVR : vérifie que le casque est connecté et tes trackers allumés.";
-                lblCalib.ForeColor = Theme.Red;
-            }
+                var lines = new List<string>();
+                int done = 0;
+                string error = null;
+                try { done = BaseStations.SetPower(on, line => { lock (lines) lines.Add(line); Log("Base stations : " + line); }); }
+                catch (Exception e) { error = e.GetBaseException().Message; }
+                BeginInvoke(new Action(() =>
+                {
+                    btnBaseOn.Enabled = btnBaseOff.Enabled = true;
+                    if (error != null) { lblBase.Text = error; lblBase.ForeColor = Theme.Red; }
+                    else if (done == 0) { lblBase.Text = lines.Count > 0 ? lines[lines.Count - 1] : "Aucune base station trouvée."; lblBase.ForeColor = Theme.Orange; }
+                    else { lblBase.Text = done + (done > 1 ? " base stations " : " base station ") + (on ? (done > 1 ? "allumées." : "allumée.") : "en veille."); lblBase.ForeColor = Theme.Green; }
+                }));
+            });
         }
 
         // Lien SteamVR : écran PC si activé, relevé des appareils tant que la page Corps est ouverte.
+        // ---------------------------------------------------------------- Icône près de l'horloge
+
+        // Lancé avec « --tray » (démarrage de Windows) : la fenêtre reste cachée, seule l'icône apparaît.
+        protected override void SetVisibleCore(bool value)
+        {
+            if (startHidden && !IsHandleCreated)
+            {
+                CreateHandle();
+                value = false;
+            }
+            base.SetVisibleCore(value);
+        }
+
+        void BuildTray()
+        {
+            var menu = new ContextMenuStrip();
+            menu.Items.Add(Lang.T("Ouvrir LunaQuest"), null, delegate { RestoreFromTray(); });
+            menu.Items.Add(Lang.T("Connecter / Déconnecter"), null, delegate { if (connectedState) RunBusy(FullDisconnect); else RunBusy(Connect); });
+            menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add(Lang.T("Quitter"), null, delegate { Close(); });
+            tray = new NotifyIcon { Icon = Icon, Text = "LunaQuest", ContextMenuStrip = menu, Visible = true };
+            tray.DoubleClick += delegate { RestoreFromTray(); };
+            tray.BalloonTipClicked += delegate { RestoreFromTray(); };
+            // Réduire la fenêtre la range près de l'horloge.
+            Resize += delegate { if (WindowState == FormWindowState.Minimized) Hide(); };
+
+            lblUpdate = new Label
+            {
+                AutoSize = false, Size = new Size(470, 24), Location = new Point(440, 86), TextAlign = ContentAlignment.MiddleRight,
+                Font = Theme.Small, ForeColor = Theme.ElectricSoft, BackColor = Color.Transparent, Cursor = Cursors.Hand, Visible = false
+            };
+            Controls.Add(lblUpdate);
+            lblUpdate.BringToFront();
+        }
+
+        void RestoreFromTray()
+        {
+            startHidden = false;
+            Show();
+            WindowState = FormWindowState.Normal;
+            Activate();
+        }
+
+        void Notify(string text)
+        {
+            if (tray != null) tray.ShowBalloonTip(5000, "LunaQuest", Lang.T(text), ToolTipIcon.Info);
+        }
+
+        // ---------------------------------------------------------------- Perfs, batteries
+
+        // Chaque seconde : perfs d'ALVR sur la page Connexion ; toutes les 10 s : batteries faibles.
+        void StatsTick()
+        {
+            var s = AlvrLink.Latest;
+            string perf = s == null ? (last.SteamVrRunning ? "Perfs : en attente du flux d'ALVR." : "")
+                : "Perfs : " + s.ClientFps.ToString("0") + "/" + s.ServerFps.ToString("0") + " im/s · latence " + s.LatencyMs.ToString("0") + " ms · "
+                  + s.Mbps.ToString("0") + " Mbit/s · " + (s.LostPerSec == 0 ? "aucune perte" : s.LostPerSec + " pertes/s")
+                  + "\nDans le casque : enfonce les deux joysticks en même temps.";
+            if (lblPerf.Text != perf) lblPerf.Text = perf;
+            lblPerf.ForeColor = s == null ? Theme.Dim : s.LatencyMs < 90 && s.LostPerSec == 0 ? Theme.Soft : Theme.Orange;
+
+            if (++statsTicks % 10 != 0) return;
+            var devices = DesktopViewer.Devices;
+            if (devices == null) return;
+            foreach (var d in devices)
+            {
+                if (!d.Connected || d.IsVirtualTracker || d.Battery < 0 || d.Class == Valve.VR.ETrackedDeviceClass.TrackingReference) continue;
+                int pct = (int)Math.Round(d.Battery * 100);
+                string key = d.Serial;
+                if (pct >= 25 || d.Charging) { lowBatteryWarned.Remove(key); continue; }
+                if (pct > 15 || lowBatteryWarned.Contains(key)) continue;
+                lowBatteryWarned.Add(key);
+                string text = Lang.T(d.Label) + " : batterie faible (" + pct + " %).";
+                Log(text);
+                Notify(text);
+                desktopViewer.Flash(text);
+            }
+        }
+
+        // ---------------------------------------------------------------- Mises à jour
+
+        // Au démarrage : y a-t-il une version plus récente sur GitHub ? (aucune donnée envoyée, simple lecture)
+        void CheckForUpdate()
+        {
+            try
+            {
+                System.Threading.Thread.Sleep(8000);
+                ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
+                var req = (HttpWebRequest)WebRequest.Create("https://api.github.com/repos/lunaquestld/LunaQuest/releases/latest");
+                req.UserAgent = "LunaQuest";
+                req.Accept = "application/vnd.github+json";
+                req.Timeout = 10000;
+                string json;
+                using (var resp = req.GetResponse())
+                using (var reader = new StreamReader(resp.GetResponseStream())) json = reader.ReadToEnd();
+                var root = new JavaScriptSerializer().DeserializeObject(json) as Dictionary<string, object>;
+                object o;
+                string tag = root != null && root.TryGetValue("tag_name", out o) ? o as string : null;
+                string url = root != null && root.TryGetValue("html_url", out o) ? o as string : null;
+                Version latest;
+                if (tag == null || url == null || !Version.TryParse(tag.TrimStart('v', 'V'), out latest)) return;
+                var current = typeof(MainForm).Assembly.GetName().Version;
+                if (latest <= new Version(current.Major, current.Minor, Math.Max(0, current.Build))) return;
+                BeginInvoke(new Action(() =>
+                {
+                    string text = "Nouvelle version " + latest + " disponible ›";
+                    lblUpdate.Text = Lang.T(text);
+                    lblUpdate.Visible = true;
+                    lblUpdate.Click += delegate { try { Process.Start(url); } catch { } };
+                    Log("LunaQuest " + latest + " est disponible : clique en haut à droite pour la télécharger.");
+                    Notify("LunaQuest " + latest + " est disponible.");
+                }));
+            }
+            catch { }
+        }
+
+        // ---------------------------------------------------------------- Enregistrement vidéo
+
+        // ALVR enregistre le flux vidéo tel qu'il est envoyé au casque (fichier .h264 / .h265, lisible avec VLC).
+        void ToggleRecording()
+        {
+            if (!recording && !IsRunning("vrserver")) { Log("Connecte-toi d'abord pour filmer."); return; }
+            bool start = !recording;
+            btnRecord.Enabled = false;
+            string folder = config.AlvrFolder;
+            Task.Run(() =>
+            {
+                string error = AlvrLink.Request(start ? "StartRecording" : "StopRecording");
+                string saved = null;
+                if (error == null && !start) saved = CollectRecording(folder);
+                BeginInvoke(new Action(() =>
+                {
+                    btnRecord.Enabled = true;
+                    if (error != null) { Log("Enregistrement impossible : " + error); return; }
+                    recording = start;
+                    btnRecord.Text = recording ? "Arrêter" : "Filmer";
+                    btnRecord.Invalidate();
+                    if (recording)
+                    {
+                        Log("Enregistrement en cours… (environ " + Math.Max(1, CaptureUi().Bitrate * 60 / 8 / 1000.0).ToString("0.#") + " Go par minute)");
+                        try { if (AlvrSession.Load(AlvrInstall.SessionPath(folder)).Foveation) Log("La fovéation est activée : les bords de la vidéo seront déformés."); } catch { }
+                    }
+                    else if (saved != null)
+                    {
+                        Log("Vidéo enregistrée : " + saved + " (lisible avec VLC).");
+                        try { Process.Start("explorer.exe", "/select,\"" + saved + "\""); } catch { }
+                    }
+                    else Log("Enregistrement arrêté.");
+                }));
+            });
+        }
+
+        // Range la dernière vidéo d'ALVR dans Vidéos\LunaQuest.
+        static string CollectRecording(string alvrFolder)
+        {
+            try
+            {
+                System.Threading.Thread.Sleep(800); // le temps qu'ALVR ferme le fichier
+                FileInfo newest = null;
+                foreach (var file in new DirectoryInfo(alvrFolder).GetFiles("recording.*"))
+                    if (newest == null || file.LastWriteTimeUtc > newest.LastWriteTimeUtc) newest = file;
+                if (newest == null) return null;
+                string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyVideos), "LunaQuest");
+                Directory.CreateDirectory(dir);
+                string target = Path.Combine(dir, "LunaQuest " + newest.LastWriteTime.ToString("yyyy-MM-dd HH-mm-ss") + newest.Extension);
+                File.Move(newest.FullName, target);
+                return target;
+            }
+            catch { return null; }
+        }
+
+        // ---------------------------------------------------------------- Base stations automatiques
+
+        // En FBT, si l'option est cochée : allumées à la connexion, en veille à la déconnexion.
+        void AutoBaseStations(bool on)
+        {
+            if (!config.BasesAuto) return;
+            try { if (BodyConfig.Load().Mode != "fbt") return; } catch { return; }
+            Log(on ? "Allumage des base stations…" : "Mise en veille des base stations…");
+            Task.Run(() =>
+            {
+                try { BaseStations.SetPower(on, line => Log("Base stations : " + line)); }
+                catch (Exception e) { Log("Base stations : " + e.GetBaseException().Message); }
+            });
+        }
+
         void UpdateVrLink()
         {
             desktopViewer.ScreenEnabled = config.DesktopViewer;
             desktopViewer.MonitorEnabled = page == 3;
             if (previewTimer != null) previewTimer.Enabled = page == 3;
-            bool need = config.DesktopViewer || page == 3;
+            // Toujours actif : perfs (deux joysticks) et alertes de batterie dans le casque.
+            bool need = true;
             if (need && !desktopViewer.IsRunning) desktopViewer.Start();
             else if (!need && desktopViewer.IsRunning) Task.Run(() => desktopViewer.Stop());
         }
@@ -2371,13 +2868,13 @@ namespace LunaQuest
                 int col = i % 2, row = i / 2;
                 int x = 132 + col * 484, y = 166 + row * 140;
                 var badge = new RectangleF(x, y, 34, 34);
-                Theme.Glow(g, new RectangleF(x - 12, y - 12, 58, 58), Color.FromArgb(60, 255, 31, 46));
+                Theme.Glow(g, new RectangleF(x - 12, y - 12, 58, 58), Theme.Alpha(Theme.Maple, 60));
                 using (var b = new LinearGradientBrush(badge, Theme.Maple, Theme.Electric, 45f)) g.FillRectangle(b, badge);
                 using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
-                using (var tb = new SolidBrush(Theme.Text))
+                using (var tb = new SolidBrush(Theme.OnAccent))
                     g.DrawString((i + 1).ToString("00"), Theme.Button, tb, badge, sf);
-                using (var tb = new SolidBrush(Theme.Text)) g.DrawString(GuideSteps[i, 0], Theme.StepTitle, tb, x + 50, y + 4);
-                using (var tb = new SolidBrush(Theme.Soft)) g.DrawString(GuideSteps[i, 1], Theme.Body, tb, new RectangleF(x + 50, y + 32, 400, 96));
+                using (var tb = new SolidBrush(Theme.Text)) g.DrawString(Lang.T(GuideSteps[i, 0]), Theme.StepTitle, tb, x + 50, y + 4);
+                using (var tb = new SolidBrush(Theme.Soft)) g.DrawString(Lang.T(GuideSteps[i, 1]), Theme.Body, tb, new RectangleF(x + 50, y + 32, 400, 96));
             }
         }
 
@@ -2418,7 +2915,7 @@ namespace LunaQuest
                 Spin = ((float)fx.NextDouble() - .5f) * 2.4f,
                 Speed = .45f + (float)fx.NextDouble() * .7f,
                 Sway = (float)fx.NextDouble() * 6.28f,
-                Color = blue ? Color.FromArgb(70 + fx.Next(70), 45, 91, 255) : Color.FromArgb(70 + fx.Next(80), 255, 31, 46)
+                Color = blue ? Theme.Alpha(Theme.Electric, 70 + fx.Next(70)) : Theme.Alpha(Theme.Maple, 70 + fx.Next(80))
             };
         }
 
@@ -2525,7 +3022,7 @@ namespace LunaQuest
             double a = scopeShown * Math.PI / 180;
             float sx = px + (float)Math.Cos(a) * 30, sy = py + (float)Math.Sin(a) * 30;
             int twinkle = 120 + (int)(100 * Math.Abs(Math.Sin(Environment.TickCount / 300.0)));
-            Theme.Glow(g, new RectangleF(sx - 5, sy - 5, 10, 10), Color.FromArgb(twinkle, 207, 224, 255));
+            Theme.Glow(g, new RectangleF(sx - 5, sy - 5, 10, 10), Theme.Alpha(Theme.MoonLight, twinkle));
         }
 
         void PaintTitle(Graphics g)
@@ -2540,10 +3037,10 @@ namespace LunaQuest
                     // Séparation rouge / bleue sur deux bandes horizontales, comme le titre du site.
                     var clip = g.Clip;
                     g.SetClip(new RectangleF(x - 10, y + gy1, 420, 18), CombineMode.Intersect);
-                    using (var b = new SolidBrush(Color.FromArgb(200, 255, 31, 46))) { g.DrawString("LUNA", Theme.Display, b, x + gx1, y, sf); g.DrawString("QUEST", Theme.Display, b, x + luna.Width + gx1, y, sf); }
+                    using (var b = new SolidBrush(Theme.Alpha(Theme.Maple, 200))) { g.DrawString("LUNA", Theme.Display, b, x + gx1, y, sf); g.DrawString("QUEST", Theme.Display, b, x + luna.Width + gx1, y, sf); }
                     g.Clip = clip;
                     g.SetClip(new RectangleF(x - 10, y + gy2, 420, 16), CombineMode.Intersect);
-                    using (var b = new SolidBrush(Color.FromArgb(200, 45, 91, 255))) { g.DrawString("LUNA", Theme.Display, b, x + gx2, y, sf); g.DrawString("QUEST", Theme.Display, b, x + luna.Width + gx2, y, sf); }
+                    using (var b = new SolidBrush(Theme.Alpha(Theme.Electric, 200))) { g.DrawString("LUNA", Theme.Display, b, x + gx2, y, sf); g.DrawString("QUEST", Theme.Display, b, x + luna.Width + gx2, y, sf); }
                     g.Clip = clip;
                 }
                 using (var b = new SolidBrush(Theme.Text)) g.DrawString("LUNA", Theme.Display, b, x, y, sf);
@@ -2555,7 +3052,7 @@ namespace LunaQuest
             g.RotateTransform(12);
             using (var b = new SolidBrush(Theme.Maple)) g.DrawString("by LD", Theme.Tag, b, 0, 0);
             g.Restore(state);
-            Theme.DrawSpaced(g, "PC VR · META QUEST · CÂBLE USB", Theme.Eyebrow, Theme.MapleSoft, x + 2, 74, 2.4f);
+            Theme.DrawSpaced(g, Lang.T("PC VR · META QUEST · CÂBLE USB"), Theme.Eyebrow, Theme.MapleSoft, x + 2, 74, 2.4f);
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -2585,7 +3082,7 @@ namespace LunaQuest
                 var r = new RectangleF(f.Left - 10, f.Top - 7, f.Width + 20, f.Height + 14);
                 if (!clip.IntersectsWith(Rectangle.Ceiling(r))) continue;
                 using (var b = new SolidBrush(Theme.Field)) g.FillRectangle(b, r);
-                using (var pen = new Pen(Color.FromArgb(60, 143, 178, 255), 1f)) g.DrawRectangle(pen, r.X, r.Y, r.Width, r.Height);
+                using (var pen = new Pen(Theme.Alpha(Theme.ElectricSoft, 60), 1f)) g.DrawRectangle(pen, r.X, r.Y, r.Width, r.Height);
             }
             if (page == 2) PaintGuide(g);
         }
@@ -2599,7 +3096,7 @@ namespace LunaQuest
         void Log(string msg)
         {
             if (InvokeRequired) { BeginInvoke(new Action<string>(Log), msg); return; }
-            log.AppendText(DateTime.Now.ToString("HH:mm:ss") + "  " + msg + Environment.NewLine);
+            log.AppendText(DateTime.Now.ToString("HH:mm:ss") + "  " + Lang.T(msg) + Environment.NewLine);
         }
 
         // Exécute une action longue hors du thread de l'interface pour qu'elle reste fluide.
@@ -2813,6 +3310,10 @@ namespace LunaQuest
             if (s.AlvrFolder == null) { Log("ALVR introuvable sur le PC : indique son dossier avec « Dossier ALVR… »."); return; }
             if (!s.SessionFound) { Log("Lance ALVR une fois (Réglages ALVR › Ouvrir ALVR) pour créer sa configuration."); return; }
 
+            // Les bases mettent quelques secondes à démarrer : on les allume en premier.
+            AutoBaseStations(true);
+            try { AlvrLink.Port = AlvrSession.Load(AlvrInstall.SessionPath(s.AlvrFolder)).WebServerPort; } catch { }
+
             string ser = "-s " + s.Serial + " ";
             foreach (int port in new[] { AlvrControlPort, AlvrStreamPort })
             {
@@ -2882,6 +3383,13 @@ namespace LunaQuest
         void FullDisconnect()
         {
             Log("Déconnexion…");
+            if (recording)
+            {
+                AlvrLink.Request("StopRecording");
+                string saved = CollectRecording(config.AlvrFolder);
+                BeginInvoke(new Action(() => { recording = false; btnRecord.Text = "Filmer"; btnRecord.Invalidate(); }));
+                if (saved != null) Log("Vidéo enregistrée : " + saved + ".");
+            }
             int games = CloseVrGames();
             if (games > 0) Log(games == 1 ? "Jeu VR fermé." : games + " jeux VR fermés.");
             StopSteamVr();
@@ -2897,6 +3405,7 @@ namespace LunaQuest
                 SetKeepAwake(s.Serial, false);
             }
             Log("Casque déconnecté. Clique sur Connecter pour rejouer.");
+            AutoBaseStations(false);
         }
 
         void RestartSteamVr()
@@ -3224,7 +3733,7 @@ namespace LunaQuest
             if (!AlvrInstall.IsValidFolder(config.AlvrFolder)) return;
             var v = CaptureUi();
             if (v.Mic && !vbCable &&
-                MessageBox.Show(this, "VB-CABLE n'est pas installé : avec le micro activé, ALVR refusera de se connecter.\n\nEnregistrer quand même ?",
+                MessageBox.Show(this, Lang.T("VB-CABLE n'est pas installé : avec le micro activé, ALVR refusera de se connecter.\n\nEnregistrer quand même ?"),
                     "LunaQuest", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
                 return;
 
@@ -3232,7 +3741,7 @@ namespace LunaQuest
             bool vrRunning = IsRunning("vrserver");
             bool dashRunning = IsRunning("ALVR Dashboard");
             if ((vrRunning || dashRunning) &&
-                MessageBox.Show(this, "SteamVR doit redémarrer pour appliquer les réglages.\n\nRedémarrer maintenant ?",
+                MessageBox.Show(this, Lang.T("SteamVR doit redémarrer pour appliquer les réglages.\n\nRedémarrer maintenant ?"),
                     "LunaQuest", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                 return;
 

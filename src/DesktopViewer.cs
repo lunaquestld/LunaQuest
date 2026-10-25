@@ -1,6 +1,8 @@
 // Lien avec SteamVR de LunaQuest :
 // - écran du PC dans le casque : une fenêtre SteamVR (overlay) qui affiche le bureau en direct,
 //   affichée ou masquée par un double appui sur le bouton menu de la manette gauche ;
+// - perfs en direct dans le casque, affichées ou masquées en enfonçant les deux joysticks en même temps ;
+// - alertes (batterie faible) affichées quelques secondes devant les yeux ;
 // - relevé en direct des appareils (casque, manettes, trackers) pour l'aperçu de la page Corps.
 using System;
 using System.Collections.Generic;
@@ -57,6 +59,37 @@ namespace LunaQuest
         Bitmap frame;
         byte[] pixels;
 
+        // Perfs et alertes : petites fenêtres qui suivent la tête.
+        const string PerfKey = "lunaquest.perf", AlertKey = "lunaquest.alert";
+        ulong perf, alert;
+        bool perfVisible;
+        DateTime perfDrawn = DateTime.MinValue, alertUntil = DateTime.MinValue, lastCombo = DateTime.MinValue;
+        volatile string pendingAlert;
+        // Raccourci des deux joysticks : actions SteamVR Input propres à LunaQuest (lues même pendant un jeu).
+        ulong actionSet, actLeftStick, actRightStick;
+        bool inputReady, inputWarned, leftDown, rightDown;
+
+        const string ActionManifest = @"{
+  ""default_bindings"": [ { ""controller_type"": ""oculus_touch"", ""binding_url"": ""bindings_oculus_touch.json"" } ],
+  ""actions"": [
+    { ""name"": ""/actions/lunaquest/in/left_stick"", ""type"": ""boolean"", ""requirement"": ""optional"" },
+    { ""name"": ""/actions/lunaquest/in/right_stick"", ""type"": ""boolean"", ""requirement"": ""optional"" }
+  ],
+  ""action_sets"": [ { ""name"": ""/actions/lunaquest"", ""usage"": ""leftright"" } ],
+  ""localization"": [ { ""language_tag"": ""fr_FR"", ""/actions/lunaquest"": ""LunaQuest"",
+    ""/actions/lunaquest/in/left_stick"": ""Joystick gauche (perfs)"", ""/actions/lunaquest/in/right_stick"": ""Joystick droit (perfs)"" } ]
+}";
+        const string TouchBindings = @"{
+  ""controller_type"": ""oculus_touch"",
+  ""bindings"": { ""/actions/lunaquest"": { ""sources"": [
+    { ""path"": ""/user/hand/left/input/joystick"", ""mode"": ""button"", ""inputs"": { ""click"": { ""output"": ""/actions/lunaquest/in/left_stick"" } } },
+    { ""path"": ""/user/hand/right/input/joystick"", ""mode"": ""button"", ""inputs"": { ""click"": { ""output"": ""/actions/lunaquest/in/right_stick"" } } }
+  ] } }
+}";
+
+        // Affiche un message quelques secondes dans le casque (appelable depuis n'importe quel fil).
+        public void Flash(string text) { pendingAlert = text; }
+
         public DesktopViewer(string appDir, Action<string> log)
         {
             this.appDir = appDir;
@@ -104,6 +137,7 @@ namespace LunaQuest
                 if (err != EVRInitError.None) { Thread.Sleep(3000); continue; }
                 try
                 {
+                    SetupInput();
                     if (!ScreenEnabled || CreateOverlays())
                     {
                         if (ScreenEnabled) log("Écran PC prêt : double appui sur le bouton menu gauche pour l'afficher.");
@@ -113,8 +147,9 @@ namespace LunaQuest
                 catch (Exception e) { log("Écran PC : erreur " + e.Message); Thread.Sleep(2000); }
                 finally
                 {
-                    visible = false;
-                    overlay = dashboard = thumbnail = 0;
+                    visible = perfVisible = false;
+                    overlay = dashboard = thumbnail = perf = alert = 0;
+                    alertUntil = DateTime.MinValue;
                     Devices = null;
                     try { OpenVR.Shutdown(); } catch { }
                 }
@@ -233,7 +268,11 @@ namespace LunaQuest
                     overlay = dashboard = thumbnail = 0;
                     visible = false;
                 }
-                if (MonitorEnabled && (DateTime.UtcNow - lastSample).TotalMilliseconds >= 30) { lastSample = DateTime.UtcNow; SampleDevices(); }
+                // Relevé rapide pour l'aperçu de la page Corps, lent (batteries) le reste du temps.
+                double sinceSample = (DateTime.UtcNow - lastSample).TotalMilliseconds;
+                if ((MonitorEnabled && sinceSample >= 30) || sinceSample >= 3000) { lastSample = DateTime.UtcNow; SampleDevices(); }
+                PollSticks();
+                UpdateHud();
 
                 var ov = OpenVR.Overlay;
                 if (visible) PumpMouse(overlay, ref ev, evSize);
@@ -246,10 +285,177 @@ namespace LunaQuest
                     if (dashVisible) Upload(dashboard, frame);
                 }
 
-                int wait = (MonitorEnabled ? 15 : visible || dashVisible ? 33 : 50) - (int)sw.ElapsedMilliseconds;
+                int wait = (MonitorEnabled ? 15 : visible || dashVisible ? 33 : 30) - (int)sw.ElapsedMilliseconds;
                 if (wait > 0) Thread.Sleep(wait);
             }
             if (overlay != 0) OpenVR.Overlay.HideOverlay(overlay);
+        }
+
+        // ---------------------------------------------------------------- Perfs et alertes dans le casque
+
+        void SetupInput()
+        {
+            inputReady = false;
+            try
+            {
+                string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LunaQuest", "input");
+                Directory.CreateDirectory(dir);
+                File.WriteAllText(Path.Combine(dir, "actions.json"), ActionManifest);
+                File.WriteAllText(Path.Combine(dir, "bindings_oculus_touch.json"), TouchBindings);
+                var input = OpenVR.Input;
+                if (input != null && input.SetActionManifestPath(Path.Combine(dir, "actions.json")) == EVRInputError.None)
+                {
+                    input.GetActionSetHandle("/actions/lunaquest", ref actionSet);
+                    input.GetActionHandle("/actions/lunaquest/in/left_stick", ref actLeftStick);
+                    input.GetActionHandle("/actions/lunaquest/in/right_stick", ref actRightStick);
+                    inputReady = actionSet != 0 && actLeftStick != 0 && actRightStick != 0;
+                }
+            }
+            catch { }
+            if (!inputReady && !inputWarned) { log("Perfs dans le casque : raccourci des joysticks indisponible."); inputWarned = true; }
+        }
+
+        // Les deux joysticks enfoncés ensemble (le second dans la foulée du premier) : perfs affichées ou masquées.
+        void PollSticks()
+        {
+            if (!inputReady) return;
+            var sets = new[] { new VRActiveActionSet_t { ulActionSet = actionSet } };
+            if (OpenVR.Input.UpdateActionState(sets, (uint)Marshal.SizeOf(typeof(VRActiveActionSet_t))) != EVRInputError.None) return;
+            var data = new InputDigitalActionData_t();
+            uint size = (uint)Marshal.SizeOf(typeof(InputDigitalActionData_t));
+            bool l = OpenVR.Input.GetDigitalActionData(actLeftStick, ref data, size, 0) == EVRInputError.None && data.bState;
+            bool r = OpenVR.Input.GetDigitalActionData(actRightStick, ref data, size, 0) == EVRInputError.None && data.bState;
+            bool pressedNow = (l && !leftDown) || (r && !rightDown);
+            leftDown = l;
+            rightDown = r;
+            if (l && r && pressedNow && (DateTime.UtcNow - lastCombo).TotalMilliseconds > 600)
+            {
+                lastCombo = DateTime.UtcNow;
+                TogglePerf();
+            }
+        }
+
+        // Petite fenêtre accrochée à la tête : x à droite, y en haut, z vers l'arrière (mètres).
+        ulong EnsureHud(ref ulong handle, string key, string name, float width, float x, float y, float z)
+        {
+            if (handle != 0) return handle;
+            var ov = OpenVR.Overlay;
+            if (ov == null || ov.CreateOverlay(key, name, ref handle) != EVROverlayError.None) { handle = 0; return 0; }
+            ov.SetOverlayWidthInMeters(handle, width);
+            var t = new HmdMatrix34_t { m0 = 1, m5 = 1, m10 = 1, m3 = x, m7 = y, m11 = z };
+            ov.SetOverlayTransformTrackedDeviceRelative(handle, OpenVR.k_unTrackedDeviceIndex_Hmd, ref t);
+            return handle;
+        }
+
+        void TogglePerf()
+        {
+            perfVisible = !perfVisible;
+            if (perfVisible)
+            {
+                if (EnsureHud(ref perf, PerfKey, "LunaQuest – Perfs", 0.3f, -0.16f, -0.12f, -0.75f) == 0) { perfVisible = false; return; }
+                DrawPerf();
+                OpenVR.Overlay.ShowOverlay(perf);
+            }
+            else if (perf != 0) OpenVR.Overlay.HideOverlay(perf);
+        }
+
+        void UpdateHud()
+        {
+            if (perfVisible && (DateTime.UtcNow - perfDrawn).TotalMilliseconds >= 500) DrawPerf();
+            string message = pendingAlert;
+            if (message != null)
+            {
+                pendingAlert = null;
+                if (EnsureHud(ref alert, AlertKey, "LunaQuest – Alerte", 0.36f, 0f, 0.1f, -0.8f) != 0)
+                {
+                    using (var bmp = RenderAlert(message)) Upload(alert, bmp, true);
+                    OpenVR.Overlay.ShowOverlay(alert);
+                    alertUntil = DateTime.UtcNow.AddSeconds(6);
+                }
+            }
+            if (alert != 0 && alertUntil != DateTime.MinValue && DateTime.UtcNow > alertUntil)
+            {
+                OpenVR.Overlay.HideOverlay(alert);
+                alertUntil = DateTime.MinValue;
+            }
+        }
+
+        void DrawPerf()
+        {
+            perfDrawn = DateTime.UtcNow;
+            using (var bmp = RenderPerf(AlvrLink.Latest)) Upload(perf, bmp, true);
+        }
+
+        // Police des panneaux : avec les caractères chinois ou japonais si besoin.
+        static string HudFont { get { return Lang.Code == "zh" ? "Microsoft YaHei UI" : Lang.Code == "ja" ? "Yu Gothic UI" : "Segoe UI"; } }
+
+        static Bitmap HudPanel(int w, int h, Color edge, out Graphics g)
+        {
+            var bmp = new Bitmap(w, h, PixelFormat.Format32bppArgb);
+            g = Graphics.FromImage(bmp);
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+            g.Clear(Color.Transparent);
+            using (var path = Theme.Round(new RectangleF(2, 2, w - 4, h - 4), 24))
+            {
+                using (var b = new SolidBrush(Color.FromArgb(225, 6, 8, 24))) g.FillPath(b, path);
+                using (var pen = new Pen(Color.FromArgb(200, edge), 3f)) g.DrawPath(pen, path);
+            }
+            return bmp;
+        }
+
+        static Bitmap RenderPerf(AlvrStats s)
+        {
+            Graphics g;
+            var bmp = HudPanel(600, 330, Theme.Electric, out g);
+            using (g)
+            using (var title = new Font(HudFont, 24, FontStyle.Bold, GraphicsUnit.Pixel))
+            using (var label = new Font(HudFont, 26, GraphicsUnit.Pixel))
+            using (var value = new Font(HudFont, 30, FontStyle.Bold, GraphicsUnit.Pixel))
+            using (var small = new Font(HudFont, 20, GraphicsUnit.Pixel))
+            using (var soft = new SolidBrush(Theme.Soft))
+            using (var dim = new SolidBrush(Theme.Dim))
+            {
+                using (var b = new SolidBrush(Theme.MapleSoft)) g.DrawString(Lang.T("LUNAQUEST · PERFS"), title, b, 28, 20);
+                if (s == null)
+                {
+                    g.DrawString(Lang.T("En attente du flux d'ALVR…"), label, soft, 28, 140);
+                }
+                else
+                {
+                    Action<int, string, string, Color> row = (y, name, text, color) =>
+                    {
+                        g.DrawString(Lang.T(name), label, soft, 28, y);
+                        using (var b = new SolidBrush(color)) g.DrawString(text, value, b, 230, y - 3);
+                    };
+                    row(70, "Images/s", s.ClientFps.ToString("0") + " / " + s.ServerFps.ToString("0"),
+                        s.ServerFps > 0 && s.ClientFps < s.ServerFps * 0.95f ? Theme.Orange : Theme.Green);
+                    row(118, "Latence", s.LatencyMs.ToString("0") + " ms",
+                        s.LatencyMs < 60 ? Theme.Green : s.LatencyMs < 90 ? Theme.Orange : Theme.Maple);
+                    g.DrawString(Lang.T("réseau ") + s.NetworkMs.ToString("0") + Lang.T(" · encodage ") + s.EncodeMs.ToString("0") + Lang.T(" · décodage ") + s.DecodeMs.ToString("0") + " ms",
+                        small, dim, 230, 158);
+                    row(196, "Débit", s.Mbps.ToString("0") + " Mbit/s", Theme.Text);
+                    row(244, "Pertes", s.LostPerSec + " /s", s.LostPerSec == 0 ? Theme.Green : Theme.Maple);
+                }
+                g.DrawString(Lang.T("Les deux joysticks enfoncés : masquer"), small, dim, 28, 292);
+            }
+            return bmp;
+        }
+
+        static Bitmap RenderAlert(string text)
+        {
+            Graphics g;
+            var bmp = HudPanel(720, 150, Theme.Maple, out g);
+            using (g)
+            using (var title = new Font(HudFont, 24, FontStyle.Bold, GraphicsUnit.Pixel))
+            using (var body = new Font(HudFont, 28, FontStyle.Bold, GraphicsUnit.Pixel))
+            using (var red = new SolidBrush(Theme.MapleSoft))
+            using (var white = new SolidBrush(Theme.Text))
+            {
+                g.DrawString("LUNAQUEST", title, red, 28, 18);
+                g.DrawString(Lang.T(text), body, white, new RectangleF(28, 56, 664, 84));
+            }
+            return bmp;
         }
 
         // ---------------------------------------------------------------- Relevé des appareils
@@ -403,7 +609,8 @@ namespace LunaQuest
         }
 
         // Envoie une image à SteamVR (qui attend du RGBA, alors que Windows fournit du BGRA).
-        void Upload(ulong handle, Bitmap bmp)
+        // keepAlpha : garde la transparence (coins arrondis des perfs et alertes).
+        void Upload(ulong handle, Bitmap bmp, bool keepAlpha = false)
         {
             if (handle == 0 || bmp == null) return;
             var rect = new Rectangle(0, 0, bmp.Width, bmp.Height);
@@ -419,7 +626,7 @@ namespace LunaQuest
                     byte bl = pixels[i];
                     pixels[i] = pixels[i + 2];
                     pixels[i + 2] = bl;
-                    pixels[i + 3] = 255;
+                    if (!keepAlpha) pixels[i + 3] = 255;
                 }
                 var pin = GCHandle.Alloc(pixels, GCHandleType.Pinned);
                 try { OpenVR.Overlay.SetOverlayRaw(handle, pin.AddrOfPinnedObject(), (uint)bmp.Width, (uint)bmp.Height, 4); }

@@ -18,7 +18,7 @@ Ce dossier contient tout ce qu'il faut pour les recompiler soi-même.
 | `alvr/client_openxr/src/lobby.rs` | Active le décor du salon d'attente |
 | `alvr/graphics/resources/lobby_quad.wgsl` | Ciel étoilé, lune et sol lunaire |
 | `alvr/graphics/src/lobby.rs` | Panneau d'accueil LunaQuest (titre, lune, messages) |
-| `alvr/server_openvr/cpp/alvr_server/LunaBody.*` | Suivi du corps de LunaQuest : trackers virtuels au choix, décalages, mode FBE Mix (bêta) qui estime torse, coudes et genoux à partir du casque, des manettes et des vrais trackers, avec calibration |
+| `alvr/server_openvr/cpp/alvr_server/LunaBody.*` | Suivi du corps de LunaQuest : trackers virtuels au choix et décalages (le code de l'ancien mode FBE Mix y reste, mais l'appli ne l'utilise plus) |
 | `alvr/server_openvr/cpp/alvr_server/alvr_server.cpp` | Branche LunaBody dans le pilote (réglages lus dans `%APPDATA%\LunaQuest\body.json`, écrits par LunaQuest) |
 | `alvr/xtask/src/dependencies.rs` | Versions d'outils verrouillées pour compiler sous Windows |
 | `Cargo.toml` | Version publique sans infos de débogage |

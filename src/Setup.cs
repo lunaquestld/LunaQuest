@@ -212,12 +212,24 @@ namespace LunaQuestSetup
             try
             {
                 System.Threading.Thread.Sleep(800); // laisse le premier désinstallateur se fermer
+                string prefix = Path.GetFullPath(dir).TrimEnd('\\') + "\\";
                 if (ok) UnregisterDrivers(dir);
+                // ADB de LunaQuest encore lancé en arrière-plan : il bloquerait la suppression du dossier.
+                if (ok)
+                    foreach (var adb in Process.GetProcessesByName("adb"))
+                        try { if (adb.MainModule.FileName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) { adb.Kill(); adb.WaitForExit(3000); } }
+                        catch { }
                 if (ok) Directory.Delete(dir, true);
                 // Seulement nos raccourcis : ceux qui pointent dans le dossier d'installation.
                 foreach (var link in new[] { StartMenuShortcut, DesktopShortcut })
-                    if (File.Exists(link) && ShortcutTarget(link).StartsWith(Path.GetFullPath(dir).TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase))
+                    if (File.Exists(link) && ShortcutTarget(link).StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                         File.Delete(link);
+                // Lancement avec Windows, s'il vise ce LunaQuest.
+                using (var run = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true))
+                {
+                    var command = run != null ? run.GetValue(AppName) as string : null;
+                    if (command != null && command.IndexOf(prefix, StringComparison.OrdinalIgnoreCase) >= 0) run.DeleteValue(AppName, false);
+                }
                 Registry.CurrentUser.DeleteSubKeyTree(UninstallKey, false);
                 Notify(ok ? "LunaQuest a été désinstallé." : "Raccourcis supprimés. Le dossier n'a pas été reconnu, supprime-le à la main si besoin :\n" + dir,
                     MessageBoxIcon.Information);

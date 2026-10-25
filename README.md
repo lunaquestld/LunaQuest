@@ -8,7 +8,7 @@
 
 [Site officiel](https://lunaquest-by-ld.netlify.app) · [Télécharger la dernière version](../../releases/latest) · [Mentions légales](https://lunaquest-by-ld.netlify.app/mentions-legales.html)
 
-![Version](https://img.shields.io/badge/version-0.3.0-ff1f2e) ![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-2d5bff) ![Licence](https://img.shields.io/badge/licence-MIT-8fb2ff)
+![Version](https://img.shields.io/badge/version-0.4.0-ff1f2e) ![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-2d5bff) ![Licence](https://img.shields.io/badge/licence-MIT-8fb2ff)
 
 </div>
 
@@ -17,19 +17,27 @@
 LunaQuest est un lanceur pour Windows qui fait passer le streaming [ALVR](https://github.com/alvr-org/ALVR) **par le câble USB** au lieu du Wi-Fi.
 Une superbe alternative si ta connexion sans fil n'est pas au top.
 
-## Nouveau dans la 0.3.0 : le corps entier (FBE)
+## Nouveau dans la 0.4.0
+
+<p align="center"><img src="site/img/parametres.png" width="720" alt="Page Paramètres : langue et thème de LunaQuest"></p>
+
+- **4 langues** : français, anglais, chinois et japonais.
+- **8 thèmes** : noir, blanc, bleu, rouge, rose, violet, vert, jaune.
+- **Animation de démarrage** (un coup de sabre ouvre l'écran) et **tutoriel guidé** qui présente chaque partie de l'appli.
+- **Perfs dans le casque** : enfonce les deux joysticks en même temps pour voir images par seconde, latence, débit et pertes.
+- **Filmer** : enregistre le flux du casque en vidéo.
+- **Base stations** : allumage et veille par le Bluetooth du PC, à la main ou automatiquement en FBT.
+- **Alertes de batterie**, **lancement avec Windows** (icône près de l'horloge) et **vérification des mises à jour**.
+- **Correctif** : LunaQuest ne retire plus les autres pilotes SteamVR (Space Calibrator, Virtual Desktop…) quand il ajoute ALVR.
+- Le mode FBE Mix est retiré.
+
+## Le corps entier (FBE)
 
 <p align="center"><img src="site/img/corps.png" width="720" alt="Page Corps et trackers : modes FBE et aperçu 3D en direct des appareils"></p>
 
-LunaQuest crée des trackers virtuels pour ton corps, avec ou sans vrais trackers :
-
 - **FBE Unique** : tout le corps estimé par les caméras du Quest (torse, hanches, coudes, genoux, pieds), sans rien acheter.
-- **FBE Mix (bêta)** : tes vrais trackers aux hanches et aux pieds, le torse, les coudes et les genoux estimés à partir du casque, des manettes et des trackers, avec une calibration debout.
 - **FBT** : seulement tes vrais trackers (Vive, Tundra…) et tes bases.
 - **Aperçu 3D en direct** de tous tes appareils : position, suivi (ou perte de suivi) et batterie.
-
-> [!WARNING]
-> **FBE Mix est en bêta** : il marche déjà, mais pas encore parfaitement. Il sera amélioré dans les prochaines versions.
 
 ## Fonctionnalités
 
@@ -45,7 +53,7 @@ LunaQuest crée des trackers virtuels pour ton corps, avec ou sans vrais tracker
 
 ## Installation
 
-1. Télécharge `LunaQuest-0.3.0-Setup.zip` dans les [releases](../../releases/latest).
+1. Télécharge `LunaQuest-0.4.0-Setup.zip` dans les [releases](../../releases/latest).
 2. Décompresse-le et lance `LunaQuest-Setup.exe`.
    L'installateur n'est pas encore signé : si Windows affiche « Windows a protégé votre ordinateur »,
    clique sur **Informations complémentaires** puis **Exécuter quand même**.
@@ -62,12 +70,12 @@ Le lanceur est écrit en C# et se compile avec le compilateur fourni avec Window
 powershell -ExecutionPolicy Bypass -File build.ps1
 ```
 
-Résultat : `bin\LunaQuest.exe`, `bin\LunaQuest-Setup.exe` et `dist\LunaQuest-0.3.0-Setup.zip`.
+Résultat : `bin\LunaQuest.exe`, `bin\LunaQuest-Setup.exe` et `dist\LunaQuest-0.4.0-Setup.zip`.
 L'appli du casque et la partie PC d'ALVR se compilent à part : voir [`alvr/`](alvr/README.md).
 
 | Dossier | Contenu |
 |---|---|
-| `src/` | Code du lanceur (`LunaQuest.cs`), de l'écran PC dans le casque (`DesktopViewer.cs`) et de l'installateur (`Setup.cs`) |
+| `src/` | Code du lanceur (`LunaQuest.cs`), de l'écran PC et des perfs dans le casque (`DesktopViewer.cs`), des base stations (`BaseStations.cs`), du lien avec ALVR (`AlvrLink.cs`), des traductions (`Lang.cs`), de l'animation et du tutoriel (`Intro.cs`) et de l'installateur (`Setup.cs`) |
 | `alvr/` | Modifications d'ALVR : appli du casque et partie PC (suivi du corps FBE) |
 | `site/` | Site web de LunaQuest |
 | `res/` | Licences des composants tiers et réglages ALVR de départ |
