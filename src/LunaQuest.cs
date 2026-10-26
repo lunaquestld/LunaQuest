@@ -24,6 +24,15 @@ namespace LunaQuest
         [STAThread]
         static void Main()
         {
+            // Un seul LunaQuest à la fois : un second lancement ramène la fenêtre déjà ouverte (ou cachée près de l'horloge).
+            bool first;
+            var single = new System.Threading.Mutex(true, @"Local\LunaQuest-instance", out first);
+            if (!first)
+            {
+                try { System.Threading.EventWaitHandle.OpenExisting(@"Local\LunaQuest-show").Set(); } catch { }
+                return;
+            }
+            GC.KeepAlive(single);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             // Thème et langue choisis dans Paramètres, appliqués avant de construire la fenêtre.
@@ -1268,6 +1277,32 @@ namespace LunaQuest
         {
             get { return GetBool(S + "headset.controllers.content.hand_skeleton.enabled"); }
             set { Set(S + "headset.controllers.content.hand_skeleton.enabled", value); }
+        }
+
+        // Manettes vues par SteamVR et les jeux : celles du casque branché (ro.product.model : « Quest 3 »,
+        // « Quest 3S », « Quest Pro », « Quest 2 »…). Avec l'entrée SteamVR 2.0, les manettes annoncent un suivi
+        // des doigts « estimé », comme les vraies manettes Quest : VRChat garde ses gestes de base au lieu de
+        // ceux des manettes Index (suivi « partiel »). Renvoie true si quelque chose a changé.
+        public bool MatchHeadset(string model)
+        {
+            string m = (model ?? "").ToLowerInvariant();
+            if (!m.Contains("quest")) return false;
+            bool changed = SetIfDifferent(S + "headset.controllers.content.emulation_mode.variant",
+                m.Contains("pro") ? "QuestPro" : m.Contains("3") ? "Quest3Plus" : "Quest2Touch");
+            if (m.Contains("pro")) changed |= SetIfDifferent(S + "headset.emulation_mode.variant", "QuestPro");
+            if (!GetBool(S + "headset.controllers.content.hand_skeleton.content.steamvr_input_2_0"))
+            {
+                Set(S + "headset.controllers.content.hand_skeleton.content.steamvr_input_2_0", true);
+                changed = true;
+            }
+            return changed;
+        }
+
+        bool SetIfDifferent(string path, string value)
+        {
+            if (GetString(path) == value) return false;
+            Set(path, value);
+            return true;
         }
 
         // Suivi du corps par les caméras du Quest, envoyé à SteamVR sous forme de trackers Vive virtuels.
@@ -2675,6 +2710,13 @@ namespace LunaQuest
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add(Lang.T("Quitter"), null, delegate { Close(); });
             tray = new NotifyIcon { Icon = Icon, Text = "LunaQuest", ContextMenuStrip = menu, Visible = true };
+            // Un second lancement de LunaQuest demande à celui-ci de se montrer.
+            var show = new System.Threading.EventWaitHandle(false, System.Threading.EventResetMode.AutoReset, @"Local\LunaQuest-show");
+            new System.Threading.Thread(() =>
+            {
+                while (show.WaitOne())
+                    try { BeginInvoke(new Action(RestoreFromTray)); } catch { return; }
+            }) { IsBackground = true, Name = "LunaQuest fenêtre unique" }.Start();
             tray.DoubleClick += delegate { RestoreFromTray(); };
             tray.BalloonTipClicked += delegate { RestoreFromTray(); };
             // Réduire la fenêtre la range près de l'horloge.
@@ -3359,11 +3401,25 @@ namespace LunaQuest
                         changed = true;
                         Log("Casque actif pour le câble : " + active + ".");
                     }
+                    // Les manettes du casque branché, avec les gestes de base dans les jeux.
+                    if (session.MatchHeadset(s.Model))
+                    {
+                        changed = true;
+                        Log("Manettes réglées sur celles du " + s.Model + ".");
+                    }
                     if (changed) session.Save();
                 }
                 catch (Exception e) { Log("Config ALVR illisible : " + e.Message); }
             }
             if (!s.HasWiredClient && s.AlvrPackage != LunaClientPackage) Log("Attention : aucun casque enregistré pour le câble. Va dans Réglages ALVR › Casque filaire.");
+            // SteamVR déjà lancé : la config d'ALVR ne peut changer qu'au prochain lancement.
+            if (s.SteamVrRunning)
+                try
+                {
+                    if (AlvrSession.Load(AlvrInstall.SessionPath(s.AlvrFolder)).MatchHeadset(s.Model))
+                        Log("Les manettes du " + s.Model + " seront utilisées au prochain lancement de SteamVR (Relancer SteamVR).");
+                }
+                catch { }
 
             // Le serveur ALVR tourne dans SteamVR : pas besoin d'ouvrir ALVR Dashboard.
             if (!s.SteamVrRunning)

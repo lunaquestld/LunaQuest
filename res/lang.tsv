@@ -328,3 +328,6 @@ injoignable.	unreachable.	无法连接。	接続できません。
 Passer	Skip	跳过	スキップ
 Suivant	Next	下一步	次へ
 C'est parti !	Let's go!	开始吧！	はじめよう！
+Manettes réglées sur celles du 	Controllers set to those of the 	手柄已设为 	コントローラーを次の機種に合わせました：
+Les manettes du 	The controllers of the 	下次启动 SteamVR 时将使用 	次回 SteamVR 起動時に 
+ seront utilisées au prochain lancement de SteamVR (Relancer SteamVR).	 will be used the next time SteamVR starts (Restart SteamVR).	 的手柄（重启 SteamVR）。	 のコントローラーを使います（SteamVR を再起動）。

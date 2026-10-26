@@ -8,7 +8,7 @@
 
 [Site officiel](https://lunaquest-by-ld.netlify.app) · [Télécharger la dernière version](../../releases/latest) · [Mentions légales](https://lunaquest-by-ld.netlify.app/mentions-legales.html)
 
-![Version](https://img.shields.io/badge/version-0.4.0-ff1f2e) ![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-2d5bff) ![Licence](https://img.shields.io/badge/licence-MIT-8fb2ff)
+![Version](https://img.shields.io/badge/version-0.4.1-ff1f2e) ![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-2d5bff) ![Licence](https://img.shields.io/badge/licence-MIT-8fb2ff)
 
 </div>
 
@@ -16,6 +16,12 @@
 
 LunaQuest est un lanceur pour Windows qui fait passer le streaming [ALVR](https://github.com/alvr-org/ALVR) **par le câble USB** au lieu du Wi-Fi.
 Une superbe alternative si ta connexion sans fil n'est pas au top.
+
+## Nouveau dans la 0.4.1
+
+- **Les vraies manettes de ton casque** : Quest 3 / 3S, Quest Pro ou Quest 2, reconnues automatiquement dans SteamVR.
+- **Gestes de base dans VRChat** (et les autres jeux), comme avec les manettes Quest, au lieu des gestes des manettes Index.
+- LunaQuest ne s'ouvre plus en double : le relancer ramène la fenêtre déjà ouverte.
 
 ## Nouveau dans la 0.4.0
 
@@ -53,7 +59,7 @@ Une superbe alternative si ta connexion sans fil n'est pas au top.
 
 ## Installation
 
-1. Télécharge `LunaQuest-0.4.0-Setup.zip` dans les [releases](../../releases/latest).
+1. Télécharge `LunaQuest-0.4.1-Setup.zip` dans les [releases](../../releases/latest).
 2. Décompresse-le et lance `LunaQuest-Setup.exe`.
    L'installateur n'est pas encore signé : si Windows affiche « Windows a protégé votre ordinateur »,
    clique sur **Informations complémentaires** puis **Exécuter quand même**.
@@ -70,7 +76,7 @@ Le lanceur est écrit en C# et se compile avec le compilateur fourni avec Window
 powershell -ExecutionPolicy Bypass -File build.ps1
 ```
 
-Résultat : `bin\LunaQuest.exe`, `bin\LunaQuest-Setup.exe` et `dist\LunaQuest-0.4.0-Setup.zip`.
+Résultat : `bin\LunaQuest.exe`, `bin\LunaQuest-Setup.exe` et `dist\LunaQuest-0.4.1-Setup.zip`.
 L'appli du casque et la partie PC d'ALVR se compilent à part : voir [`alvr/`](alvr/README.md).
 
 | Dossier | Contenu |
