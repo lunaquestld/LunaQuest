@@ -1,0 +1,762 @@
+<html lang="en">
+<title>LunaQuest – PC VR over USB for Meta Quest</title>
+<meta name="description" content="LunaQuest: play your PC VR games on your Meta Quest over a USB cable, without the Meta app. Free, one-click connection, based on ALVR.">
+<link rel="alternate" hreflang="fr" href="https://lunaquest-by-ld.netlify.app/">
+<link rel="alternate" hreflang="en" href="https://lunaquest-by-ld.netlify.app/en/">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="../fonts/fonts.css">
+<style>
+  /* Layout : nuit de pleine lune façon affiche samouraï — rouge érable, bleu électrique, lumière de lune ; colonne de 1120px, une colonne sur mobile. */
+  :root {
+    color-scheme: dark;
+    --night: #04061a;
+    --ink: #07091f;
+    --panel: rgba(12, 18, 54, 0.66);
+    --line: rgba(130, 160, 255, 0.18);
+    --red: #ff1f2e;
+    --red-soft: #ff7b86;
+    --blue: #2d5bff;
+    --blue-soft: #8fb2ff;
+    --moon: #cfe0ff;
+    --paper: #f4f3ff;
+    --muted: #a8b4dc;
+    --faint: #6e7aa6;
+    --font-display: "Anton", "Impact", "Arial Narrow", sans-serif;
+    --font-body: "Manrope", "Segoe UI", system-ui, sans-serif;
+    --font-mono: "Space Mono", Consolas, monospace;
+    --font-tag: "Permanent Marker", "Segoe Print", cursive;
+    --radius: 18px;
+    --max: 1120px;
+    --cut: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--night); color: var(--paper); font: 16px/1.65 var(--font-body); overflow-x: hidden; }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 60; background: var(--night); }
+  @media (pointer: fine) { body.fx-cursor, body.fx-cursor a, body.fx-cursor button, body.fx-cursor summary, body.fx-cursor [tabindex] { cursor: crosshair; } }
+  a { color: var(--blue-soft); }
+  :focus-visible { outline: 2px solid var(--red-soft); outline-offset: 3px; }
+  h1, h2, h3 { margin: 0; text-wrap: balance; }
+  .wrap { position: relative; z-index: 2; max-width: var(--max); margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .eyebrow { font: 700 12px/1 var(--font-mono); letter-spacing: .32em; text-transform: uppercase; color: var(--red-soft); }
+
+  /* ---------- Fond ---------- */
+  #sky { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+  .police { position: fixed; inset: 0; z-index: 1; pointer-events: none; mix-blend-mode: screen; }
+  .police::before, .police::after { content: ""; position: absolute; inset: 0; opacity: 0; }
+  .police::before { background: radial-gradient(ellipse at 0% 55%, rgba(255,31,46,.5), transparent 55%); }
+  .police::after { background: radial-gradient(ellipse at 100% 55%, rgba(45,91,255,.55), transparent 55%); }
+  body.siren .police::before { animation: sirenR .5s steps(2) infinite; }
+  body.siren .police::after { animation: sirenB .5s steps(2) infinite; }
+  @keyframes sirenR { 0% { opacity: .9; } 50% { opacity: 0; } }
+  @keyframes sirenB { 0% { opacity: 0; } 50% { opacity: .9; } }
+  .progress { position: fixed; top: env(safe-area-inset-top, 0px); left: 0; height: 3px; width: 100%; z-index: 70; transform-origin: 0 50%; transform: scaleX(0); background: linear-gradient(90deg, var(--red), var(--moon), var(--blue)); box-shadow: 0 0 12px var(--red); }
+
+  /* Curseur : anneau qui suit la souris et grossit sur ce qui est cliquable. */
+  .cursor { position: fixed; left: 0; top: 0; z-index: 80; pointer-events: none; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%;
+    border: 1.5px solid var(--moon); mix-blend-mode: screen; transition: width .2s, height .2s, margin .2s, border-color .2s, background .2s; display: none; }
+  .cursor.on { width: 58px; height: 58px; margin: -29px 0 0 -29px; border-color: var(--red); background: rgba(255,31,46,.12); }
+  .cursor-dot { position: fixed; left: 0; top: 0; z-index: 81; pointer-events: none; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: var(--red); box-shadow: 0 0 10px var(--red); display: none; }
+  @media (pointer: fine) { body.fx-cursor .cursor, body.fx-cursor .cursor-dot { display: block; } }
+
+  /* Glitch : séparation rouge / bleu, pilotée par le script. */
+  .glitch { position: relative; display: inline-block; }
+  .glitch::before, .glitch::after { content: attr(data-text); position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen; }
+  .glitch::before { color: var(--red); transform: translate(var(--gx1, 0px), 0); clip-path: inset(var(--gc1, 100%) 0 var(--gc2, 0) 0); }
+  .glitch::after { color: var(--blue); transform: translate(var(--gx2, 0px), 0); clip-path: inset(var(--gc3, 100%) 0 var(--gc4, 0) 0); }
+
+  /* ---------- Barre du haut ---------- */
+  .top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 50; backdrop-filter: blur(14px); background: rgba(4, 6, 26, .74); border-bottom: 1px solid var(--line); }
+  .top .wrap { display: flex; align-items: center; gap: 20px; padding-block: 12px; }
+  .creator { position: relative; display: flex; align-items: center; gap: 12px; }
+  .avatar { position: relative; width: 52px; height: 52px; flex: none; border-radius: 50%; padding: 3px; isolation: isolate; }
+  .avatar::before { content: ""; position: absolute; inset: 0; border-radius: 50%; z-index: -1;
+    background: conic-gradient(from var(--spin, 0deg), var(--red), var(--moon), var(--blue), var(--red)); animation: ring 4s linear infinite; }
+  .avatar::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; z-index: -2; background: conic-gradient(from var(--spin, 0deg), var(--red), transparent 40%, var(--blue), transparent 80%); filter: blur(8px); opacity: .7; animation: ring 4s linear infinite; }
+  @property --spin { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+  @keyframes ring { to { --spin: 360deg; } }
+  .avatar img { display: block; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid var(--night); transition: transform .35s cubic-bezier(.2,.9,.2,1), filter .35s; }
+  .creator:hover .avatar img, .creator:focus-within .avatar img { transform: scale(1.12) rotate(-6deg); filter: saturate(1.3) contrast(1.1); }
+  .creator .who { font: 700 11px/1.2 var(--font-mono); letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
+  .creator .who b { display: block; font: 400 22px/1 var(--font-tag); letter-spacing: 0; color: var(--paper); text-transform: none; transform: rotate(-4deg); margin-bottom: 3px; }
+  .creator-card { position: absolute; top: calc(100% + 14px); left: 0; width: min(380px, calc(100vw - 32px)); display: grid; grid-template-columns: 120px 1fr; gap: 16px;
+    padding: 16px; border-radius: 18px; background: rgba(7, 10, 34, .97); border: 1px solid rgba(255,123,134,.35);
+    box-shadow: 0 24px 60px rgba(0,0,0,.6), -10px 0 40px rgba(255,31,46,.18), 10px 0 40px rgba(45,91,255,.18);
+    opacity: 0; visibility: hidden; transform: translateY(-8px) scale(.98); transform-origin: 30px 0; transition: opacity .25s, transform .3s cubic-bezier(.2,.9,.2,1), visibility .3s; }
+  .creator:hover .creator-card, .creator:focus-within .creator-card { opacity: 1; visibility: visible; transform: none; }
+  .portrait { position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: 9 / 16; max-width: 100%; border: 1px solid var(--line); }
+  .portrait img { position: absolute; inset: -8%; width: 116%; height: 116%; object-fit: cover; transform: translate(var(--px, 0px), var(--py, 0px)); transition: transform .2s ease-out; }
+  .portrait::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgba(4,6,26,.8)); }
+  .creator-card h3 { font: 700 11px/1 var(--font-mono); letter-spacing: .3em; text-transform: uppercase; color: var(--red-soft); margin-bottom: 8px; }
+  .creator-card .sig { font: 400 34px/1 var(--font-tag); color: var(--paper); transform: rotate(-5deg); display: inline-block; margin-bottom: 12px; text-shadow: 3px 0 var(--red), -3px 0 var(--blue); }
+  .creator-card dl { margin: 0; display: grid; gap: 7px; font-size: 13.5px; }
+  .creator-card dt { font: 700 10px/1 var(--font-mono); letter-spacing: .2em; text-transform: uppercase; color: var(--faint); }
+  .creator-card dd { margin: 2px 0 0; color: var(--paper); }
+  .nav { display: flex; gap: 6px; margin-left: auto; }
+  .nav a { position: relative; color: var(--muted); text-decoration: none; font: 700 12px/1 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; padding: 10px 12px; transition: color .2s; }
+  .nav a::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: 4px; height: 2px; background: linear-gradient(90deg, var(--red), var(--blue)); transform: scaleX(0); transform-origin: left; transition: transform .25s cubic-bezier(.2,.9,.2,1); }
+  .nav a:hover { color: var(--paper); }
+  .nav a:hover::after { transform: scaleX(1); }
+  .pill { font: 700 11px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; padding: 9px 14px; color: var(--night); background: var(--moon); clip-path: var(--cut); white-space: nowrap; animation: pulse 1.6s steps(2) infinite; }
+  @keyframes pulse { 50% { filter: brightness(1.25); } }
+
+  /* ---------- Hero ---------- */
+  .hero { position: relative; display: grid; grid-template-columns: 1.05fr 1fr; gap: 44px; align-items: center; padding-block: 64px 48px; }
+  .beams { position: absolute; inset: -60px -10vw auto; height: 620px; pointer-events: none; mix-blend-mode: screen; opacity: .5; z-index: 0; overflow: hidden; }
+  .beam { position: absolute; top: -40px; width: 140px; height: 760px; transform-origin: 50% 0; background: linear-gradient(180deg, var(--bc), transparent 80%); filter: blur(10px); }
+  .b1 { left: 8%; --bc: rgba(255,31,46,.55); animation: sweep 6s ease-in-out infinite alternate; }
+  .b2 { left: 38%; --bc: rgba(45,91,255,.55); animation: sweep 4.6s ease-in-out -2s infinite alternate-reverse; }
+  .b3 { right: 10%; --bc: rgba(207,224,255,.4); animation: sweep 5.4s ease-in-out -1s infinite alternate; }
+  @keyframes sweep { from { transform: rotate(-24deg); } to { transform: rotate(24deg); } }
+  .hero > div:not(.beams) { position: relative; z-index: 1; min-width: 0; }
+  .title { position: relative; display: inline-block; }
+  .hero h1 { font: 400 clamp(64px, 11vw, 140px)/.88 var(--font-display); letter-spacing: .01em; text-transform: uppercase; color: var(--paper); text-shadow: 0 0 40px rgba(207,224,255,.25); }
+  .hero h1 .q { color: var(--red); text-shadow: 0 0 34px rgba(255,31,46,.55); }
+  .slash { position: absolute; left: -6%; right: -6%; top: 52%; height: 4px; background: linear-gradient(90deg, transparent, var(--paper), var(--red-soft), transparent); box-shadow: 0 0 18px var(--paper), 0 0 40px var(--red); transform: rotate(-9deg) scaleX(0); transform-origin: 0 50%; opacity: 0; pointer-events: none; }
+  .title.cut .slash { animation: slash .42s cubic-bezier(.2,.9,.2,1) forwards; }
+  @keyframes slash { 0% { transform: rotate(-9deg) scaleX(0); opacity: 1; } 50% { transform: rotate(-9deg) scaleX(1); opacity: 1; } 100% { transform: rotate(-9deg) scaleX(1); opacity: 0; } }
+  .tag-ld { position: absolute; right: -18px; top: -26px; font: 400 34px/1 var(--font-tag); color: var(--red); transform: rotate(12deg); text-shadow: 0 0 18px rgba(255,31,46,.6); }
+  .lead { font-size: clamp(18px, 2.2vw, 21px); color: var(--muted); max-width: 36ch; margin: 22px 0 30px; }
+  .lead b { color: var(--paper); }
+  .cta { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+  .btn { position: relative; display: inline-flex; align-items: center; gap: 12px; padding: 17px 30px 17px 34px; font: 700 13px/1 var(--font-mono); letter-spacing: .22em; text-transform: uppercase; text-decoration: none; border: 0; clip-path: var(--cut); transition: transform .18s cubic-bezier(.2,.9,.2,1), background .2s, color .2s; will-change: transform; }
+  .btn-soon { color: var(--paper); background: var(--red); cursor: not-allowed; }
+  .btn-soon:hover { background: var(--paper); color: var(--night); }
+  .btn-soon small { font: 700 10px/1 var(--font-mono); letter-spacing: .16em; padding: 6px 8px; background: rgba(4,6,26,.35); }
+  .btn-dl { color: var(--paper); background: var(--red); box-shadow: 0 0 34px rgba(255,31,46,.35); }
+  .btn-dl:hover { background: var(--paper); color: var(--night); }
+  .btn-dl small { font: 700 10px/1 var(--font-mono); letter-spacing: .16em; padding: 6px 8px; background: rgba(4,6,26,.35); }
+  .btn-ghost { color: var(--paper); background: rgba(45,91,255,.22); box-shadow: inset 0 0 0 1px rgba(143,178,255,.4); }
+  .btn-ghost:hover { background: var(--blue); }
+  .hero-meta { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 26px; font: 700 11px/1.4 var(--font-mono); letter-spacing: .16em; text-transform: uppercase; color: var(--faint); }
+  .hero-meta span { display: inline-flex; align-items: center; gap: 8px; }
+  .hero-meta span::before { content: ""; width: 7px; height: 7px; background: var(--red); transform: rotate(45deg); }
+
+  .stage { position: relative; perspective: 1400px; }
+  .moon { position: absolute; width: 160px; height: 160px; right: -14px; top: -66px; border-radius: 50%; z-index: 0;
+    background: radial-gradient(circle at 34% 30%, #fff, #c9d8f6 58%, #8ea2d4); box-shadow: 0 0 100px rgba(207,224,255,.6), inset -30px -14px 40px rgba(8,14,46,.55); animation: float 9s ease-in-out infinite; }
+  .moon::before, .moon::after { content: ""; position: absolute; border-radius: 50%; background: rgba(70,90,150,.22); }
+  .moon::before { width: 40px; height: 40px; left: 30px; top: 76px; }
+  .moon::after { width: 22px; height: 22px; left: 92px; top: 34px; }
+  @keyframes float { 50% { transform: translateY(-14px); } }
+  .shot { position: relative; z-index: 1; margin: 0; border-radius: 14px; overflow: hidden; border: 1px solid rgba(207,224,255,.25);
+    box-shadow: 0 40px 90px rgba(0,0,0,.65), -24px 18px 70px rgba(255,31,46,.28), 24px -10px 70px rgba(45,91,255,.3);
+    transform: rotateY(-10deg) rotateX(5deg); transition: transform .45s ease-out; will-change: transform; }
+  .shot img { display: block; width: 100%; height: auto; }
+  .shot::after { content: ""; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,.14) 48%, transparent 60%); transform: translateX(var(--sheen, -60%)); transition: transform .45s ease-out; pointer-events: none; }
+
+  /* ---------- Bandeau défilant ---------- */
+  .marquee { position: relative; z-index: 2; overflow: hidden; background: var(--red); color: var(--night); transform: rotate(-2deg); margin: 20px -4vw; border-block: 2px solid var(--night); box-shadow: 0 0 40px rgba(255,31,46,.45); }
+  .marquee.alt { background: var(--blue); color: var(--paper); transform: rotate(1.5deg); margin-top: -12px; box-shadow: 0 0 40px rgba(45,91,255,.45); }
+  .track { display: flex; width: max-content; animation: marquee 22s linear infinite; }
+  .marquee.alt .track { animation-direction: reverse; animation-duration: 28s; }
+  .marquee:hover .track { animation-play-state: paused; }
+  .track span { font: 400 30px/1 var(--font-display); text-transform: uppercase; letter-spacing: .04em; padding: 14px 22px; white-space: nowrap; }
+  .track span::after { content: "✦"; margin-left: 44px; font-size: 20px; vertical-align: 4px; }
+  @keyframes marquee { to { transform: translateX(-50%); } }
+
+  /* ---------- Sections ---------- */
+  section { padding-block: 72px; }
+  .head { display: grid; gap: 14px; margin-bottom: 38px; max-width: 64ch; }
+  .head h2 { position: relative; font: 400 clamp(40px, 6vw, 72px)/.95 var(--font-display); text-transform: uppercase; letter-spacing: .01em; }
+  .head h2 .r { color: var(--red); }
+  .head h2 .b { color: var(--blue-soft); }
+  .head h2::after { content: ""; display: block; height: 3px; width: 140px; margin-top: 16px; background: linear-gradient(90deg, var(--red), var(--blue)); transform: scaleX(.25); transform-origin: left; transition: transform .7s cubic-bezier(.2,.9,.2,1); box-shadow: 0 0 14px rgba(255,31,46,.6); }
+  .head.seen h2::after { transform: scaleX(1); }
+  .head p { margin: 0; color: var(--muted); font-size: 18px; }
+
+  /* Cartes interactives : inclinaison 3D, halo qui suit la souris, bordure rouge/bleu. */
+  .tilt { position: relative; border-radius: var(--radius); background: var(--panel); border: 1px solid var(--line); transform-style: preserve-3d; transition: transform .25s ease-out, border-color .25s, box-shadow .25s; will-change: transform; }
+  .tilt::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .25s;
+    background: radial-gradient(360px circle at var(--mx, 50%) var(--my, 50%), rgba(255,31,46,.22), rgba(45,91,255,.12) 40%, transparent 65%); }
+  .tilt::after { content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; pointer-events: none; opacity: 0; transition: opacity .25s;
+    background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), var(--red), var(--blue) 50%, transparent 75%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+  .tilt:hover { box-shadow: 0 24px 60px rgba(0,0,0,.45); }
+  .tilt:hover::before, .tilt:hover::after { opacity: 1; }
+  .tilt > * { position: relative; }
+
+  .why { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .why article { padding: 28px; }
+  .why .big { font: 400 54px/1 var(--font-display); text-transform: uppercase; color: var(--paper); text-shadow: 3px 0 var(--red), -3px 0 var(--blue); transition: text-shadow .2s steps(2); }
+  .why article:hover .big { text-shadow: 6px 0 var(--red), -6px 0 var(--blue); }
+  .why h3 { font: 700 19px/1.3 var(--font-body); margin: 14px 0 8px; }
+  .why p { margin: 0; color: var(--muted); }
+
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .feature { padding: 28px; }
+  .icon { width: 52px; height: 52px; display: grid; place-items: center; clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); background: linear-gradient(135deg, var(--red), var(--blue)); transition: transform .4s cubic-bezier(.2,.9,.2,1); }
+  .feature:hover .icon { transform: rotate(60deg) scale(1.08); }
+  .icon svg { width: 24px; height: 24px; fill: none; stroke: var(--paper); stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; transition: transform .4s cubic-bezier(.2,.9,.2,1); }
+  .feature:hover .icon svg { transform: rotate(-60deg); }
+  .feature h3 { font: 700 19px/1.3 var(--font-body); margin: 18px 0 8px; }
+  .feature p { margin: 0; color: var(--muted); font-size: 15px; }
+  .feature .num { position: absolute; right: 22px; top: 18px; font: 400 44px/1 var(--font-display); color: rgba(207,224,255,.07); transition: color .3s; }
+  .feature:hover .num { color: rgba(255,31,46,.35); }
+
+  .preview { display: grid; gap: 22px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tabs button { font: 700 12px/1 var(--font-mono); letter-spacing: .2em; text-transform: uppercase; color: var(--muted); background: rgba(45,91,255,.12); border: 0; padding: 14px 22px 14px 26px; clip-path: var(--cut); transition: background .2s, color .2s, transform .15s; }
+  .tabs button:hover { color: var(--paper); background: rgba(45,91,255,.32); transform: translateY(-2px); }
+  .tabs button[aria-selected="true"] { color: var(--night); background: var(--moon); }
+  .viewer { position: relative; overflow: hidden; border-radius: 16px; max-width: 966px; border: 1px solid rgba(207,224,255,.22); box-shadow: 0 30px 80px rgba(0,0,0,.6), -20px 0 60px rgba(255,31,46,.16), 20px 0 60px rgba(45,91,255,.18); }
+  .viewer img { display: block; width: 100%; height: auto; }
+  .viewer.glitching img { animation: tear .32s steps(4); }
+  @keyframes tear {
+    0% { clip-path: inset(10% 0 60% 0); transform: translateX(-14px); filter: hue-rotate(90deg); }
+    33% { clip-path: inset(50% 0 20% 0); transform: translateX(12px); }
+    66% { clip-path: inset(30% 0 40% 0); transform: translateX(-6px); filter: none; }
+    100% { clip-path: inset(0); transform: none; }
+  }
+  .caption { color: var(--muted); margin: 0; max-width: 70ch; }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-bottom: 18px; }
+  .stat { padding: 24px 26px; }
+  .stat .val { font: 400 clamp(46px, 6vw, 64px)/1 var(--font-display); color: var(--paper); font-variant-numeric: tabular-nums; }
+  .stat .val small { font: 700 14px/1 var(--font-mono); letter-spacing: .1em; color: var(--red-soft); margin-left: 6px; }
+  .stat p { margin: 10px 0 0; color: var(--muted); font-size: 14px; }
+  .perf { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .panel { padding: 28px; min-width: 0; }
+  .panel h3 { font: 700 19px/1.3 var(--font-body); margin-bottom: 16px; }
+  .spec { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .spec td { padding: 11px 0; border-top: 1px solid var(--line); vertical-align: top; }
+  .spec tr:first-child td { border-top: 0; }
+  .spec td:first-child { font: 700 11px/1.6 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--faint); width: 40%; padding-right: 12px; }
+  .note { font-size: 13px; color: var(--faint); margin: 16px 0 0; }
+  .bars { display: grid; gap: 16px; }
+  .bars .row { display: flex; justify-content: space-between; font-size: 14px; color: var(--muted); margin-bottom: 6px; }
+  .bars .row b { font: 700 13px/1.6 var(--font-mono); color: var(--paper); }
+  .bar { height: 10px; background: rgba(143,178,255,.12); overflow: hidden; clip-path: var(--cut); }
+  .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--red), var(--blue)); transform-origin: left; transition: transform 1.2s cubic-bezier(.2,.9,.2,1); }
+  .bars:not(.seen) .bar i { transform: scaleX(.15); }
+
+  .release { position: relative; overflow: hidden; display: grid; grid-template-columns: auto 1fr; gap: 32px; align-items: center; padding: 34px; border-radius: 22px;
+    background: linear-gradient(120deg, rgba(255,31,46,.22), rgba(4,6,26,.6) 45%, rgba(45,91,255,.24)); border: 1px solid rgba(255,123,134,.35); }
+  .version { font: 400 clamp(64px, 10vw, 110px)/.9 var(--font-display); color: var(--paper); text-shadow: 4px 0 var(--red), -4px 0 var(--blue); }
+  .version small { display: block; font: 700 11px/1.4 var(--font-mono); letter-spacing: .3em; text-transform: uppercase; color: var(--red-soft); text-shadow: none; margin-bottom: 10px; }
+  .stamp { position: absolute; right: 26px; top: 20px; font: 400 26px/1 var(--font-tag); color: var(--red); transform: rotate(10deg); border: 3px solid var(--red); padding: 6px 12px; border-radius: 6px; opacity: .85; }
+  .release h2 { font: 400 34px/1 var(--font-display); text-transform: uppercase; margin-bottom: 10px; }
+  .release p { margin: 0 0 12px; color: var(--muted); max-width: 52ch; }
+  .release ul { margin: 0; padding-left: 20px; color: var(--muted); }
+  .release li b { color: var(--paper); }
+  .release li { margin-bottom: 6px; }
+  .release .dl-row { margin: 18px 0 0; }
+
+  /* ---------- FBE ---------- */
+  .fbe { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 24px; align-items: center; }
+  .fbe-modes { display: grid; gap: 12px; }
+  .fbe-mode { padding: 20px 22px; }
+  .fbe-mode h3 { font: 400 26px/1 var(--font-display); text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+  .fbe-mode p { margin: 0; color: var(--muted); font-size: 15px; }
+  .beta { font: 700 10px/1 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; padding: 5px 9px 5px 10px; color: var(--night); background: var(--red-soft); clip-path: var(--cut); }
+  .fbe-shot { margin: 0; border-radius: 14px; overflow: hidden; border: 1px solid rgba(207,224,255,.22); box-shadow: 0 30px 80px rgba(0,0,0,.6), -20px 0 60px rgba(255,31,46,.16), 20px 0 60px rgba(45,91,255,.18); }
+  .fbe-shot img { display: block; width: 100%; height: auto; }
+  @media (max-width: 920px) { .fbe { grid-template-columns: 1fr; } }
+
+  .support { display: grid; grid-template-columns: 1.4fr 1fr; gap: 18px; align-items: start; }
+  .faq { display: grid; gap: 10px; }
+  .faq details { padding: 0 22px; }
+  .faq details[open] { border-color: rgba(255,123,134,.45); }
+  .faq summary { cursor: pointer; list-style: none; padding: 18px 0; font-weight: 700; display: flex; justify-content: space-between; gap: 16px; transition: color .2s; }
+  .faq summary:hover { color: var(--red-soft); }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: "+"; font: 700 22px/1 var(--font-mono); color: var(--red); transition: transform .3s cubic-bezier(.2,.9,.2,1); }
+  .faq details[open] summary::after { transform: rotate(135deg); }
+  .faq p { margin: 0 0 18px; color: var(--muted); }
+  .contact { padding: 28px; position: sticky; top: 100px; }
+  .contact h3 { font: 400 32px/1 var(--font-display); text-transform: uppercase; margin-bottom: 12px; }
+  .contact p { color: var(--muted); margin: 0 0 18px; }
+  .soon-tag { display: inline-block; font: 700 11px/1 var(--font-mono); letter-spacing: .2em; text-transform: uppercase; padding: 10px 14px 10px 16px; color: var(--night); background: var(--red-soft); clip-path: var(--cut); animation: pulse 1.6s steps(2) infinite; }
+
+  /* ---------- Espace commentaires ---------- */
+  [hidden] { display: none !important; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .avis { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 18px; align-items: start; }
+  .avis-side { display: grid; gap: 14px; position: sticky; top: 100px; }
+  .avis-box { padding: 26px; }
+  .avis-box h3 { font: 400 30px/1 var(--font-display); text-transform: uppercase; margin-bottom: 10px; }
+  .avis-box p { color: var(--muted); margin: 0 0 16px; }
+  .avis-btns { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .avis-btns.small { margin-top: 14px; gap: 18px; }
+  .avis-who { font-size: 14px; }
+  .avis-who b { color: var(--paper); }
+  .avis textarea, .auth input[type=email], .auth input[type=password], .auth input[type=text] {
+    width: 100%; font: 15px/1.5 var(--font-body); color: var(--paper); background: rgba(4,6,26,.6); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .avis textarea { resize: vertical; min-height: 120px; }
+  .avis textarea:focus, .auth input:focus { outline: 2px solid var(--red-soft); outline-offset: 1px; border-color: transparent; }
+  .avis-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 10px 0 4px; flex-wrap: wrap; }
+  .check { display: inline-flex; gap: 8px; align-items: center; font-size: 14px; color: var(--paper); cursor: pointer; }
+  .check input { accent-color: var(--red); width: 16px; height: 16px; }
+  .avis-count { font: 700 11px/1 var(--font-mono); color: var(--faint); }
+  .avis-hint { font-size: 12.5px; color: var(--faint) !important; margin: 0 0 14px !important; }
+  .avis-rules { padding: 0 22px; }
+  .avis-rules summary { cursor: pointer; padding: 16px 0; font-weight: 700; font-size: 14px; }
+  .avis-rules ul { margin: 0 0 16px; padding-left: 18px; color: var(--muted); font-size: 14px; }
+  .avis-offline { color: var(--muted); padding: 22px 26px; border: 1px dashed var(--line); border-radius: var(--radius); }
+  .comments { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 10px; }
+  .comment { padding: 18px 22px; }
+  .comment-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .comment-author { color: var(--paper); }
+  .comment-author.anon { color: var(--muted); font-style: italic; }
+  .badge { font: 700 10px/1 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; padding: 5px 8px; color: var(--night); background: var(--red-soft); clip-path: var(--cut); }
+  .comment-date { font: 700 11px/1 var(--font-mono); color: var(--faint); margin-left: auto; }
+  .comment-body { margin: 0; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .comment-actions { margin-top: 8px; display: flex; gap: 16px; }
+  .link-btn { font: 700 11px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--blue-soft); background: none; border: 0; padding: 4px 0; cursor: pointer; text-decoration: none; }
+  .link-btn:hover { color: var(--paper); }
+  .link-btn:disabled { color: var(--faint); cursor: default; }
+  .avis-empty { color: var(--muted); }
+  .form-msg { font-size: 14px; margin: 10px 0 0; min-height: 1em; color: var(--muted); }
+  .form-msg:empty { display: none; }
+  .form-msg.error { color: var(--red-soft); }
+  .form-msg.ok { color: #7ee0b8; }
+
+  /* Fenêtre compte */
+  .auth { width: min(440px, calc(100vw - 32px)); padding: 0; border: 1px solid rgba(255,123,134,.35); border-radius: 20px; color: var(--paper);
+    background: rgba(7, 10, 34, .98); box-shadow: 0 30px 80px rgba(0,0,0,.7), -14px 0 50px rgba(255,31,46,.2), 14px 0 50px rgba(45,91,255,.2); }
+  .auth::backdrop { background: rgba(2, 3, 14, .72); backdrop-filter: blur(4px); }
+  .auth form, .auth .panel-body { padding: 28px; display: grid; gap: 12px; }
+  .auth h3 { font: 400 32px/1 var(--font-display); text-transform: uppercase; margin: 0 0 4px; }
+  .auth label { font: 700 11px/1.4 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--faint); display: grid; gap: 6px; }
+  .auth .check { font: 14px/1.4 var(--font-body); letter-spacing: 0; text-transform: none; color: var(--muted); display: flex; align-items: flex-start; }
+  .auth .btn { justify-content: center; }
+  .auth .alt { font-size: 14px; color: var(--muted); margin: 0; }
+  .auth .x { position: absolute; right: 14px; top: 12px; background: none; border: 0; color: var(--muted); font-size: 26px; cursor: pointer; line-height: 1; }
+  .auth .x:hover { color: var(--paper); }
+  .auth .danger { color: var(--red-soft); }
+
+  @media (max-width: 920px) { .avis { grid-template-columns: 1fr; } .avis-side { position: static; } }
+
+  footer { position: relative; z-index: 2; padding-block: 40px 56px; border-top: 1px solid var(--line); color: var(--faint); font-size: 14px; }
+  footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 14px; align-items: center; }
+  footer b { color: var(--muted); }
+  footer .tagline { font: 400 26px/1 var(--font-tag); color: var(--paper); transform: rotate(-3deg); display: inline-block; }
+
+  /* ---------- Easter egg : la vidéo prend la place du grand portrait ---------- */
+  .portrait video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #000; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 1; }
+  .portrait.playing video { opacity: 1; }
+  .portrait.playing img { opacity: 0; }
+  .portrait.playing::after { z-index: 2; }
+  .creator.egg .creator-card { opacity: 1; visibility: visible; transform: none; }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 920px) {
+    .hero, .perf, .support { grid-template-columns: 1fr; }
+    .features, .why, .stats { grid-template-columns: 1fr 1fr; }
+    .contact { position: static; }
+    .shot { transform: none; }
+  }
+  @media (max-width: 640px) {
+    .nav { display: none; }
+    .pill { margin-left: auto; }
+    .creator .who { display: none; }
+    .features, .why, .stats { grid-template-columns: 1fr; }
+    .release { grid-template-columns: 1fr; }
+    .stamp { font-size: 18px; }
+    .moon { width: 100px; height: 100px; top: -36px; right: -4px; }
+    .tag-ld { right: -4px; }
+    .track span { font-size: 22px; }
+    section { padding-block: 48px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  }
+</style>
+
+<canvas id="sky" aria-hidden="true"></canvas>
+<div class="police" aria-hidden="true"></div>
+<div class="progress" id="progress" aria-hidden="true"></div>
+<div class="cursor" id="cursor" aria-hidden="true"></div>
+<div class="cursor-dot" id="cursor-dot" aria-hidden="true"></div>
+
+<header class="top">
+  <div class="wrap">
+    <div class="creator" id="creator" tabindex="0" aria-describedby="creator-info">
+      <div class="avatar"><img src="../img/createur-avatar.jpg" width="320" height="320" alt="Photo of LD, creator of LunaQuest"></div>
+      <div class="who"><b>LD</b>Creator</div>
+      <div class="creator-card" id="creator-info" role="tooltip">
+        <div class="portrait" id="portrait"><img id="portrait-img" src="../img/createur-portrait.jpg" width="720" height="1280" alt=""><video id="egg-video" src="../media/hehe.mp4" playsinline preload="auto" aria-hidden="true"></video></div>
+        <div>
+          <h3>Creator info</h3>
+          <span class="sig">LD</span>
+          <dl>
+            <div><dt>Idea</dt><dd>Imagined by LD</dd></div>
+            <div><dt>Made with</dt><dd>Developed with the AI Claude</dd></div>
+            <div><dt>Version</dt><dd>Early Access 0.4.1</dd></div>
+          </dl>
+        </div>
+      </div>
+    </div>
+    <nav class="nav" aria-label="Sections">
+      <a href="#features">Features</a>
+      <a href="#whats-new">New</a>
+      <a href="#fbe">FBE</a>
+      <a href="#preview">Preview</a>
+      <a href="#performance">Specs</a>
+      <a href="#comments">Comments</a>
+      <a href="#support">Support</a>
+      <a href="../" hreflang="fr" lang="fr" title="Version française">FR</a>
+    </nav>
+    <span class="pill">Early Access 0.4.1</span>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <section class="hero" aria-labelledby="titre">
+      <div class="beams" aria-hidden="true"><div class="beam b1"></div><div class="beam b2"></div><div class="beam b3"></div></div>
+      <div>
+        <p class="eyebrow">PC VR · Meta Quest · USB cable</p>
+        <div class="title" id="title">
+          <h1 id="titre" class="glitch" data-text="LunaQuest">Luna<span class="q">Quest</span></h1>
+          <div class="slash" aria-hidden="true"></div>
+          <span class="tag-ld" aria-hidden="true">by LD</span>
+        </div>
+        <p class="lead">Play your PC VR games on your Quest <b>over a USB cable</b>, without the Meta app. A great alternative if you <b>don't have a good connection</b>.</p>
+        <div class="cta">
+          <a class="btn btn-dl magnet" id="download" href="../download/LunaQuest-0.4.1-Setup.zip" download>Download <small>v0.4.1 · Windows · 21 MB</small></a>
+          <a class="btn btn-ghost magnet" href="#preview">See the preview</a>
+        </div>
+        <div class="hero-meta"><span>Windows 10 / 11</span><span>Quest 2 · 3 · 3S · Pro</span><span>Based on ALVR</span></div>
+      </div>
+      <div class="stage" id="stage">
+        <div class="moon" aria-hidden="true"></div>
+        <figure class="shot" id="shot">
+          <img src="../img/connexion.png" width="1100" height="760" alt="LunaQuest window: headset status, Connect button and log">
+        </figure>
+      </div>
+    </section>
+  </div>
+
+  <div class="marquee" aria-hidden="true"><div class="track">
+    <span>No Wi-Fi</span><span>One cable</span><span>No Meta app</span><span>Early Access 0.4.1</span><span>Imagined by LD</span>
+    <span>No Wi-Fi</span><span>One cable</span><span>No Meta app</span><span>Early Access 0.4.1</span><span>Imagined by LD</span>
+  </div></div>
+  <div class="marquee alt" aria-hidden="true"><div class="track">
+    <span>Made with Claude</span><span>Plug and play</span><span>No NASA PC needed</span><span>LunaQuest</span>
+    <span>Made with Claude</span><span>Plug and play</span><span>No NASA PC needed</span><span>LunaQuest</span>
+  </div></div>
+
+  <div class="wrap">
+    <section aria-labelledby="why">
+      <div class="head reveal">
+        <p class="eyebrow">Why a cable</p>
+        <h2 id="why">Wi-Fi dropping? <span class="r">The cable holds.</span></h2>
+        <p>Wireless streaming depends on your network. With LunaQuest, the image goes straight through the USB cable: no overloaded router, no drops when someone starts a video in the next room.</p>
+      </div>
+      <div class="why">
+        <article class="tilt"><div class="big">0 Wi-Fi</div><h3>No network needed</h3><p>The video stream goes through a USB tunnel between the PC and the headset. Your internet connection doesn't matter.</p></article>
+        <article class="tilt"><div class="big">1 click</div><h3>One-click connection</h3><p>LunaQuest opens the tunnel, starts SteamVR and the LunaQuest app in the headset for you.</p></article>
+        <article class="tilt"><div class="big">0 Meta</div><h3>No heavy software</h3><p>A light, smooth window instead of the Meta PC app.</p></article>
+      </div>
+    </section>
+
+    <section id="features" aria-labelledby="features-title">
+      <div class="head reveal">
+        <p class="eyebrow">Features</p>
+        <h2 id="features-title">Everything you need, <span class="b">nothing more.</span></h2>
+      </div>
+      <div class="features">
+        <article class="feature tilt"><span class="num">01</span>
+          <div class="icon"><svg viewBox="0 0 24 24"><path d="M9 7V3M15 7V3M7 7h10v5a5 5 0 0 1-10 0V7ZM12 17v4"/></svg></div>
+          <h3>Plug in and go</h3><p>The automatic connection starts as soon as the headset is plugged in. Nothing left to click.</p></article>
+        <article class="feature tilt"><span class="num">02</span>
+          <div class="icon"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"/><circle cx="18" cy="15" r="3"/></svg></div>
+          <h3>Built-in ALVR settings</h3><p>Frame rate, video bitrate, codec, sound, microphone: everything is set in LunaQuest, without opening ALVR.</p></article>
+        <article class="feature tilt"><span class="num">03</span>
+          <div class="icon"><svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg></div>
+          <h3>Headset always awake</h3><p>The headset no longer goes to sleep when you put it down, which prevents games freezing at launch.</p></article>
+        <article class="feature tilt"><span class="num">04</span>
+          <div class="icon"><svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></div>
+          <h3>Live status</h3><p>Headset, battery, USB tunnel, SteamVR: see at a glance what is ready and what is missing.</p></article>
+        <article class="feature tilt"><span class="num">05</span>
+          <div class="icon"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg></div>
+          <h3>Guided setup</h3><p>ADB and the LunaQuest headset app install from LunaQuest, with a built-in step-by-step guide.</p></article>
+        <article class="feature tilt"><span class="num">06</span>
+          <div class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+          <h3>Made for SteamVR</h3><p>Your SteamVR games start as usual: Beat Saber, VRChat and the rest.</p></article>
+      </div>
+    </section>
+
+    <section id="whats-new" aria-labelledby="new-title">
+      <div class="head reveal">
+        <p class="eyebrow">New · 0.4.1</p>
+        <h2 id="new-title">Your app, <span class="b">your way.</span></h2>
+        <p>Four languages, eight themes, performance stats in the headset and a way to record your games. At startup, a saber slash opens the screen, then a short tutorial shows you each part of the app.</p>
+      </div>
+      <div class="fbe">
+        <div class="fbe-modes">
+          <article class="tilt fbe-mode"><h3>Languages and themes</h3><p>French, English, Chinese or Japanese. Black, white, blue, red, pink, purple, green or yellow theme.</p></article>
+          <article class="tilt fbe-mode"><h3>Stats in the headset</h3><p>Press both joysticks at the same time: frame rate, latency, bitrate and packet loss appear in front of you.</p></article>
+          <article class="tilt fbe-mode"><h3>Record</h3><p>One button records the headset stream as a video, saved in your Videos folder.</p></article>
+          <article class="tilt fbe-mode"><h3>The right controllers</h3><p>Quest 3 / 3S, Pro or 2 controllers recognized automatically, with the standard hand gestures in VRChat and other games.</p></article>
+        </div>
+        <figure class="fbe-shot"><img src="../img/parametres.png" width="1100" height="760" alt="LunaQuest Settings page: language, theme and startup animation" loading="lazy"></figure>
+      </div>
+    </section>
+
+    <section id="fbe" aria-labelledby="fbe-title">
+      <div class="head reveal">
+        <p class="eyebrow">Full body</p>
+        <h2 id="fbe-title">Your whole body, <span class="r">in VR.</span></h2>
+        <p>FBE (Full Body Estimation): LunaQuest creates virtual trackers for your body, or follows your real trackers. A live 3D preview shows each device, its tracking and its battery.</p>
+      </div>
+      <div class="fbe">
+        <div class="fbe-modes">
+          <article class="tilt fbe-mode"><h3>FBE Only</h3><p>Your whole body estimated by the Quest cameras: chest, hips, elbows, knees and feet. No trackers to buy.</p></article>
+          <article class="tilt fbe-mode"><h3>FBT</h3><p>Only your real trackers (Vive, Tundra…) and your base stations, as usual, with the live preview and each tracker's battery.</p></article>
+          <article class="tilt fbe-mode"><h3>Base stations</h3><p>Turn your 2.0 base stations on or put them to sleep through the PC's Bluetooth, even when not connected. In FBT, they can turn on by themselves when you connect and go to sleep at the end.</p></article>
+        </div>
+        <figure class="fbe-shot"><img src="../img/corps.png" width="1100" height="760" alt="LunaQuest Body and trackers page: FBE modes and live 3D preview of the devices" loading="lazy"></figure>
+      </div>
+    </section>
+
+    <section id="preview" aria-labelledby="preview-title">
+      <div class="head reveal">
+        <p class="eyebrow">Preview</p>
+        <h2 id="preview-title">An app <span class="b">under the moon.</span></h2>
+      </div>
+      <div class="preview">
+        <div class="tabs" role="tablist" aria-label="LunaQuest screens">
+          <button id="tab-connexion" role="tab" aria-selected="true" data-img="../img/connexion.png" data-cap="Connection: live headset status, the big Connect button, the PC screen in the headset and a log of what's happening.">Connection</button>
+          <button id="tab-reglages" role="tab" aria-selected="false" data-img="../img/reglages.png" data-cap="ALVR settings: frame rate, bitrate, codec, resolution, sound, microphone, foveation and your presets, without opening ALVR.">ALVR settings</button>
+          <button id="tab-corps" role="tab" aria-selected="false" data-img="../img/corps.png" data-cap="Body and trackers: FBE Only and FBT modes, a live 3D preview of your devices, their tracking and battery, and your base stations.">Body and trackers</button>
+          <button id="tab-parametres" role="tab" aria-selected="false" data-img="../img/parametres.png" data-cap="Settings: the language (French, English, Chinese, Japanese), the theme and the startup animation.">Settings</button>
+          <button id="tab-guide" role="tab" aria-selected="false" data-img="../img/guide.png" data-cap="Guide: the six steps from zero to your first wired game.">Guide</button>
+        </div>
+        <div class="viewer" id="viewer" role="tabpanel" aria-labelledby="tab-connexion">
+          <img id="preview-img" src="../img/connexion.png" width="1100" height="760" alt="LunaQuest Connection screen">
+        </div>
+        <p class="caption" id="preview-cap">Connection: live headset status, the big Connect button, the PC screen in the headset and a log of what's happening.</p>
+        <p class="caption">The screenshots show the app in French; in the app, open Settings (gear icon) and pick English.</p>
+      </div>
+    </section>
+
+    <section id="performance" aria-labelledby="perf-title">
+      <div class="head reveal">
+        <p class="eyebrow">Performance</p>
+        <h2 id="perf-title">Great performance, <span class="r">no NASA PC.</span></h2>
+        <p>LunaQuest uses your graphics card's video encoder. A mid-range card is enough to play smoothly.</p>
+      </div>
+      <div class="stats">
+        <div class="stat tilt"><div class="val"><span class="count" data-to="90">90</span><small>Hz</small></div><p>Smooth in game on a mid-range card.</p></div>
+        <div class="stat tilt"><div class="val"><span class="count" data-to="100">100</span><small>Mbit/s</small></div><p>Comfortable video bitrate over USB.</p></div>
+        <div class="stat tilt"><div class="val"><span class="count" data-to="0">0</span><small>Wi-Fi</small></div><p>No dependence on your connection.</p></div>
+      </div>
+      <div class="perf">
+        <div class="panel tilt">
+          <h3>Test setup</h3>
+          <div class="bars" id="bars">
+            <div><div class="row"><span>Refresh rate</span><b>90 Hz</b></div><div class="bar"><i style="width:75%"></i></div></div>
+            <div><div class="row"><span>Video bitrate over USB</span><b>60 to 100 Mbit/s</b></div><div class="bar"><i style="width:55%"></i></div></div>
+            <div><div class="row"><span>Resolution per eye (Quest 3)</span><b>2060 × 2148</b></div><div class="bar"><i style="width:68%"></i></div></div>
+          </div>
+          <p class="note">Measured with a Quest 3 and a GeForce RTX 3060 (12 GB), over a USB cable.</p>
+        </div>
+        <div class="panel tilt">
+          <h3>What you need</h3>
+          <table class="spec">
+            <tr><td>System</td><td>Windows 10 or 11</td></tr>
+            <tr><td>Graphics card</td><td>SteamVR compatible. An RTX 3060 already does the job very well.</td></tr>
+            <tr><td>Headset</td><td>Meta Quest 2, 3, 3S or Pro, in developer mode</td></tr>
+            <tr><td>Cable</td><td>USB-C, USB 3 recommended</td></tr>
+            <tr><td>Software</td><td>Steam and SteamVR (free). ALVR is included.</td></tr>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="version-title">
+      <div class="release tilt">
+        <span class="stamp" aria-hidden="true">Early Access</span>
+        <div class="version"><small>Current version</small>0.4.1</div>
+        <div>
+          <h2 id="version-title">Available in early access</h2>
+          <p>LunaQuest works, but it's still being polished: your feedback helps improve it.</p>
+          <ul>
+            <li><b>0.4.1:</b> your headset's controllers (Quest 3 / 3S, Pro or 2) in SteamVR, with the standard hand gestures in VRChat and other games. LunaQuest no longer opens twice.</li>
+            <li><b>Languages and themes:</b> French, English, Chinese, Japanese and eight color themes. Startup animation and guided tutorial.</li>
+            <li><b>In game:</b> stats in the headset (both joysticks), Record button, low battery alerts.</li>
+            <li><b>Base stations:</b> on and sleep through Bluetooth, manually or automatically in FBT.</li>
+            <li><b>Handy:</b> start with Windows (icon near the clock) and update check.</li>
+            <li><b>Fix:</b> LunaQuest no longer removes other SteamVR drivers (Space Calibrator, Virtual Desktop…). The FBE Mix mode is removed.</li>
+            <li><b>Install:</b> a real installer, no admin rights, with a clean uninstall. Full tutorial included.</li>
+            <li><b>Windows warning:</b> the installer isn't signed yet. If Windows shows “Windows protected your PC”, click “More info” then “Run anyway”.</li>
+          </ul>
+          <p class="dl-row"><a class="btn btn-dl" href="../download/LunaQuest-0.4.1-Setup.zip" download>Download 0.4.1</a></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="avis" aria-labelledby="avis-titre">
+      <div class="head reveal" id="comments">
+        <p class="eyebrow">Comments</p>
+        <h2 id="avis-titre">Your opinion <span class="r">matters.</span></h2>
+        <p>A bug, an idea, feedback on your games? Leave a comment. Downloading stays free: the account is only for commenting.</p>
+      </div>
+
+      <p class="avis-offline" id="avis-offline" hidden>The comment section is coming very soon.</p>
+
+      <div class="avis" id="avis-main">
+        <div class="avis-side">
+          <div class="tilt avis-box" id="avis-guest">
+            <h3>Join the discussion</h3>
+            <p>Create a free account to comment, with your username or anonymously.</p>
+            <div class="avis-btns">
+              <button class="btn btn-dl" type="button" data-open="signup">Create an account</button>
+              <button class="btn btn-ghost" type="button" data-open="login">Sign in</button>
+            </div>
+          </div>
+
+          <div class="tilt avis-box" id="avis-member" hidden>
+            <p class="avis-who">Signed in: <b id="avis-me"></b></p>
+            <form id="avis-form" novalidate>
+              <label class="sr-only" for="avis-text">Your comment</label>
+              <textarea id="avis-text" maxlength="1000" rows="5" placeholder="Your comment…" required></textarea>
+              <div class="avis-row">
+                <label class="check"><input type="checkbox" id="avis-anon"> Post anonymously</label>
+                <span class="avis-count" id="avis-count">0 / 1000</span>
+              </div>
+              <p class="avis-hint">When anonymous, your username isn't shown. The creator can see it, for moderation.</p>
+              <button class="btn btn-dl" type="submit" id="avis-send">Post</button>
+              <p class="form-msg" id="avis-status" role="status"></p>
+            </form>
+            <p class="form-msg error" id="avis-banned" hidden>Your account can no longer post comments.</p>
+            <div class="avis-btns small">
+              <button class="link-btn" type="button" data-open="account">My account</button>
+              <a class="link-btn" id="avis-admin-link" href="../admin.html" hidden>Moderation</a>
+              <button class="link-btn" type="button" id="avis-logout">Sign out</button>
+            </div>
+          </div>
+
+          <details class="tilt avis-rules">
+            <summary>Comment section rules</summary>
+            <ul>
+              <li>Be respectful: no insults, hate speech or harassment.</li>
+              <li>No ads or spam. Links and filtered words are checked before posting.</li>
+              <li>A comment reported by several members is hidden until it's checked.</li>
+              <li>Accounts that don't follow these rules can be blocked.</li>
+            </ul>
+          </details>
+        </div>
+
+        <div class="avis-feed">
+          <ul class="comments" id="avis-list" aria-live="polite"></ul>
+          <p class="avis-empty" id="avis-empty" hidden>No comments yet. Be the first!</p>
+          <p class="form-msg" id="avis-list-msg" role="status"></p>
+          <button class="btn btn-ghost" type="button" id="avis-more" hidden>See more</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="support" aria-labelledby="support-title">
+      <div class="head reveal">
+        <p class="eyebrow">Support</p>
+        <h2 id="support-title">A question? <span class="b">We'll help.</span></h2>
+      </div>
+      <div class="support">
+        <div class="faq">
+          <details class="tilt" open>
+            <summary>Do I need the Meta app on my PC?</summary>
+            <p>No. LunaQuest goes through ALVR and SteamVR. The Meta PC app isn't needed.</p>
+          </details>
+          <details class="tilt">
+            <summary>Does it work with a bad internet connection?</summary>
+            <p>Yes, that's the whole point: the image goes through the USB cable, not your Wi-Fi. Steam only needs internet to start as usual.</p>
+          </details>
+          <details class="tilt">
+            <summary>Which headsets are supported?</summary>
+            <p>Meta Quest 2, 3, 3S and Pro, with developer mode enabled (free, from the Meta Horizon phone app).</p>
+          </details>
+          <details class="tilt">
+            <summary>My game freezes at launch, what should I do?</summary>
+            <p>Leave “Keep the headset awake” on: a sleeping headset blocks the image. With modded Beat Saber, the BeatLeader mod can also freeze the game under SteamVR.</p>
+          </details>
+          <details class="tilt">
+            <summary>The image stutters in the headset.</summary>
+            <p>Lower the video bitrate in ALVR settings, for example to 60 Mbit/s, and use a USB 3 cable.</p>
+          </details>
+          <details class="tilt">
+            <summary>How do I get the app in English?</summary>
+            <p>Open Settings (the gear icon at the bottom left), choose English, and let LunaQuest restart.</p>
+          </details>
+        </div>
+        <aside class="contact tilt" aria-labelledby="contact-title">
+          <h3 id="contact-title">Contact support</h3>
+          <p>Can't find your answer? Ask your question in the comment section, the creator answers there.</p>
+          <a class="btn btn-ghost" href="#avis">Ask my question</a>
+        </aside>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span class="tagline">Imagined by LD</span>
+    <span>Made with the AI <b>Claude</b> · LunaQuest Early Access 0.4.1 · Based on <a href="https://github.com/alvr-org/ALVR">ALVR</a> (open source) · Not affiliated with Meta or Valve · <a href="https://github.com/lunaquestld/LunaQuest" rel="noopener">Source code on GitHub</a> · <a href="../mentions-legales.html" hreflang="fr">Legal notice and privacy (in French)</a> · <a href="../" hreflang="fr" lang="fr">Version française</a></span>
+  </div>
+</footer>
+
+<dialog class="auth" id="auth-dialog" aria-label="Account">
+  <button class="x" type="button" data-close aria-label="Close">×</button>
+
+  <form id="form-login" data-panel="login" novalidate>
+    <h3>Sign in</h3>
+    <label>E-mail <input type="email" name="email" autocomplete="email" required></label>
+    <label>Password <input type="password" name="password" autocomplete="current-password" required></label>
+    <button class="btn btn-dl" type="submit">Sign in</button>
+    <p class="form-msg" role="status"></p>
+    <p class="alt"><button class="link-btn" type="button" data-open="forgot">Forgot your password?</button></p>
+    <p class="alt">No account yet? <button class="link-btn" type="button" data-open="signup">Create an account</button></p>
+  </form>
+
+  <form id="form-signup" data-panel="signup" novalidate hidden>
+    <h3>Create an account</h3>
+    <label>Username <input type="text" name="pseudo" minlength="2" maxlength="20" pattern="[A-Za-z0-9_.\-]{2,20}" autocomplete="nickname" required></label>
+    <label>E-mail <input type="email" name="email" autocomplete="email" required></label>
+    <label>Password (at least 8 characters) <input type="password" name="password" minlength="8" autocomplete="new-password" required></label>
+    <label>Confirm the password <input type="password" name="password2" minlength="8" autocomplete="new-password" required></label>
+    <label class="check"><input type="checkbox" name="terms" required> <span>I accept the comment section rules and the <a href="../mentions-legales.html#confidentialite" target="_blank" rel="noopener">privacy policy</a> (in French).</span></label>
+    <button class="btn btn-dl" type="submit">Create my account</button>
+    <p class="form-msg" role="status"></p>
+    <p class="alt">Already have an account? <button class="link-btn" type="button" data-open="login">Sign in</button></p>
+  </form>
+
+  <form id="form-forgot" data-panel="forgot" novalidate hidden>
+    <h3>Forgot password</h3>
+    <label>Account e-mail <input type="email" name="email" autocomplete="email" required></label>
+    <button class="btn btn-dl" type="submit">Get a link</button>
+    <p class="form-msg" role="status"></p>
+    <p class="alt"><button class="link-btn" type="button" data-open="login">Back to sign in</button></p>
+  </form>
+
+  <form id="form-recovery" data-panel="recovery" novalidate hidden>
+    <h3>New password</h3>
+    <label>New password <input type="password" name="password" minlength="8" autocomplete="new-password" required></label>
+    <label>Confirm it <input type="password" name="password2" minlength="8" autocomplete="new-password" required></label>
+    <button class="btn btn-dl" type="submit">Save</button>
+    <p class="form-msg" role="status"></p>
+  </form>
+
+  <div data-panel="account" hidden>
+    <form id="form-pseudo" novalidate>
+      <h3>My account</h3>
+      <p class="alt">Current username: <b id="acc-pseudo-now"></b></p>
+      <label>New username <input type="text" name="pseudo" minlength="2" maxlength="20" pattern="[A-Za-z0-9_.\-]{2,20}" required></label>
+      <button class="btn btn-ghost" type="submit">Change username</button>
+      <p class="form-msg" role="status"></p>
+    </form>
+    <div class="panel-body">
+      <p class="alt">Deleting your account also deletes all your comments.</p>
+      <button class="link-btn danger" type="button" id="acc-delete">Delete my account</button>
+      <p class="form-msg" id="acc-delete-msg" role="status"></p>
+    </div>
+  </div>
+</dialog>
+
+<script src="../vendor/supabase.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/comments.js" defer></script>
+
+<script src="../js/site.js"></script>

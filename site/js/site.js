@@ -231,7 +231,7 @@
         Array.prototype.forEach.call(tabs, function (t) { t.setAttribute("aria-selected", t === tab ? "true" : "false"); });
         viewer.setAttribute("aria-labelledby", tab.id);
         img.src = tab.getAttribute("data-img");
-        img.alt = "Écran " + tab.textContent + " de LunaQuest";
+        img.alt = document.documentElement.lang === "en" ? "LunaQuest " + tab.textContent + " screen" : "Écran " + tab.textContent + " de LunaQuest";
         cap.textContent = tab.getAttribute("data-cap");
         if (!reduce) { viewer.classList.remove("glitching"); void viewer.offsetWidth; viewer.classList.add("glitching"); }
       });
