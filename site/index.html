@@ -3,6 +3,7 @@
 <meta name="description" content="LunaQuest : joue à tes jeux PC VR sur ton Meta Quest par câble USB, sans l'appli Meta. Gratuit, connexion en un clic, basé sur ALVR.">
 <link rel="alternate" hreflang="fr" href="https://lunaquest-by-ld.netlify.app/">
 <link rel="alternate" hreflang="en" href="https://lunaquest-by-ld.netlify.app/en/">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="fonts/fonts.css">
 <style>
@@ -361,6 +362,20 @@
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
   }
+
+  /* ---------- Passer de LunaQuest (câble) à SunQuest (sans fil), en bas de l'écran ---------- */
+  body { padding-bottom: 64px; }
+  .switch { position: fixed; left: 50%; bottom: max(14px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 75; display: flex; gap: 4px; padding: 4px;
+    background: rgba(8, 6, 12, .82); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,.14); clip-path: var(--cut); box-shadow: 0 12px 40px rgba(0,0,0,.5); }
+  .switch a { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px 10px 18px; font: 700 12px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase;
+    color: #c9c3d6; text-decoration: none; clip-path: var(--cut); white-space: nowrap; transition: background .2s, color .2s; }
+  .switch a small { font: 700 10px/1 var(--font-mono); letter-spacing: .1em; opacity: .7; }
+  .switch svg { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .switch .sw-luna:hover { color: #f4f3ff; background: rgba(45,91,255,.35); }
+  .switch .sw-sun:hover { color: #fff7ee; background: rgba(255,116,22,.35); }
+  .switch .sw-luna[aria-current="page"] { color: #04061a; background: #cfe0ff; }
+  .switch .sw-sun[aria-current="page"] { color: #1c0c02; background: #ffbe14; }
+  @media (max-width: 420px) { .switch a small { display: none; } .switch a { padding: 10px 12px 10px 14px; } }
 </style>
 
 <canvas id="sky" aria-hidden="true"></canvas>
@@ -400,6 +415,11 @@
     <span class="pill">Early Access 0.4.1</span>
   </div>
 </header>
+
+<nav class="switch" aria-label="Choisir la version">
+  <a class="sw-luna" href="./" aria-current="page" title="LunaQuest : par câble USB"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/></svg>LunaQuest <small>câble</small></a>
+  <a class="sw-sun" href="sunquest/" title="SunQuest : sans fil"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg>SunQuest <small>sans fil</small></a>
+</nav>
 
 <main>
   <div class="wrap">

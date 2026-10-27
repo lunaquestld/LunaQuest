@@ -17,6 +17,10 @@
 LunaQuest est un lanceur pour Windows qui fait passer le streaming [ALVR](https://github.com/alvr-org/ALVR) **par le câble USB** au lieu du Wi-Fi.
 Une superbe alternative si ta connexion sans fil n'est pas au top.
 
+> **Envie de jouer sans fil ?** [SunQuest](https://github.com/lunaquestld/SunQuest) est la version Wi-Fi de LunaQuest,
+> façon Virtual Desktop : SteamVR démarre tout seul quand tu ouvres l'appli dans le casque.
+> Les deux s'installent côte à côte.
+
 ## Nouveau dans la 0.4.1
 
 - **Les vraies manettes de ton casque** : Quest 3 / 3S, Quest Pro ou Quest 2, reconnues automatiquement dans SteamVR.

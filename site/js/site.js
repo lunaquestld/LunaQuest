@@ -3,6 +3,9 @@
     var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     var fine = window.matchMedia("(pointer: fine)").matches;
     var mouse = { x: -999, y: -999 };
+    // Pages de SunQuest (html data-product="sun") : couleurs du soleil.
+    var sun = document.documentElement.getAttribute("data-product") === "sun";
+    var product = sun ? "SunQuest" : "LunaQuest";
 
     // ---------- Ciel : étoiles, feuilles d'érable qui tombent, étincelles au clic ----------
     var canvas = document.getElementById("sky"), ctx = canvas.getContext("2d");
@@ -11,7 +14,7 @@
     function newLeaf(top) {
       var blue = Math.random() < .15;
       return { x: Math.random() * w, y: top ? -30 : Math.random() * h, s: 7 + Math.random() * 13, r: Math.random() * 6.28, vr: (Math.random() - .5) * .03,
-        vy: .35 + Math.random() * .7, sway: Math.random() * 6.28, vx: 0, a: .35 + Math.random() * .45, c: blue ? "45,91,255" : "255,31,46" };
+        vy: .35 + Math.random() * .7, sway: Math.random() * 6.28, vx: 0, a: .35 + Math.random() * .45, c: sun ? (blue ? "255,190,20" : "255,116,22") : (blue ? "45,91,255" : "255,31,46") };
     }
     function resize() {
       w = window.innerWidth; h = window.innerHeight;
@@ -20,7 +23,7 @@
       for (var i = 0, n = Math.round(w * h / 5000); i < n; i++) {
         var k = Math.random();
         stars.push({ x: Math.random() * w, y: Math.random() * h, s: .4 + Math.pow(Math.random(), 3) * 1.7, p: Math.random() * 6.28, v: .5 + Math.random(),
-          c: k < .1 ? "255,123,134" : k < .35 ? "143,178,255" : "244,243,255" });
+          c: sun ? (k < .1 ? "255,168,96" : k < .35 ? "255,214,120" : "255,247,238") : (k < .1 ? "255,123,134" : k < .35 ? "143,178,255" : "244,243,255") });
       }
       leaves = [];
       for (var j = 0, m = Math.max(10, Math.round(w / 70)); j < m; j++) leaves.push(newLeaf(false));
@@ -72,7 +75,7 @@
       if (reduce) return;
       for (var i = 0; i < 26; i++) {
         var ang = Math.random() * 6.28, sp = 2 + Math.random() * 6;
-        sparks.push({ x: e.clientX, y: e.clientY, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - 2, life: 1, c: i % 3 === 0 ? "45,91,255" : i % 3 === 1 ? "255,31,46" : "207,224,255" });
+        sparks.push({ x: e.clientX, y: e.clientY, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - 2, life: 1, c: i % 3 === 0 ? (sun ? "255,190,20" : "45,91,255") : i % 3 === 1 ? (sun ? "255,116,22" : "255,31,46") : (sun ? "255,226,150" : "207,224,255") });
       }
     });
 
@@ -231,7 +234,7 @@
         Array.prototype.forEach.call(tabs, function (t) { t.setAttribute("aria-selected", t === tab ? "true" : "false"); });
         viewer.setAttribute("aria-labelledby", tab.id);
         img.src = tab.getAttribute("data-img");
-        img.alt = document.documentElement.lang === "en" ? "LunaQuest " + tab.textContent + " screen" : "Écran " + tab.textContent + " de LunaQuest";
+        img.alt = document.documentElement.lang === "en" ? product + " " + tab.textContent + " screen" : "Écran " + tab.textContent + " de " + product;
         cap.textContent = tab.getAttribute("data-cap");
         if (!reduce) { viewer.classList.remove("glitching"); void viewer.offsetWidth; viewer.classList.add("glitching"); }
       });

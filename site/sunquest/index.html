@@ -1,0 +1,789 @@
+<html lang="fr" data-product="sun">
+<title>SunQuest – PC VR sans fil pour Meta Quest</title>
+<meta name="description" content="SunQuest : joue à tes jeux PC VR sur ton Meta Quest sans fil, par le Wi-Fi, comme avec Virtual Desktop. Gratuit, SteamVR démarre tout seul, basé sur ALVR.">
+<link rel="alternate" hreflang="fr" href="https://lunaquest-by-ld.netlify.app/sunquest/">
+<link rel="alternate" hreflang="en" href="https://lunaquest-by-ld.netlify.app/sunquest/en/">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="../fonts/fonts.css">
+<style>
+  /* Layout : nuit de pleine lune façon affiche samouraï — rouge érable, bleu électrique, lumière de lune ; colonne de 1120px, une colonne sur mobile. */
+  :root {
+    color-scheme: dark;
+    --night: #0e0603;
+    --ink: #160a05;
+    --panel: rgba(42, 18, 8, 0.66);
+    --line: rgba(255, 176, 92, 0.2);
+    --red: #ff7416;
+    --red-soft: #ffa860;
+    --blue: #ffbe14;
+    --blue-soft: #ffd678;
+    --moon: #ffe296;
+    --paper: #fff7ee;
+    --muted: #e3c4a4;
+    --faint: #a6826a;
+    --font-display: "Anton", "Impact", "Arial Narrow", sans-serif;
+    --font-body: "Manrope", "Segoe UI", system-ui, sans-serif;
+    --font-mono: "Space Mono", Consolas, monospace;
+    --font-tag: "Permanent Marker", "Segoe Print", cursive;
+    --radius: 18px;
+    --max: 1120px;
+    --cut: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--night); color: var(--paper); font: 16px/1.65 var(--font-body); overflow-x: hidden; }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 60; background: var(--night); }
+  @media (pointer: fine) { body.fx-cursor, body.fx-cursor a, body.fx-cursor button, body.fx-cursor summary, body.fx-cursor [tabindex] { cursor: crosshair; } }
+  a { color: var(--blue-soft); }
+  :focus-visible { outline: 2px solid var(--red-soft); outline-offset: 3px; }
+  h1, h2, h3 { margin: 0; text-wrap: balance; }
+  .wrap { position: relative; z-index: 2; max-width: var(--max); margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .eyebrow { font: 700 12px/1 var(--font-mono); letter-spacing: .32em; text-transform: uppercase; color: var(--red-soft); }
+
+  /* ---------- Fond ---------- */
+  #sky { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+  .police { position: fixed; inset: 0; z-index: 1; pointer-events: none; mix-blend-mode: screen; }
+  .police::before, .police::after { content: ""; position: absolute; inset: 0; opacity: 0; }
+  .police::before { background: radial-gradient(ellipse at 0% 55%, rgba(255,116,22,.5), transparent 55%); }
+  .police::after { background: radial-gradient(ellipse at 100% 55%, rgba(255,190,20,.55), transparent 55%); }
+  body.siren .police::before { animation: sirenR .5s steps(2) infinite; }
+  body.siren .police::after { animation: sirenB .5s steps(2) infinite; }
+  @keyframes sirenR { 0% { opacity: .9; } 50% { opacity: 0; } }
+  @keyframes sirenB { 0% { opacity: 0; } 50% { opacity: .9; } }
+  .progress { position: fixed; top: env(safe-area-inset-top, 0px); left: 0; height: 3px; width: 100%; z-index: 70; transform-origin: 0 50%; transform: scaleX(0); background: linear-gradient(90deg, var(--red), var(--moon), var(--blue)); box-shadow: 0 0 12px var(--red); }
+
+  /* Curseur : anneau qui suit la souris et grossit sur ce qui est cliquable. */
+  .cursor { position: fixed; left: 0; top: 0; z-index: 80; pointer-events: none; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%;
+    border: 1.5px solid var(--moon); mix-blend-mode: screen; transition: width .2s, height .2s, margin .2s, border-color .2s, background .2s; display: none; }
+  .cursor.on { width: 58px; height: 58px; margin: -29px 0 0 -29px; border-color: var(--red); background: rgba(255,116,22,.12); }
+  .cursor-dot { position: fixed; left: 0; top: 0; z-index: 81; pointer-events: none; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: var(--red); box-shadow: 0 0 10px var(--red); display: none; }
+  @media (pointer: fine) { body.fx-cursor .cursor, body.fx-cursor .cursor-dot { display: block; } }
+
+  /* Glitch : séparation rouge / bleu, pilotée par le script. */
+  .glitch { position: relative; display: inline-block; }
+  .glitch::before, .glitch::after { content: attr(data-text); position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen; }
+  .glitch::before { color: var(--red); transform: translate(var(--gx1, 0px), 0); clip-path: inset(var(--gc1, 100%) 0 var(--gc2, 0) 0); }
+  .glitch::after { color: var(--blue); transform: translate(var(--gx2, 0px), 0); clip-path: inset(var(--gc3, 100%) 0 var(--gc4, 0) 0); }
+
+  /* ---------- Barre du haut ---------- */
+  .top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 50; backdrop-filter: blur(14px); background: rgba(14, 6, 3, .74); border-bottom: 1px solid var(--line); }
+  .top .wrap { display: flex; align-items: center; gap: 20px; padding-block: 12px; }
+  .creator { position: relative; display: flex; align-items: center; gap: 12px; }
+  .avatar { position: relative; width: 52px; height: 52px; flex: none; border-radius: 50%; padding: 3px; isolation: isolate; }
+  .avatar::before { content: ""; position: absolute; inset: 0; border-radius: 50%; z-index: -1;
+    background: conic-gradient(from var(--spin, 0deg), var(--red), var(--moon), var(--blue), var(--red)); animation: ring 4s linear infinite; }
+  .avatar::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; z-index: -2; background: conic-gradient(from var(--spin, 0deg), var(--red), transparent 40%, var(--blue), transparent 80%); filter: blur(8px); opacity: .7; animation: ring 4s linear infinite; }
+  @property --spin { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+  @keyframes ring { to { --spin: 360deg; } }
+  .avatar img { display: block; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid var(--night); transition: transform .35s cubic-bezier(.2,.9,.2,1), filter .35s; }
+  .creator:hover .avatar img, .creator:focus-within .avatar img { transform: scale(1.12) rotate(-6deg); filter: saturate(1.3) contrast(1.1); }
+  .creator .who { font: 700 11px/1.2 var(--font-mono); letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
+  .creator .who b { display: block; font: 400 22px/1 var(--font-tag); letter-spacing: 0; color: var(--paper); text-transform: none; transform: rotate(-4deg); margin-bottom: 3px; }
+  .creator-card { position: absolute; top: calc(100% + 14px); left: 0; width: min(380px, calc(100vw - 32px)); display: grid; grid-template-columns: 120px 1fr; gap: 16px;
+    padding: 16px; border-radius: 18px; background: rgba(22, 10, 5, .97); border: 1px solid rgba(255,168,96,.35);
+    box-shadow: 0 24px 60px rgba(0,0,0,.6), -10px 0 40px rgba(255,116,22,.18), 10px 0 40px rgba(255,190,20,.18);
+    opacity: 0; visibility: hidden; transform: translateY(-8px) scale(.98); transform-origin: 30px 0; transition: opacity .25s, transform .3s cubic-bezier(.2,.9,.2,1), visibility .3s; }
+  .creator:hover .creator-card, .creator:focus-within .creator-card { opacity: 1; visibility: visible; transform: none; }
+  .portrait { position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: 9 / 16; max-width: 100%; border: 1px solid var(--line); }
+  .portrait img { position: absolute; inset: -8%; width: 116%; height: 116%; object-fit: cover; transform: translate(var(--px, 0px), var(--py, 0px)); transition: transform .2s ease-out; }
+  .portrait::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgba(14,6,3,.8)); }
+  .creator-card h3 { font: 700 11px/1 var(--font-mono); letter-spacing: .3em; text-transform: uppercase; color: var(--red-soft); margin-bottom: 8px; }
+  .creator-card .sig { font: 400 34px/1 var(--font-tag); color: var(--paper); transform: rotate(-5deg); display: inline-block; margin-bottom: 12px; text-shadow: 3px 0 var(--red), -3px 0 var(--blue); }
+  .creator-card dl { margin: 0; display: grid; gap: 7px; font-size: 13.5px; }
+  .creator-card dt { font: 700 10px/1 var(--font-mono); letter-spacing: .2em; text-transform: uppercase; color: var(--faint); }
+  .creator-card dd { margin: 2px 0 0; color: var(--paper); }
+  .nav { display: flex; gap: 6px; margin-left: auto; }
+  .nav a { position: relative; color: var(--muted); text-decoration: none; font: 700 12px/1 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; padding: 10px 12px; transition: color .2s; }
+  .nav a::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: 4px; height: 2px; background: linear-gradient(90deg, var(--red), var(--blue)); transform: scaleX(0); transform-origin: left; transition: transform .25s cubic-bezier(.2,.9,.2,1); }
+  .nav a:hover { color: var(--paper); }
+  .nav a:hover::after { transform: scaleX(1); }
+  .pill { font: 700 11px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; padding: 9px 14px; color: var(--night); background: var(--moon); clip-path: var(--cut); white-space: nowrap; animation: pulse 1.6s steps(2) infinite; }
+  @keyframes pulse { 50% { filter: brightness(1.25); } }
+
+  /* ---------- Hero ---------- */
+  .hero { position: relative; display: grid; grid-template-columns: 1.05fr 1fr; gap: 44px; align-items: center; padding-block: 64px 48px; }
+  .beams { position: absolute; inset: -60px -10vw auto; height: 620px; pointer-events: none; mix-blend-mode: screen; opacity: .5; z-index: 0; overflow: hidden; }
+  .beam { position: absolute; top: -40px; width: 140px; height: 760px; transform-origin: 50% 0; background: linear-gradient(180deg, var(--bc), transparent 80%); filter: blur(10px); }
+  .b1 { left: 8%; --bc: rgba(255,116,22,.55); animation: sweep 6s ease-in-out infinite alternate; }
+  .b2 { left: 38%; --bc: rgba(255,190,20,.55); animation: sweep 4.6s ease-in-out -2s infinite alternate-reverse; }
+  .b3 { right: 10%; --bc: rgba(255,226,150,.4); animation: sweep 5.4s ease-in-out -1s infinite alternate; }
+  @keyframes sweep { from { transform: rotate(-24deg); } to { transform: rotate(24deg); } }
+  .hero > div:not(.beams) { position: relative; z-index: 1; min-width: 0; }
+  .title { position: relative; display: inline-block; }
+  .hero h1 { font: 400 clamp(64px, 11vw, 140px)/.88 var(--font-display); letter-spacing: .01em; text-transform: uppercase; color: var(--paper); text-shadow: 0 0 40px rgba(255,226,150,.25); }
+  .hero h1 .q { color: var(--red); text-shadow: 0 0 34px rgba(255,116,22,.55); }
+  .slash { position: absolute; left: -6%; right: -6%; top: 52%; height: 4px; background: linear-gradient(90deg, transparent, var(--paper), var(--red-soft), transparent); box-shadow: 0 0 18px var(--paper), 0 0 40px var(--red); transform: rotate(-9deg) scaleX(0); transform-origin: 0 50%; opacity: 0; pointer-events: none; }
+  .title.cut .slash { animation: slash .42s cubic-bezier(.2,.9,.2,1) forwards; }
+  @keyframes slash { 0% { transform: rotate(-9deg) scaleX(0); opacity: 1; } 50% { transform: rotate(-9deg) scaleX(1); opacity: 1; } 100% { transform: rotate(-9deg) scaleX(1); opacity: 0; } }
+  .tag-ld { position: absolute; right: -18px; top: -26px; font: 400 34px/1 var(--font-tag); color: var(--red); transform: rotate(12deg); text-shadow: 0 0 18px rgba(255,116,22,.6); }
+  .lead { font-size: clamp(18px, 2.2vw, 21px); color: var(--muted); max-width: 36ch; margin: 22px 0 30px; }
+  .lead b { color: var(--paper); }
+  .cta { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+  .btn { position: relative; display: inline-flex; align-items: center; gap: 12px; padding: 17px 30px 17px 34px; font: 700 13px/1 var(--font-mono); letter-spacing: .22em; text-transform: uppercase; text-decoration: none; border: 0; clip-path: var(--cut); transition: transform .18s cubic-bezier(.2,.9,.2,1), background .2s, color .2s; will-change: transform; }
+  .btn-soon { color: var(--paper); background: var(--red); cursor: not-allowed; }
+  .btn-soon:hover { background: var(--paper); color: var(--night); }
+  .btn-soon small { font: 700 10px/1 var(--font-mono); letter-spacing: .16em; padding: 6px 8px; background: rgba(14,6,3,.35); }
+  .btn-dl { color: var(--paper); background: var(--red); box-shadow: 0 0 34px rgba(255,116,22,.35); }
+  .btn-dl:hover { background: var(--paper); color: var(--night); }
+  .btn-dl small { font: 700 10px/1 var(--font-mono); letter-spacing: .16em; padding: 6px 8px; background: rgba(14,6,3,.35); }
+  .btn-ghost { color: var(--paper); background: rgba(255,190,20,.22); box-shadow: inset 0 0 0 1px rgba(255,214,120,.4); }
+  .btn-ghost:hover { background: var(--blue); }
+  .hero-meta { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 26px; font: 700 11px/1.4 var(--font-mono); letter-spacing: .16em; text-transform: uppercase; color: var(--faint); }
+  .hero-meta span { display: inline-flex; align-items: center; gap: 8px; }
+  .hero-meta span::before { content: ""; width: 7px; height: 7px; background: var(--red); transform: rotate(45deg); }
+
+  .stage { position: relative; perspective: 1400px; }
+  .moon { position: absolute; width: 160px; height: 160px; right: -14px; top: -66px; border-radius: 50%; z-index: 0;
+    background: radial-gradient(circle at 34% 30%, #fff, #c9d8f6 58%, #8ea2d4); box-shadow: 0 0 100px rgba(255,226,150,.6), inset -30px -14px 40px rgba(8,14,46,.55); animation: float 9s ease-in-out infinite; }
+  .moon::before, .moon::after { content: ""; position: absolute; border-radius: 50%; background: rgba(70,90,150,.22); }
+  .moon::before { width: 40px; height: 40px; left: 30px; top: 76px; }
+  .moon::after { width: 22px; height: 22px; left: 92px; top: 34px; }
+  @keyframes float { 50% { transform: translateY(-14px); } }
+  .shot { position: relative; z-index: 1; margin: 0; border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,226,150,.25);
+    box-shadow: 0 40px 90px rgba(0,0,0,.65), -24px 18px 70px rgba(255,116,22,.28), 24px -10px 70px rgba(255,190,20,.3);
+    transform: rotateY(-10deg) rotateX(5deg); transition: transform .45s ease-out; will-change: transform; }
+  .shot img { display: block; width: 100%; height: auto; }
+  .shot::after { content: ""; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,.14) 48%, transparent 60%); transform: translateX(var(--sheen, -60%)); transition: transform .45s ease-out; pointer-events: none; }
+
+  /* ---------- Bandeau défilant ---------- */
+  .marquee { position: relative; z-index: 2; overflow: hidden; background: var(--red); color: var(--night); transform: rotate(-2deg); margin: 20px -4vw; border-block: 2px solid var(--night); box-shadow: 0 0 40px rgba(255,116,22,.45); }
+  .marquee.alt { background: var(--blue); color: var(--paper); transform: rotate(1.5deg); margin-top: -12px; box-shadow: 0 0 40px rgba(255,190,20,.45); }
+  .track { display: flex; width: max-content; animation: marquee 22s linear infinite; }
+  .marquee.alt .track { animation-direction: reverse; animation-duration: 28s; }
+  .marquee:hover .track { animation-play-state: paused; }
+  .track span { font: 400 30px/1 var(--font-display); text-transform: uppercase; letter-spacing: .04em; padding: 14px 22px; white-space: nowrap; }
+  .track span::after { content: "✦"; margin-left: 44px; font-size: 20px; vertical-align: 4px; }
+  @keyframes marquee { to { transform: translateX(-50%); } }
+
+  /* ---------- Sections ---------- */
+  section { padding-block: 72px; }
+  .head { display: grid; gap: 14px; margin-bottom: 38px; max-width: 64ch; }
+  .head h2 { position: relative; font: 400 clamp(40px, 6vw, 72px)/.95 var(--font-display); text-transform: uppercase; letter-spacing: .01em; }
+  .head h2 .r { color: var(--red); }
+  .head h2 .b { color: var(--blue-soft); }
+  .head h2::after { content: ""; display: block; height: 3px; width: 140px; margin-top: 16px; background: linear-gradient(90deg, var(--red), var(--blue)); transform: scaleX(.25); transform-origin: left; transition: transform .7s cubic-bezier(.2,.9,.2,1); box-shadow: 0 0 14px rgba(255,116,22,.6); }
+  .head.seen h2::after { transform: scaleX(1); }
+  .head p { margin: 0; color: var(--muted); font-size: 18px; }
+
+  /* Cartes interactives : inclinaison 3D, halo qui suit la souris, bordure rouge/bleu. */
+  .tilt { position: relative; border-radius: var(--radius); background: var(--panel); border: 1px solid var(--line); transform-style: preserve-3d; transition: transform .25s ease-out, border-color .25s, box-shadow .25s; will-change: transform; }
+  .tilt::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .25s;
+    background: radial-gradient(360px circle at var(--mx, 50%) var(--my, 50%), rgba(255,116,22,.22), rgba(255,190,20,.12) 40%, transparent 65%); }
+  .tilt::after { content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; pointer-events: none; opacity: 0; transition: opacity .25s;
+    background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), var(--red), var(--blue) 50%, transparent 75%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+  .tilt:hover { box-shadow: 0 24px 60px rgba(0,0,0,.45); }
+  .tilt:hover::before, .tilt:hover::after { opacity: 1; }
+  .tilt > * { position: relative; }
+
+  .why { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .why article { padding: 28px; }
+  .why .big { font: 400 54px/1 var(--font-display); text-transform: uppercase; color: var(--paper); text-shadow: 3px 0 var(--red), -3px 0 var(--blue); transition: text-shadow .2s steps(2); }
+  .why article:hover .big { text-shadow: 6px 0 var(--red), -6px 0 var(--blue); }
+  .why h3 { font: 700 19px/1.3 var(--font-body); margin: 14px 0 8px; }
+  .why p { margin: 0; color: var(--muted); }
+
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .feature { padding: 28px; }
+  .icon { width: 52px; height: 52px; display: grid; place-items: center; clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); background: linear-gradient(135deg, var(--red), var(--blue)); transition: transform .4s cubic-bezier(.2,.9,.2,1); }
+  .feature:hover .icon { transform: rotate(60deg) scale(1.08); }
+  .icon svg { width: 24px; height: 24px; fill: none; stroke: var(--paper); stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; transition: transform .4s cubic-bezier(.2,.9,.2,1); }
+  .feature:hover .icon svg { transform: rotate(-60deg); }
+  .feature h3 { font: 700 19px/1.3 var(--font-body); margin: 18px 0 8px; }
+  .feature p { margin: 0; color: var(--muted); font-size: 15px; }
+  .feature .num { position: absolute; right: 22px; top: 18px; font: 400 44px/1 var(--font-display); color: rgba(255,226,150,.07); transition: color .3s; }
+  .feature:hover .num { color: rgba(255,116,22,.35); }
+
+  .preview { display: grid; gap: 22px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tabs button { font: 700 12px/1 var(--font-mono); letter-spacing: .2em; text-transform: uppercase; color: var(--muted); background: rgba(255,190,20,.12); border: 0; padding: 14px 22px 14px 26px; clip-path: var(--cut); transition: background .2s, color .2s, transform .15s; }
+  .tabs button:hover { color: var(--paper); background: rgba(255,190,20,.32); transform: translateY(-2px); }
+  .tabs button[aria-selected="true"] { color: var(--night); background: var(--moon); }
+  .viewer { position: relative; overflow: hidden; border-radius: 16px; max-width: 966px; border: 1px solid rgba(255,226,150,.22); box-shadow: 0 30px 80px rgba(0,0,0,.6), -20px 0 60px rgba(255,116,22,.16), 20px 0 60px rgba(255,190,20,.18); }
+  .viewer img { display: block; width: 100%; height: auto; }
+  .viewer.glitching img { animation: tear .32s steps(4); }
+  @keyframes tear {
+    0% { clip-path: inset(10% 0 60% 0); transform: translateX(-14px); filter: hue-rotate(90deg); }
+    33% { clip-path: inset(50% 0 20% 0); transform: translateX(12px); }
+    66% { clip-path: inset(30% 0 40% 0); transform: translateX(-6px); filter: none; }
+    100% { clip-path: inset(0); transform: none; }
+  }
+  .caption { color: var(--muted); margin: 0; max-width: 70ch; }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-bottom: 18px; }
+  .stat { padding: 24px 26px; }
+  .stat .val { font: 400 clamp(46px, 6vw, 64px)/1 var(--font-display); color: var(--paper); font-variant-numeric: tabular-nums; }
+  .stat .val small { font: 700 14px/1 var(--font-mono); letter-spacing: .1em; color: var(--red-soft); margin-left: 6px; }
+  .stat p { margin: 10px 0 0; color: var(--muted); font-size: 14px; }
+  .perf { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .panel { padding: 28px; min-width: 0; }
+  .panel h3 { font: 700 19px/1.3 var(--font-body); margin-bottom: 16px; }
+  .spec { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .spec td { padding: 11px 0; border-top: 1px solid var(--line); vertical-align: top; }
+  .spec tr:first-child td { border-top: 0; }
+  .spec td:first-child { font: 700 11px/1.6 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--faint); width: 40%; padding-right: 12px; }
+  .note { font-size: 13px; color: var(--faint); margin: 16px 0 0; }
+  .bars { display: grid; gap: 16px; }
+  .bars .row { display: flex; justify-content: space-between; font-size: 14px; color: var(--muted); margin-bottom: 6px; }
+  .bars .row b { font: 700 13px/1.6 var(--font-mono); color: var(--paper); }
+  .bar { height: 10px; background: rgba(255,214,120,.12); overflow: hidden; clip-path: var(--cut); }
+  .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--red), var(--blue)); transform-origin: left; transition: transform 1.2s cubic-bezier(.2,.9,.2,1); }
+  .bars:not(.seen) .bar i { transform: scaleX(.15); }
+
+  .release { position: relative; overflow: hidden; display: grid; grid-template-columns: auto 1fr; gap: 32px; align-items: center; padding: 34px; border-radius: 22px;
+    background: linear-gradient(120deg, rgba(255,116,22,.22), rgba(14,6,3,.6) 45%, rgba(255,190,20,.24)); border: 1px solid rgba(255,168,96,.35); }
+  .version { font: 400 clamp(64px, 10vw, 110px)/.9 var(--font-display); color: var(--paper); text-shadow: 4px 0 var(--red), -4px 0 var(--blue); }
+  .version small { display: block; font: 700 11px/1.4 var(--font-mono); letter-spacing: .3em; text-transform: uppercase; color: var(--red-soft); text-shadow: none; margin-bottom: 10px; }
+  .stamp { position: absolute; right: 26px; top: 20px; font: 400 26px/1 var(--font-tag); color: var(--red); transform: rotate(10deg); border: 3px solid var(--red); padding: 6px 12px; border-radius: 6px; opacity: .85; }
+  .release h2 { font: 400 34px/1 var(--font-display); text-transform: uppercase; margin-bottom: 10px; }
+  .release p { margin: 0 0 12px; color: var(--muted); max-width: 52ch; }
+  .release ul { margin: 0; padding-left: 20px; color: var(--muted); }
+  .release li b { color: var(--paper); }
+  .release li { margin-bottom: 6px; }
+  .release .dl-row { margin: 18px 0 0; }
+
+  /* ---------- FBE ---------- */
+  .fbe { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 24px; align-items: center; }
+  .fbe-modes { display: grid; gap: 12px; }
+  .fbe-mode { padding: 20px 22px; }
+  .fbe-mode h3 { font: 400 26px/1 var(--font-display); text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+  .fbe-mode p { margin: 0; color: var(--muted); font-size: 15px; }
+  .beta { font: 700 10px/1 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; padding: 5px 9px 5px 10px; color: var(--night); background: var(--red-soft); clip-path: var(--cut); }
+  .fbe-shot { margin: 0; border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,226,150,.22); box-shadow: 0 30px 80px rgba(0,0,0,.6), -20px 0 60px rgba(255,116,22,.16), 20px 0 60px rgba(255,190,20,.18); }
+  .fbe-shot img { display: block; width: 100%; height: auto; }
+  @media (max-width: 920px) { .fbe { grid-template-columns: 1fr; } }
+
+  .support { display: grid; grid-template-columns: 1.4fr 1fr; gap: 18px; align-items: start; }
+  .faq { display: grid; gap: 10px; }
+  .faq details { padding: 0 22px; }
+  .faq details[open] { border-color: rgba(255,168,96,.45); }
+  .faq summary { cursor: pointer; list-style: none; padding: 18px 0; font-weight: 700; display: flex; justify-content: space-between; gap: 16px; transition: color .2s; }
+  .faq summary:hover { color: var(--red-soft); }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: "+"; font: 700 22px/1 var(--font-mono); color: var(--red); transition: transform .3s cubic-bezier(.2,.9,.2,1); }
+  .faq details[open] summary::after { transform: rotate(135deg); }
+  .faq p { margin: 0 0 18px; color: var(--muted); }
+  .contact { padding: 28px; position: sticky; top: 100px; }
+  .contact h3 { font: 400 32px/1 var(--font-display); text-transform: uppercase; margin-bottom: 12px; }
+  .contact p { color: var(--muted); margin: 0 0 18px; }
+  .soon-tag { display: inline-block; font: 700 11px/1 var(--font-mono); letter-spacing: .2em; text-transform: uppercase; padding: 10px 14px 10px 16px; color: var(--night); background: var(--red-soft); clip-path: var(--cut); animation: pulse 1.6s steps(2) infinite; }
+
+  /* ---------- Espace commentaires ---------- */
+  [hidden] { display: none !important; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .avis { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 18px; align-items: start; }
+  .avis-side { display: grid; gap: 14px; position: sticky; top: 100px; }
+  .avis-box { padding: 26px; }
+  .avis-box h3 { font: 400 30px/1 var(--font-display); text-transform: uppercase; margin-bottom: 10px; }
+  .avis-box p { color: var(--muted); margin: 0 0 16px; }
+  .avis-btns { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .avis-btns.small { margin-top: 14px; gap: 18px; }
+  .avis-who { font-size: 14px; }
+  .avis-who b { color: var(--paper); }
+  .avis textarea, .auth input[type=email], .auth input[type=password], .auth input[type=text] {
+    width: 100%; font: 15px/1.5 var(--font-body); color: var(--paper); background: rgba(14,6,3,.6); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .avis textarea { resize: vertical; min-height: 120px; }
+  .avis textarea:focus, .auth input:focus { outline: 2px solid var(--red-soft); outline-offset: 1px; border-color: transparent; }
+  .avis-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 10px 0 4px; flex-wrap: wrap; }
+  .check { display: inline-flex; gap: 8px; align-items: center; font-size: 14px; color: var(--paper); cursor: pointer; }
+  .check input { accent-color: var(--red); width: 16px; height: 16px; }
+  .avis-count { font: 700 11px/1 var(--font-mono); color: var(--faint); }
+  .avis-hint { font-size: 12.5px; color: var(--faint) !important; margin: 0 0 14px !important; }
+  .avis-rules { padding: 0 22px; }
+  .avis-rules summary { cursor: pointer; padding: 16px 0; font-weight: 700; font-size: 14px; }
+  .avis-rules ul { margin: 0 0 16px; padding-left: 18px; color: var(--muted); font-size: 14px; }
+  .avis-offline { color: var(--muted); padding: 22px 26px; border: 1px dashed var(--line); border-radius: var(--radius); }
+  .comments { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 10px; }
+  .comment { padding: 18px 22px; }
+  .comment-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .comment-author { color: var(--paper); }
+  .comment-author.anon { color: var(--muted); font-style: italic; }
+  .badge { font: 700 10px/1 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; padding: 5px 8px; color: var(--night); background: var(--red-soft); clip-path: var(--cut); }
+  .comment-date { font: 700 11px/1 var(--font-mono); color: var(--faint); margin-left: auto; }
+  .comment-body { margin: 0; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .comment-actions { margin-top: 8px; display: flex; gap: 16px; }
+  .link-btn { font: 700 11px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--blue-soft); background: none; border: 0; padding: 4px 0; cursor: pointer; text-decoration: none; }
+  .link-btn:hover { color: var(--paper); }
+  .link-btn:disabled { color: var(--faint); cursor: default; }
+  .avis-empty { color: var(--muted); }
+  .form-msg { font-size: 14px; margin: 10px 0 0; min-height: 1em; color: var(--muted); }
+  .form-msg:empty { display: none; }
+  .form-msg.error { color: var(--red-soft); }
+  .form-msg.ok { color: #7ee0b8; }
+
+  /* Fenêtre compte */
+  .auth { width: min(440px, calc(100vw - 32px)); padding: 0; border: 1px solid rgba(255,168,96,.35); border-radius: 20px; color: var(--paper);
+    background: rgba(22, 10, 5, .98); box-shadow: 0 30px 80px rgba(0,0,0,.7), -14px 0 50px rgba(255,116,22,.2), 14px 0 50px rgba(255,190,20,.2); }
+  .auth::backdrop { background: rgba(8, 3, 1, .72); backdrop-filter: blur(4px); }
+  .auth form, .auth .panel-body { padding: 28px; display: grid; gap: 12px; }
+  .auth h3 { font: 400 32px/1 var(--font-display); text-transform: uppercase; margin: 0 0 4px; }
+  .auth label { font: 700 11px/1.4 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--faint); display: grid; gap: 6px; }
+  .auth .check { font: 14px/1.4 var(--font-body); letter-spacing: 0; text-transform: none; color: var(--muted); display: flex; align-items: flex-start; }
+  .auth .btn { justify-content: center; }
+  .auth .alt { font-size: 14px; color: var(--muted); margin: 0; }
+  .auth .x { position: absolute; right: 14px; top: 12px; background: none; border: 0; color: var(--muted); font-size: 26px; cursor: pointer; line-height: 1; }
+  .auth .x:hover { color: var(--paper); }
+  .auth .danger { color: var(--red-soft); }
+
+  @media (max-width: 920px) { .avis { grid-template-columns: 1fr; } .avis-side { position: static; } }
+
+  footer { position: relative; z-index: 2; padding-block: 40px 56px; border-top: 1px solid var(--line); color: var(--faint); font-size: 14px; }
+  footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 14px; align-items: center; }
+  footer b { color: var(--muted); }
+  footer .tagline { font: 400 26px/1 var(--font-tag); color: var(--paper); transform: rotate(-3deg); display: inline-block; }
+
+  /* ---------- Easter egg : la vidéo prend la place du grand portrait ---------- */
+  .portrait video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #000; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 1; }
+  .portrait.playing video { opacity: 1; }
+  .portrait.playing img { opacity: 0; }
+  .portrait.playing::after { z-index: 2; }
+  .creator.egg .creator-card { opacity: 1; visibility: visible; transform: none; }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 920px) {
+    .hero, .perf, .support { grid-template-columns: 1fr; }
+    .features, .why, .stats { grid-template-columns: 1fr 1fr; }
+    .contact { position: static; }
+    .shot { transform: none; }
+  }
+  @media (max-width: 640px) {
+    .nav { display: none; }
+    .pill { margin-left: auto; }
+    .creator .who { display: none; }
+    .features, .why, .stats { grid-template-columns: 1fr; }
+    .release { grid-template-columns: 1fr; }
+    .stamp { font-size: 18px; }
+    .moon { width: 100px; height: 100px; top: -36px; right: -4px; }
+    .tag-ld { right: -4px; }
+    .track span { font-size: 22px; }
+    section { padding-block: 48px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  }
+
+  /* ---------- SunQuest : un soleil à la place de la lune, texte foncé sur l'orange et l'or ---------- */
+  .sun { position: absolute; width: 170px; height: 170px; right: -18px; top: -70px; border-radius: 50%; z-index: 0;
+    background: radial-gradient(circle at 36% 32%, #fffce2, #ffc24a 45%, #ff7414);
+    box-shadow: 0 0 110px rgba(255,170,40,.7), 0 0 0 14px rgba(255,198,74,.1), 0 0 0 30px rgba(255,198,74,.05); animation: float 9s ease-in-out infinite; }
+  .btn-dl, .btn-soon, .marquee, .marquee.alt, .btn-ghost:hover, .stamp { color: var(--night); }
+  .stamp { background: var(--red); border-color: var(--red); }
+  @media (max-width: 640px) { .sun { width: 104px; height: 104px; top: -38px; right: -4px; } }
+  /* ---------- Passer de LunaQuest (câble) à SunQuest (sans fil), en bas de l'écran ---------- */
+  body { padding-bottom: 64px; }
+  .switch { position: fixed; left: 50%; bottom: max(14px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 75; display: flex; gap: 4px; padding: 4px;
+    background: rgba(8, 6, 12, .82); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,.14); clip-path: var(--cut); box-shadow: 0 12px 40px rgba(0,0,0,.5); }
+  .switch a { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px 10px 18px; font: 700 12px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase;
+    color: #c9c3d6; text-decoration: none; clip-path: var(--cut); white-space: nowrap; transition: background .2s, color .2s; }
+  .switch a small { font: 700 10px/1 var(--font-mono); letter-spacing: .1em; opacity: .7; }
+  .switch svg { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .switch .sw-luna:hover { color: #f4f3ff; background: rgba(45,91,255,.35); }
+  .switch .sw-sun:hover { color: #fff7ee; background: rgba(255,116,22,.35); }
+  .switch .sw-luna[aria-current="page"] { color: #04061a; background: #cfe0ff; }
+  .switch .sw-sun[aria-current="page"] { color: #1c0c02; background: #ffbe14; }
+  @media (max-width: 420px) { .switch a small { display: none; } .switch a { padding: 10px 12px 10px 14px; } }
+</style>
+
+<canvas id="sky" aria-hidden="true"></canvas>
+<div class="police" aria-hidden="true"></div>
+<div class="progress" id="progress" aria-hidden="true"></div>
+<div class="cursor" id="cursor" aria-hidden="true"></div>
+<div class="cursor-dot" id="cursor-dot" aria-hidden="true"></div>
+
+<header class="top">
+  <div class="wrap">
+    <div class="creator" id="creator" tabindex="0" aria-describedby="creator-info">
+      <div class="avatar"><img src="../img/createur-avatar.jpg" width="320" height="320" alt="Photo de LD, créateur de SunQuest"></div>
+      <div class="who"><b>LD</b>Créateur</div>
+      <div class="creator-card" id="creator-info" role="tooltip">
+        <div class="portrait" id="portrait"><img id="portrait-img" src="../img/createur-portrait.jpg" width="720" height="1280" alt=""><video id="egg-video" src="../media/hehe.mp4" playsinline preload="auto" aria-hidden="true"></video></div>
+        <div>
+          <h3>Info créateur</h3>
+          <span class="sig">LD</span>
+          <dl>
+            <div><dt>Idée</dt><dd>Imaginé par LD</dd></div>
+            <div><dt>Réalisation</dt><dd>Développé avec l'IA Claude</dd></div>
+            <div><dt>Version</dt><dd>Early Access 0.1.0</dd></div>
+          </dl>
+        </div>
+      </div>
+    </div>
+    <nav class="nav" aria-label="Sections">
+      <a href="#fonctionnalites">Fonctions</a>
+      <a href="#wifi">Wi-Fi</a>
+      <a href="#fbe">FBE</a>
+      <a href="#apercu">Aperçu</a>
+      <a href="#performances">Perfs</a>
+      <a href="#avis">Avis</a>
+      <a href="#support">Support</a>
+      <a href="en/" hreflang="en" lang="en" title="English version">EN</a>
+    </nav>
+    <span class="pill">Early Access 0.1.0</span>
+  </div>
+</header>
+
+<nav class="switch" aria-label="Choisir la version">
+  <a class="sw-luna" href="../" title="LunaQuest : par câble USB"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/></svg>LunaQuest <small>câble</small></a>
+  <a class="sw-sun" href="./" aria-current="page" title="SunQuest : sans fil"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg>SunQuest <small>sans fil</small></a>
+</nav>
+
+<main>
+  <div class="wrap">
+    <section class="hero" aria-labelledby="titre">
+      <div class="beams" aria-hidden="true"><div class="beam b1"></div><div class="beam b2"></div><div class="beam b3"></div></div>
+      <div>
+        <p class="eyebrow">PC VR · Meta Quest · Sans fil</p>
+        <div class="title" id="title">
+          <h1 id="titre" class="glitch" data-text="SunQuest">Sun<span class="q">Quest</span></h1>
+          <div class="slash" aria-hidden="true"></div>
+          <span class="tag-ld" aria-hidden="true">by LD</span>
+        </div>
+        <p class="lead">Joue à tes jeux PC VR sur ton Quest <b>sans fil</b>, par le Wi-Fi, comme avec Virtual Desktop. Ouvre l'appli dans le casque : <b>SteamVR démarre tout seul</b> sur le PC et ta bibliothèque de jeux s'affiche devant toi.</p>
+        <div class="cta">
+          <a class="btn btn-dl magnet" id="download" href="../download/SunQuest-0.1.0-Setup.zip" download>Télécharger <small>v0.1.0 · Windows · 22 Mo</small></a>
+          <a class="btn btn-ghost magnet" href="#apercu">Voir l'aperçu</a>
+        </div>
+        <div class="hero-meta"><span>Windows 10 / 11</span><span>Quest 2 · 3 · 3S · Pro</span><span>Basé sur ALVR</span></div>
+      </div>
+      <div class="stage" id="stage">
+        <div class="sun" aria-hidden="true"></div>
+        <figure class="shot" id="shot">
+          <img src="../img/sunquest/connexion.png" width="1100" height="760" alt="Fenêtre de SunQuest : état du réseau et du casque, bouton Connecter et journal">
+        </figure>
+      </div>
+    </section>
+  </div>
+
+  <div class="marquee" aria-hidden="true"><div class="track">
+    <span>Sans câble</span><span>Ouvre et joue</span><span>Tes jeux dans le casque</span><span>Early Access 0.1.0</span><span>Imaginé par LD</span>
+    <span>Sans câble</span><span>Ouvre et joue</span><span>Tes jeux dans le casque</span><span>Early Access 0.1.0</span><span>Imaginé par LD</span>
+  </div></div>
+  <div class="marquee alt" aria-hidden="true"><div class="track">
+    <span>Réalisé avec Claude</span><span>La version Wi-Fi de LunaQuest</span><span>Pas besoin d'un PC de la NASA</span><span>SunQuest</span>
+    <span>Réalisé avec Claude</span><span>La version Wi-Fi de LunaQuest</span><span>Pas besoin d'un PC de la NASA</span><span>SunQuest</span>
+  </div></div>
+
+  <div class="wrap">
+    <section aria-labelledby="pourquoi">
+      <div class="head reveal">
+        <p class="eyebrow">Pourquoi sans fil</p>
+        <h2 id="pourquoi">Le câble te retient ? <span class="r">Le Wi-Fi te libère.</span></h2>
+        <p>Tourne, saute, joue debout dans toute la pièce sans câble qui s'enroule. SunQuest envoie l'image par ton Wi-Fi et vérifie que ton réseau tient la route. Ton Wi-Fi n'est pas au top ? <a href="../">LunaQuest</a> fait la même chose par câble USB.</p>
+      </div>
+      <div class="why">
+        <article class="tilt"><div class="big">0 câble</div><h3>Libre de tes mouvements</h3><p>Un câble USB une seule fois pour installer l'appli du casque, puis plus jamais.</p></article>
+        <article class="tilt"><div class="big">0 clic</div><h3>Ouvre et joue</h3><p>Ouvre SunQuest dans le casque : le PC l'entend sur le réseau et démarre SteamVR tout seul.</p></article>
+        <article class="tilt"><div class="big">0 Meta</div><h3>Pas d'interface lourde</h3><p>Une fenêtre légère qui attend ton casque près de l'horloge, sans l'appli Meta pour PC.</p></article>
+      </div>
+    </section>
+
+    <section id="fonctionnalites" aria-labelledby="fonctions">
+      <div class="head reveal">
+        <p class="eyebrow">Fonctionnalités</p>
+        <h2 id="fonctions">Comme Virtual Desktop, <span class="b">en gratuit.</span></h2>
+      </div>
+      <div class="features">
+        <article class="feature tilt"><span class="num">01</span>
+          <div class="icon"><svg viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0M5.5 12.5a10 10 0 0 1 13 0M9 16a5 5 0 0 1 6 0"/><circle cx="12" cy="19.5" r="1"/></svg></div>
+          <h3>Connexion toute seule</h3><p>SunQuest attend en fond sur le PC. Ouvre l'appli dans le casque et SteamVR démarre : rien à cliquer sur le PC.</p></article>
+        <article class="feature tilt"><span class="num">02</span>
+          <div class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="7" rx="1"/><rect x="14" y="4" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+          <h3>Bibliothèque dans le casque</h3><p>Tes jeux VR avec leur jaquette, les derniers joués d'abord. Vise, appuie sur la gâchette, ça se lance. Un bouton ferme le jeu en cours.</p></article>
+        <article class="feature tilt"><span class="num">03</span>
+          <div class="icon"><svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></div>
+          <h3>Diagnostic Wi-Fi</h3><p>Le réseau du PC, le Wi-Fi du casque (bande, signal, vitesse), un test de ping et le débit vidéo conseillé, appliqué en un clic.</p></article>
+        <article class="feature tilt"><span class="num">04</span>
+          <div class="icon"><svg viewBox="0 0 24 24"><path d="M9 7V3M15 7V3M7 7h10v5a5 5 0 0 1-10 0V7ZM12 17v4"/><path d="M4 4l16 16"/></svg></div>
+          <h3>ADB sans fil</h3><p>Branche le casque une fois et clique sur Appairer : SunQuest installe l'appli du casque, le garde éveillé et voit son Wi-Fi, sans câble.</p></article>
+        <article class="feature tilt"><span class="num">05</span>
+          <div class="icon"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"/><circle cx="18" cy="15" r="3"/></svg></div>
+          <h3>Réglages ALVR intégrés</h3><p>Images par seconde, débit, codec, résolution, son, micro et préréglages par jeu, sans ouvrir ALVR. Pare-feu de Windows ouvert pour toi.</p></article>
+        <article class="feature tilt"><span class="num">06</span>
+          <div class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+          <h3>Écran du PC dans le casque</h3><p>Double appui sur le bouton menu gauche : ton bureau Windows s'affiche devant toi, avec le pointeur laser comme souris.</p></article>
+      </div>
+    </section>
+
+    <section id="wifi" aria-labelledby="wifi-titre">
+      <div class="head reveal">
+        <p class="eyebrow">Nouveau · 0.1.0</p>
+        <h2 id="wifi-titre">Ton réseau, <span class="b">passé au crible.</span></h2>
+        <p>Une image fluide sans fil dépend surtout de ton réseau. L'onglet Wi-Fi te dit ce qui va, ce qui coince, et le débit vidéo à mettre.</p>
+      </div>
+      <div class="fbe">
+        <div class="fbe-modes">
+          <article class="tilt fbe-mode"><h3>Le PC</h3><p>Ethernet ou Wi-Fi, vitesse de la carte réseau. SunQuest te prévient si ton PC passe par le Wi-Fi : un câble vers la box change tout.</p></article>
+          <article class="tilt fbe-mode"><h3>Le casque</h3><p>Réseau, bande 2,4 / 5 / 6 GHz, norme (Wi-Fi 5, 6, 6E, 7), signal en dBm et vitesse du lien, en direct.</p></article>
+          <article class="tilt fbe-mode"><h3>Ping et pare-feu</h3><p>Un test de ping vers le casque (moyenne, pics, gigue, pertes) et l'ouverture des ports d'ALVR dans le pare-feu de Windows.</p></article>
+          <article class="tilt fbe-mode"><h3>Débit conseillé</h3><p>Une note de ton réseau, les conseils à suivre et le débit vidéo adapté, appliqué en un clic dans les réglages.</p></article>
+        </div>
+        <figure class="fbe-shot"><img src="../img/sunquest/wifi.png" width="1100" height="760" alt="Onglet Wi-Fi de SunQuest : réseau du PC, Wi-Fi du casque, ping et débit conseillé" loading="lazy"></figure>
+      </div>
+    </section>
+
+    <section id="fbe" aria-labelledby="fbe-titre">
+      <div class="head reveal">
+        <p class="eyebrow">Corps entier</p>
+        <h2 id="fbe-titre">Ton corps entier, <span class="r">sans fil.</span></h2>
+        <p>Les modes FBE de LunaQuest sont aussi dans SunQuest : des trackers virtuels pour ton corps, ou tes vrais trackers, avec un aperçu 3D en direct de chaque appareil.</p>
+      </div>
+      <div class="fbe">
+        <div class="fbe-modes">
+          <article class="tilt fbe-mode"><h3>FBE Unique</h3><p>Tout le corps estimé par les caméras du Quest : torse, hanches, coudes, genoux et pieds. Aucun tracker à acheter.</p></article>
+          <article class="tilt fbe-mode"><h3>FBT</h3><p>Seulement tes vrais trackers (Vive, Tundra…) et tes bases, avec l'aperçu en direct et la batterie de chaque tracker.</p></article>
+          <article class="tilt fbe-mode"><h3>Base stations</h3><p>Allume ou mets en veille tes bases 2.0 par le Bluetooth du PC. En FBT, elles s'allument toutes seules à la connexion.</p></article>
+        </div>
+        <figure class="fbe-shot"><img src="../img/sunquest/corps.png" width="1100" height="760" alt="Page Corps et trackers de SunQuest : modes FBE et aperçu 3D en direct des appareils" loading="lazy"></figure>
+      </div>
+    </section>
+
+    <section id="apercu" aria-labelledby="apercu-titre">
+      <div class="head reveal">
+        <p class="eyebrow">Aperçu</p>
+        <h2 id="apercu-titre">Une appli <span class="b">au soleil.</span></h2>
+      </div>
+      <div class="preview">
+        <div class="tabs" role="tablist" aria-label="Écrans de SunQuest">
+          <button id="tab-connexion" role="tab" aria-selected="true" data-img="../img/sunquest/connexion.png" data-cap="Connexion : le réseau du PC, le casque, son Wi-Fi, ALVR et SteamVR en direct, le gros bouton Connecter, les options et le journal.">Connexion</button>
+          <button id="tab-wifi" role="tab" aria-selected="false" data-img="../img/sunquest/wifi.png" data-cap="Wi-Fi : la carte réseau du PC, le Wi-Fi du casque, le test de ping, le pare-feu et le débit vidéo conseillé pour ton réseau.">Wi-Fi</button>
+          <button id="tab-reglages" role="tab" aria-selected="false" data-img="../img/sunquest/reglages.png" data-cap="Réglages ALVR : images par seconde, débit, codec, résolution, son, micro, fovéation, l'adresse du casque et tes préréglages.">Réglages ALVR</button>
+          <button id="tab-corps" role="tab" aria-selected="false" data-img="../img/sunquest/corps.png" data-cap="Corps et trackers : les modes FBE Unique et FBT, l'aperçu 3D en direct de tes appareils et tes base stations.">Corps et trackers</button>
+          <button id="tab-parametres" role="tab" aria-selected="false" data-img="../img/sunquest/parametres.png" data-cap="Paramètres : la langue, le thème (Soleil par défaut) et l'animation de démarrage.">Paramètres</button>
+          <button id="tab-guide" role="tab" aria-selected="false" data-img="../img/sunquest/guide.png" data-cap="Guide : les six étapes pour passer de zéro à ton premier jeu sans fil.">Guide</button>
+        </div>
+        <div class="viewer" id="viewer" role="tabpanel" aria-labelledby="tab-connexion">
+          <img id="preview-img" src="../img/sunquest/connexion.png" width="1100" height="760" alt="Écran Connexion de SunQuest">
+        </div>
+        <p class="caption" id="preview-cap">Connexion : le réseau du PC, le casque, son Wi-Fi, ALVR et SteamVR en direct, le gros bouton Connecter, les options et le journal.</p>
+      </div>
+    </section>
+
+    <section id="performances" aria-labelledby="perf-titre">
+      <div class="head reveal">
+        <p class="eyebrow">Performances</p>
+        <h2 id="perf-titre">Fluide sans fil, <span class="r">si ton réseau suit.</span></h2>
+        <p>SunQuest s'appuie sur l'encodeur vidéo de ta carte graphique, comme LunaQuest. Sans fil, c'est surtout ton réseau qui compte : l'onglet Wi-Fi te dit où tu en es.</p>
+      </div>
+      <div class="stats">
+        <div class="stat tilt"><div class="val"><span class="count" data-to="90">90</span><small>Hz</small></div><p>Pour commencer, 120 Hz avec un bon PC et un bon Wi-Fi.</p></div>
+        <div class="stat tilt"><div class="val"><span class="count" data-to="200">200</span><small>Mbit/s</small></div><p>Débit conseillé en Wi-Fi 6, tout près du routeur.</p></div>
+        <div class="stat tilt"><div class="val"><span class="count" data-to="0">0</span><small>câble</small></div><p>Une fois l'appli du casque installée.</p></div>
+      </div>
+      <div class="perf">
+        <div class="panel tilt">
+          <h3>Débit conseillé selon le lien du casque</h3>
+          <div class="bars" id="bars">
+            <div><div class="row"><span>Lien de 1 100 Mbit/s et plus (Wi-Fi 6, même pièce)</span><b>200 Mbit/s</b></div><div class="bar"><i style="width:80%"></i></div></div>
+            <div><div class="row"><span>Lien de 550 à 1 100 Mbit/s</span><b>120 à 150 Mbit/s</b></div><div class="bar"><i style="width:56%"></i></div></div>
+            <div><div class="row"><span>Lien de 350 Mbit/s, ou PC en Wi-Fi</span><b>80 Mbit/s</b></div><div class="bar"><i style="width:34%"></i></div></div>
+          </div>
+          <p class="note">Ce sont les valeurs que l'onglet Wi-Fi de SunQuest te conseille. Elles changent avec ton routeur, les murs et les autres appareils.</p>
+        </div>
+        <div class="panel tilt">
+          <h3>Ce qu'il te faut</h3>
+          <table class="spec">
+            <tr><td>Système</td><td>Windows 10 ou 11</td></tr>
+            <tr><td>Carte graphique</td><td>Compatible SteamVR. Une RTX 3060 fait déjà très bien l'affaire.</td></tr>
+            <tr><td>Casque</td><td>Meta Quest 2, 3, 3S ou Pro, en mode développeur</td></tr>
+            <tr><td>Réseau</td><td>PC branché en Ethernet à la box ou au routeur, casque en Wi-Fi 5 GHz (Wi-Fi 6 idéal)</td></tr>
+            <tr><td>Câble</td><td>USB-C une seule fois, pour installer l'appli du casque</td></tr>
+            <tr><td>Logiciels</td><td>Steam et SteamVR (gratuits). ALVR est inclus.</td></tr>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="version-titre">
+      <div class="release tilt">
+        <span class="stamp" aria-hidden="true">Early Access</span>
+        <div class="version"><small>Version actuelle</small>0.1.0</div>
+        <div>
+          <h2 id="version-titre">La première version de SunQuest</h2>
+          <p>SunQuest fonctionne, mais il est encore en peaufinage : tes retours aident à l'améliorer.</p>
+          <ul>
+            <li><b>Sans fil :</b> le casque s'annonce sur ton réseau et SteamVR démarre tout seul quand tu ouvres l'appli. ALVR passe en UDP, le mode du Wi-Fi.</li>
+            <li><b>Bibliothèque dans le casque :</b> tes jeux VR avec leur jaquette, lancés au pointeur laser, et un bouton pour fermer le jeu en cours.</li>
+            <li><b>Onglet Wi-Fi :</b> réseau du PC, Wi-Fi du casque, ping, pare-feu et débit conseillé en un clic.</li>
+            <li><b>ADB sans fil :</b> un seul passage par le câble pour installer SunQuest Client, l'appli du casque aux couleurs du soleil.</li>
+            <li><b>Repris de LunaQuest :</b> FBE, base stations, perfs dans le casque, écran du PC, filmer, langues et thèmes, lancement avec Windows.</li>
+            <li><b>Avec LunaQuest :</b> les deux s'installent côte à côte, chacun avec ses réglages. En passant de l'un à l'autre, SteamVR redémarre une fois.</li>
+            <li><b>Avertissement Windows :</b> l'installateur n'est pas encore signé. Si Windows affiche « Windows a protégé votre ordinateur », clique sur « Informations complémentaires » puis « Exécuter quand même ».</li>
+          </ul>
+          <p class="dl-row"><a class="btn btn-dl" href="../download/SunQuest-0.1.0-Setup.zip" download>Télécharger la 0.1.0</a></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="avis" aria-labelledby="avis-titre">
+      <div class="head reveal">
+        <p class="eyebrow">Avis</p>
+        <h2 id="avis-titre">Ton avis <span class="r">compte.</span></h2>
+        <p>Un bug, une idée, un retour sur tes jeux ? Laisse un commentaire. L'espace commentaires est le même pour LunaQuest et SunQuest, avec le même compte.</p>
+      </div>
+
+      <p class="avis-offline" id="avis-offline" hidden>L'espace commentaires arrive très bientôt.</p>
+
+      <div class="avis" id="avis-main">
+        <div class="avis-side">
+          <div class="tilt avis-box" id="avis-guest">
+            <h3>Rejoins la discussion</h3>
+            <p>Crée un compte gratuit pour commenter, avec ton pseudo ou en anonyme.</p>
+            <div class="avis-btns">
+              <button class="btn btn-dl" type="button" data-open="signup">Créer un compte</button>
+              <button class="btn btn-ghost" type="button" data-open="login">Se connecter</button>
+            </div>
+          </div>
+
+          <div class="tilt avis-box" id="avis-member" hidden>
+            <p class="avis-who">Connecté : <b id="avis-me"></b></p>
+            <form id="avis-form" novalidate>
+              <label class="sr-only" for="avis-text">Ton commentaire</label>
+              <textarea id="avis-text" maxlength="1000" rows="5" placeholder="Ton commentaire…" required></textarea>
+              <div class="avis-row">
+                <label class="check"><input type="checkbox" id="avis-anon"> Publier en anonyme</label>
+                <span class="avis-count" id="avis-count">0 / 1000</span>
+              </div>
+              <p class="avis-hint">En anonyme, ton pseudo n'est pas affiché. Le créateur peut le voir, pour la modération.</p>
+              <button class="btn btn-dl" type="submit" id="avis-send">Publier</button>
+              <p class="form-msg" id="avis-status" role="status"></p>
+            </form>
+            <p class="form-msg error" id="avis-banned" hidden>Ton compte ne peut plus publier de commentaires.</p>
+            <div class="avis-btns small">
+              <button class="link-btn" type="button" data-open="account">Mon compte</button>
+              <a class="link-btn" id="avis-admin-link" href="../admin.html" hidden>Modération</a>
+              <button class="link-btn" type="button" id="avis-logout">Se déconnecter</button>
+            </div>
+          </div>
+
+          <details class="tilt avis-rules">
+            <summary>Règles de l'espace commentaires</summary>
+            <ul>
+              <li>Reste respectueux : pas d'insultes, de propos haineux ou de harcèlement.</li>
+              <li>Pas de pub ni de spam. Les liens et les mots filtrés passent par une vérification avant publication.</li>
+              <li>Un commentaire signalé par plusieurs membres est masqué en attendant la vérification.</li>
+              <li>Les comptes qui ne respectent pas ces règles peuvent être bloqués.</li>
+            </ul>
+          </details>
+        </div>
+
+        <div class="avis-feed">
+          <ul class="comments" id="avis-list" aria-live="polite"></ul>
+          <p class="avis-empty" id="avis-empty" hidden>Aucun commentaire pour l'instant. Sois le premier !</p>
+          <p class="form-msg" id="avis-list-msg" role="status"></p>
+          <button class="btn btn-ghost" type="button" id="avis-more" hidden>Voir plus</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="support" aria-labelledby="support-titre">
+      <div class="head reveal">
+        <p class="eyebrow">Support</p>
+        <h2 id="support-titre">Une question ? <span class="b">On t'aide.</span></h2>
+      </div>
+      <div class="support">
+        <div class="faq">
+          <details class="tilt" open>
+            <summary>Faut-il Virtual Desktop ou l'appli Meta ?</summary>
+            <p>Non. SunQuest passe par ALVR et SteamVR, tous deux gratuits. Ni Virtual Desktop ni l'appli Meta pour PC ne sont nécessaires.</p>
+          </details>
+          <details class="tilt">
+            <summary>Quel réseau faut-il ?</summary>
+            <p>Le PC branché en Ethernet à ta box ou à ton routeur, et le casque sur le Wi-Fi 5 GHz (Wi-Fi 6 ou 6E idéalement), dans la même pièce que le routeur si possible. L'onglet Wi-Fi vérifie tout.</p>
+          </details>
+          <details class="tilt">
+            <summary>Ma connexion n'est pas bonne, je fais comment ?</summary>
+            <p>Prends <a href="../">LunaQuest</a> : la même appli, mais l'image passe par un câble USB au lieu du Wi-Fi. Les deux s'installent côte à côte.</p>
+          </details>
+          <details class="tilt">
+            <summary>Le casque n'est jamais trouvé.</summary>
+            <p>Vérifie que le PC et le casque sont sur le même réseau (pas le Wi-Fi invité de la box), que le pare-feu est ouvert (onglet Wi-Fi) et que SunQuest tourne sur le PC. Sinon, tape l'adresse IP du casque dans Réglages ALVR.</p>
+          </details>
+          <details class="tilt">
+            <summary>L'image saccade ou se pixelise.</summary>
+            <p>Ouvre l'onglet Wi-Fi : PC en Ethernet, casque en 5 GHz, puis applique le débit conseillé. Coupe les téléchargements pendant que tu joues.</p>
+          </details>
+          <details class="tilt">
+            <summary>Une manette n'est pas détectée.</summary>
+            <p>Active « Mains squelettiques » dans Réglages ALVR : sans lui, la manette gauche peut ne jamais apparaître dans SteamVR. Vérifie aussi les piles.</p>
+          </details>
+        </div>
+        <aside class="contact tilt" aria-labelledby="contact-titre">
+          <h3 id="contact-titre">Contacter le support</h3>
+          <p>Tu ne trouves pas ta réponse ? Pose ta question dans l'espace commentaires, le créateur y répond.</p>
+          <a class="btn btn-ghost" href="#avis">Poser ma question</a>
+        </aside>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span class="tagline">Imaginé par LD</span>
+    <span>Réalisé avec l'IA <b>Claude</b> · SunQuest Early Access 0.1.0 · Basé sur <a href="https://github.com/alvr-org/ALVR">ALVR</a> (open source) · Non affilié à Meta, à Valve ni à Virtual Desktop · <a href="https://github.com/lunaquestld/SunQuest" rel="noopener">Code source sur GitHub</a> · <a href="../mentions-legales.html">Mentions légales et confidentialité</a></span>
+  </div>
+</footer>
+
+<dialog class="auth" id="auth-dialog" aria-label="Compte">
+  <button class="x" type="button" data-close aria-label="Fermer">×</button>
+
+  <form id="form-login" data-panel="login" novalidate>
+    <h3>Connexion</h3>
+    <label>E-mail <input type="email" name="email" autocomplete="email" required></label>
+    <label>Mot de passe <input type="password" name="password" autocomplete="current-password" required></label>
+    <button class="btn btn-dl" type="submit">Se connecter</button>
+    <p class="form-msg" role="status"></p>
+    <p class="alt"><button class="link-btn" type="button" data-open="forgot">Mot de passe oublié ?</button></p>
+    <p class="alt">Pas encore de compte ? <button class="link-btn" type="button" data-open="signup">Créer un compte</button></p>
+  </form>
+
+  <form id="form-signup" data-panel="signup" novalidate hidden>
+    <h3>Créer un compte</h3>
+    <label>Pseudo <input type="text" name="pseudo" minlength="2" maxlength="20" pattern="[A-Za-z0-9_.\-]{2,20}" autocomplete="nickname" required></label>
+    <label>E-mail <input type="email" name="email" autocomplete="email" required></label>
+    <label>Mot de passe (8 caractères minimum) <input type="password" name="password" minlength="8" autocomplete="new-password" required></label>
+    <label>Confirme le mot de passe <input type="password" name="password2" minlength="8" autocomplete="new-password" required></label>
+    <label class="check"><input type="checkbox" name="terms" required> <span>J'accepte les règles de l'espace commentaires et la <a href="../mentions-legales.html#confidentialite" target="_blank" rel="noopener">politique de confidentialité</a>.</span></label>
+    <button class="btn btn-dl" type="submit">Créer mon compte</button>
+    <p class="form-msg" role="status"></p>
+    <p class="alt">Déjà un compte ? <button class="link-btn" type="button" data-open="login">Se connecter</button></p>
+  </form>
+
+  <form id="form-forgot" data-panel="forgot" novalidate hidden>
+    <h3>Mot de passe oublié</h3>
+    <label>E-mail du compte <input type="email" name="email" autocomplete="email" required></label>
+    <button class="btn btn-dl" type="submit">Recevoir un lien</button>
+    <p class="form-msg" role="status"></p>
+    <p class="alt"><button class="link-btn" type="button" data-open="login">Retour à la connexion</button></p>
+  </form>
+
+  <form id="form-recovery" data-panel="recovery" novalidate hidden>
+    <h3>Nouveau mot de passe</h3>
+    <label>Nouveau mot de passe <input type="password" name="password" minlength="8" autocomplete="new-password" required></label>
+    <label>Confirme-le <input type="password" name="password2" minlength="8" autocomplete="new-password" required></label>
+    <button class="btn btn-dl" type="submit">Enregistrer</button>
+    <p class="form-msg" role="status"></p>
+  </form>
+
+  <div data-panel="account" hidden>
+    <form id="form-pseudo" novalidate>
+      <h3>Mon compte</h3>
+      <p class="alt">Pseudo actuel : <b id="acc-pseudo-now"></b></p>
+      <label>Nouveau pseudo <input type="text" name="pseudo" minlength="2" maxlength="20" pattern="[A-Za-z0-9_.\-]{2,20}" required></label>
+      <button class="btn btn-ghost" type="submit">Changer de pseudo</button>
+      <p class="form-msg" role="status"></p>
+    </form>
+    <div class="panel-body">
+      <p class="alt">Supprimer ton compte efface aussi tous tes commentaires.</p>
+      <button class="link-btn danger" type="button" id="acc-delete">Supprimer mon compte</button>
+      <p class="form-msg" id="acc-delete-msg" role="status"></p>
+    </div>
+  </div>
+</dialog>
+
+<script src="../vendor/supabase.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/comments.js" defer></script>
+
+<script src="../js/site.js"></script>
